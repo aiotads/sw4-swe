@@ -1,0 +1,9 @@
+# 原始書 PDF — 版權素材，不入庫、不公開（CC BY-NC-ND；自行從官方來源取得）
+# 官方免費版：https://abseil.io/resources/swe-book
+swe_at_google.2.pdf
+*.pdf
+
+# Python / 工具暫存
+__pycache__/
+*.pyc
+.DS_Store
