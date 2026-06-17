@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 24 章 Continuous Delivery ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具</div>
+    <div class="ch-no">CHAPTER 24</div>
+    <h1 class="title">Continuous Delivery</h1>
+    <div class="title-zh">持續交付</div>
+    <div class="meta-row">
+      <span class="badge">作者 Narayan, Jones, Shipe, Owens</span>
+      <span class="badge">PDF p.533–544</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Counterintuitively, faster is safer."</span>
+      <span class="zh">違反直覺地說：更快，反而更安全。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p><b>CD（持續交付）</b>的核心信念與 Agile 一脈相承：<b>長期而言，較小批次的變更帶來較高品質——「faster is safer（更快反而更安全）」</b>。Google 把 CD 拆成能<b>獨立交付價值</b>的面向逐步推進：<b>敏捷／自動化／隔離／可靠／資料驅動／分階段推出</b>。組織競爭力在上市速度，瓶頸是部署時間——<b>程式碼的價值不在提交時、而在功能送到用戶手上時實現</b>。</p>
+      <p>關鍵槓桿：<b>velocity 是團隊運動</b>（在共享 head 開發＋CI＋自動回退，而非拉分支；YouTube 50 小時人工回歸是反例）；對「又貴又險」的發布別放慢，而要<b>降成本、提紀律、增量化風險＋投資微服務/重寫</b>；<b>flag-guarding（旗標守護）</b>把單一功能的命運與整體 binary 發布解耦；<b>release train（發布列車）</b>教「沒有完美的 binary」與「錯過就等下一班」；<b>只出貨被用到的東西</b>（動態部署＋A/B 避免 bloat）；<b>shift left＋把現實當基準</b>（多樣性是事實、做代表性測試/分階段/A/B 部署）。</p>
+      <p>文化上「<b>Always Be Deploying</b>」＋「一項發布職責是保護產品不受開發者傷害」。結論：faster 不只更安全、也更便宜；而且<b>光是把能持續部署的結構建起來，就產生了大部分的價值——即使你不真的每天推給用戶</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你的發布又貴又險，本能是「放慢、拉長穩定期」。</b> 本章打臉這個直覺：放慢只給短期穩定、長期拖垮 velocity。正解是<b>降低每次發布成本、提高紀律、把風險切成增量</b>——並投資長期架構（微服務化/重寫）而非表面營運修補。</div>
+      <div class="why-card"><b>你的團隊長大了，有人想拉分支「避免互踩」。</b> 這是反模式：當下舒服、日後整合與 culprit finding 痛。應<b>在共享 head 開發＋CI＋自動回退</b>。對照 ch23 的 TAP/Build Cop。</div>
+      <div class="why-card"><b>你不知道怎麼把「發布功能」與「發布 binary」解耦。</b> <b>Flag-guarding</b> 是答案：新舊 codepath 並存、動態 config 控制、出事改旗標不重發、發布前一刻才開旗標配合公告。</div>
+      <div class="why-card"><b>你在為「要不要為某 bug／某功能延遲發布」焦慮。</b> 兩條鐵律：<b>沒有完美的 binary</b>（用有門檻 KPI 與 error budget 思維取捨）＋<b>錯過發布列車就等下一班</b>（規律發布讓那只是幾小時）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">主旨</span> Faster is safer：小批次 vs 大批次 <span class="en2">smaller batches = higher quality</span></h3>
+      <div class="claim">CD／Agile 的核心信條：<b>較小批次的變更隨時間帶來較高品質</b>。兩次發布間變更夠少，除錯就 trivial、風險增量、適應更快。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="小批次頻繁發布（每次風險小、易除錯）對比大批次稀疏發布（每次風險大、難找元兇）">
+          <text x="180" y="24" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">小批次、頻繁發布</text>
+          <text x="540" y="24" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">大批次、稀疏發布</text>
+          <line x1="30" y1="120" x2="350" y2="120" stroke="var(--border)" stroke-width="1.4"/>
+          <g fill="var(--theme-scale)">
+            <circle cx="60" cy="120" r="6"/><circle cx="100" cy="120" r="6"/><circle cx="140" cy="120" r="6"/>
+            <circle cx="180" cy="120" r="6"/><circle cx="220" cy="120" r="6"/><circle cx="260" cy="120" r="6"/>
+            <circle cx="300" cy="120" r="6"/><circle cx="340" cy="120" r="6"/>
+          </g>
+          <text x="190" y="150" class="fig-mut" font-size="10" text-anchor="middle">每次只含少量變更</text>
+          <text x="190" y="166" class="fig-mut" font-size="10" text-anchor="middle">→ 除錯 trivial、可快速回退</text>
+          <text x="190" y="182" class="fig-mut" font-size="10" text-anchor="middle">→ 與「已知良好位置」偏離最小</text>
+          <line x1="390" y1="120" x2="710" y2="120" stroke="var(--border)" stroke-width="1.4"/>
+          <circle cx="470" cy="120" r="20" fill="var(--theme-trade)" opacity=".85"/>
+          <circle cx="630" cy="120" r="20" fill="var(--theme-trade)" opacity=".85"/>
+          <text x="550" y="152" class="fig-mut" font-size="10" text-anchor="middle">每次含數月血淚</text>
+          <text x="550" y="168" class="fig-mut" font-size="10" text-anchor="middle">→ 風險超線性增加、難找元兇</text>
+          <text x="550" y="184" class="fig-mut" font-size="10" text-anchor="middle">→ 放棄或硬推的兩難</text>
+          <text x="360" y="214" class="fig-txt" font-size="11.5" text-anchor="middle" font-weight="700">faster is safer：更快不只更安全，也更便宜（每次發布與被放棄的成本都更低）</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 「faster is safer」：左邊<b>小批次、頻繁發布</b>——每次只含少量變更，除錯 trivial、可快速回退、與「已知良好位置」偏離最小；右邊<b>大批次、稀疏發布</b>——每次含數月血淚，風險<b>超線性</b>增加、難找元兇，陷入「放棄一季成果或沒信心硬推」的兩難。健康與速度並不對立。</figcaption>
+      </figure>
+      <div class="impl"><b>velocity 是團隊運動：</b>團隊長大時別拉分支「避免互踩」（日後整合與 culprit finding 痛）——在共享 head 開發＋CI＋自動回退（見 ch23）。發布又貴又險時，<b>別放慢</b>（只換短期穩定、長期拖垮 velocity）；正解是<b>降成本、提紀律、增量化風險</b>，抗拒表面營運修補、投資長期架構（<b>遷移微服務、甚至打掉重寫</b>）。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">解耦</span> 旗標守護與發布列車 <span class="en2">flag-guarding · release train</span></h3>
+      <div class="claim">可靠連續發布的關鍵：為所有變更加 <b>flag guard</b>，<b>把單一功能的命運與整體 binary 發布解耦</b>。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="新舊 codepath 並存於 binary、由旗標守護；binary 走規律發布列車，功能命運由動態 config 旗標獨立控制">
+          <text x="360" y="22" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">旗標守護：解耦「功能命運」與「binary 發布」</text>
+          <rect x="40" y="44" width="250" height="96" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+          <text x="165" y="64" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle">同一個 binary</text>
+          <rect x="58" y="78" width="100" height="46" rx="8" fill="#16241f" stroke="var(--theme-scale)" stroke-width="1.5"/>
+          <text x="108" y="98" class="fig-txt" font-size="10.5" text-anchor="middle">舊 codepath</text>
+          <text x="108" y="113" class="fig-mut" font-size="9" text-anchor="middle">穩定·已上線</text>
+          <rect x="172" y="78" width="100" height="46" rx="8" fill="#211c12" stroke="var(--theme-time)" stroke-width="1.5"/>
+          <text x="222" y="98" class="fig-txt" font-size="10.5" text-anchor="middle">新 codepath</text>
+          <text x="222" y="113" class="fig-mut" font-size="9" text-anchor="middle">flag 守護</text>
+          <rect x="430" y="60" width="120" height="40" rx="9" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="490" y="84" class="fig-txt" font-size="11" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">動態 config</text>
+          <path d="M272 100 C340 100 370 80 426 80" stroke="var(--theme-trade)" stroke-width="1.6" fill="none" stroke-dasharray="4 4"/>
+          <text x="350" y="74" class="fig-mut" font-size="9.5" text-anchor="middle">改旗標值</text>
+          <text x="350" y="116" class="fig-mut" font-size="9.5" text-anchor="middle">不必重發 binary</text>
+          <text x="490" y="120" class="fig-mut" font-size="9.5" text-anchor="middle">發布前一刻才開旗標</text>
+          <text x="490" y="134" class="fig-mut" font-size="9.5" text-anchor="middle">配合新聞稿·降洩漏風險</text>
+          <line x1="40" y1="170" x2="690" y2="170" stroke="var(--border)" stroke-width="1.4"/>
+          <text x="40" y="190" class="fig-mut" font-size="10">發布列車（規律班次，如每兩天）：</text>
+          <g fill="var(--accent)"><circle cx="120" cy="170" r="6"/><circle cx="240" cy="170" r="6"/><circle cx="360" cy="170" r="6"/><circle cx="480" cy="170" r="6"/><circle cx="600" cy="170" r="6"/></g>
+          <text x="600" y="190" class="fig-mut" font-size="10" text-anchor="end">錯過就等下一班（幾小時，非幾天）</text>
+          <text x="360" y="216" class="fig-mut" font-size="10.5" text-anchor="middle" fill="var(--theme-time)">沒有完美的 binary：用有門檻的 KPI／error budget 讓「不完美但夠好」的功能能上</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> <b>Flag-guarding</b>：新舊 codepath 並存於<b>同一個 binary</b>、新碼由 flag 守護；功能命運靠<b>動態 config</b> 改旗標獨立控制——出事改旗標不必重發 binary、發布前一刻才開旗標以配合公告降洩漏風險。binary 本身走規律的<b>發布列車</b>（如每兩天），<b>錯過就等下一班</b>（幾小時非幾天）。配合「沒有完美的 binary」——用有門檻的 KPI／error budget 讓不完美但夠好的功能能上。</figcaption>
+      </figure>
+      <div class="impl"><b>只出貨被用到的：</b>bloat 讓用戶裝置為沒用的功能付空間/流量代價；用<b>動態部署＋A/B</b> 只送有價值的程式，並把「多久產生可行發布」與「用戶多久收到」解耦，讓選擇刻意。<b>shift left／把現實當基準：</b>客戶端多樣性是事實非問題——做代表性測試、分階段推出、<b>A/B 部署</b>（光推更新就會動指標，故同送更新版與安慰劑；用戶群不夠大就追求 change-neutral）。文化：<b>Always Be Deploying</b>＋保護產品不受開發者傷害。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Over time, smaller batches of changes result in higher quality; in other words, faster is safer."</span><span class="zh">長期而言，較小批次的變更會帶來較高品質；換句話說，更快反而更安全。</span><div class="note">CD 與 Agile 的核心信條，也是全章主旨。</div></blockquote>
+    <blockquote class="q"><span class="en">"The value of code is not realized at the time of submission but when features are available to your users."</span><span class="zh">程式碼的價值不在提交的當下實現，而在功能能被你的使用者用到時才實現。</span><div class="note">開場——velocity 的瓶頸是部署時間。</div></blockquote>
+    <blockquote class="q"><span class="en">"It turns out that no matter how small your island, you should get reliable and accurate search results."</span><span class="zh">結果是：無論你的島有多小，你都該得到可靠而準確的搜尋結果。</span><div class="note">No Binary Is Perfect——菲律賓小島方言 bug 的決定；用判斷力做取捨，這次選擇延遲發布修 bug。</div></blockquote>
+    <blockquote class="q"><span class="en">"If you're late for the release train, it will leave without you. ... deadlines are certain, life is not."</span><span class="zh">如果你趕不上發布列車，它會自己開走、不等你。……deadline 是確定的，人生不是。</span><div class="note">Meet Your Release Deadline——規律發布把「等下一班」從幾天縮成幾小時。</div></blockquote>
+    <blockquote class="q"><span class="en">"Simply having the structures in place that enable continuous deployment generates the majority of the value, even if you don't actually push those releases out to users."</span><span class="zh">光是把那些能支撐持續部署的結構建立起來，就已經產生了絕大部分的價值——即使你並沒有真的把那些發布推給使用者。</span><div class="note">結論——重點是「能隨時做到」所需的流程、即時指標、清楚政策。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Continuous Delivery（CD，持續交付）</span><br>持續組裝 RC 並晉級測試、隨時能可靠發布的實踐；核心信條是「小批次帶來高品質」。</div>
+      <div class="kw"><span class="term">Faster Is Safer（更快反而更安全）</span><br>全章主旨；小批次頻繁發布讓變更增量、除錯 trivial、適應更快，且每次發布與被放棄的成本都更低。</div>
+      <div class="kw"><span class="term">Velocity（速度）／Launch and Iterate</span><br>競爭力在上市速度、瓶頸是部署時間；價值在功能到用戶手上才實現，故「早發布、常發布、邊做邊改」。</div>
+      <div class="kw"><span class="term">Flag-Guarding（旗標守護）／Feature Flag</span><br>用功能旗標包住每個變更，新舊 codepath 並存、用動態 config 控制；把單一功能的命運與整體 binary 發布解耦。</div>
+      <div class="kw"><span class="term">Release Train（發布列車）</span><br>規律、可預測的發布節奏；錯過就等下一班（只需數小時），降低恐慌與爆肝（Search 做到每兩天一班）。</div>
+      <div class="kw"><span class="term">No Binary Is Perfect（沒有完美的 binary）</span><br>軟體本質複雜，每次發布都要做取捨；用有明確門檻的 KPI（呼應 error budget）讓不完美但夠好的功能能上。</div>
+      <div class="kw"><span class="term">Bloat（臃腫）／Ship Only What Gets Used</span><br>產品越成功越臃腫；動態部署＋A/B 讓 App 只把對用戶有價值的程式送上裝置，避免裝置付空間/流量代價。</div>
+      <div class="kw"><span class="term">Dynamic Deployment（動態部署）</span><br>靠模組化做可設定部署，把「多久產生可行發布」與「用戶多久收到」解耦，讓選擇是刻意的。</div>
+      <div class="kw"><span class="term">Reality as Benchmark／Representative Testing</span><br>客戶端多樣性是事實而非問題；窮盡測試不可行就做代表性測試＋分階段推出。</div>
+      <div class="kw"><span class="term">A/B Deployment／Change-Neutral Release</span><br>同送更新版與安慰劑（舊版再發）比較，因光推更新就會動指標；用戶群不夠大時改追求 change-neutral（只測部署穩定性）。</div>
+      <div class="kw"><span class="term">Always Be Deploying（持續部署）</span><br>把部署變成高頻、低風險的日常紀律；頻繁列車讓與「已知良好位置」的偏離最小。</div>
+      <div class="kw"><span class="term">Protect the Product from the Developers</span><br>一項發布職責；開發者對新功能的熱情不能凌駕既有產品 UX，新功能須以強契約介面隔離。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你的發布「又貴又險」嗎？本能是放慢 cadence、拉長穩定期嗎？你願不願意接受反直覺結論——<b>降成本、提紀律、增量化風險＋投資長期架構（微服務/重寫）</b>而非表面修補？你的 YouTube 式 50 小時人工回歸在哪？</li>
+      <li>你的團隊長大時，有沒有人想「拉分支避免互踩」？能不能改成<b>在共享 head 開發＋CI＋自動回退＋culprit finding</b>？你已具備 ch23 的哪些前置？</li>
+      <li>你為所有變更加 <b>flag guard</b> 了嗎？能不能「出事改動態 config 旗標、不必重發 binary」「發布前一刻才開旗標配合公告」？你有「能安全 rollout 設定」的 config 服務嗎？</li>
+      <li>回想上次為「某 bug／某功能」焦慮要不要延遲發布——你是用<b>有門檻的 KPI 與 error budget 思維</b>取捨，還是憑感覺/最大聲的人？「菲律賓小島」那題你會怎麼判？</li>
+      <li>你出貨了多少「沒人用」的東西（bloat）？能不能用<b>動態部署＋A/B</b> 把「產生可行發布」與「用戶收到」解耦、只送有價值的程式？你量測過每個功能在野外的成本與價值嗎？對照 ch07、ch11。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— CD 直接建在 CI 之上；本章的 RC、feature flag、release train 都假設 ch23 的 CB/CD/green head、TAP、Build Cop、自動回退已就位。</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— 「在共享 head 開發、別拉長壽分支」「設定當程式碼放版控」是 trunk-based development 與 One-Version Rule 的直接應用。</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— 「faster is safer」靠測試與 CI 撐起信心；representative testing、guardrail metrics 承接測試章的 size/scope 與 flaky 取捨。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— A/B 部署、guardrail metrics、「只出貨被用到的」都需要可信指標；呼應 GSM/QUANTS 量測紀律。</span></div>
+      <div class="chip"><a href="ch06.html">ch06 Leading at Scale</a> <span class="rel">— 「velocity 是團隊運動」「保護產品不受開發者傷害」是規模化領導取捨；error budget 與 Good/Fast/Cheap 呼應「沒有完美 binary」。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「整合了時間維度的程式設計」；CD 把「程式碼有預期壽命、須持續演化發布」落實為日常紀律。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch23.html">← 上一章：Continuous Integration</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch25.html">下一章：Compute as a Service →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools</div>
+    <div class="ch-no">CHAPTER 24</div>
+    <h1 class="title">Continuous Delivery</h1>
+    <div class="title-zh">Faster is safer — release early, often, and in small batches</div>
+    <div class="meta-row">
+      <span class="badge">by Narayan, Jones, Shipe, Owens</span>
+      <span class="badge">PDF p.533–544</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Counterintuitively, faster is safer."</span>
+      <span class="zh">Health and speed aren't opposed — frequent, small-batch releases have better quality outcomes.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p><b>CD</b>'s core belief, shared with Agile: <b>over time, smaller batches yield higher quality — "faster is safer."</b> Google develops facets that <b>deliver value independently</b>: <b>Agility / Automation / Isolation / Reliability / Data-driven / Phased rollout.</b> Competitiveness is time to market, bottlenecked by deployment time — <b>code's value is realized not at submission but when features reach users.</b></p>
+      <p>Key levers: <b>velocity is a team sport</b> (develop at the shared head + CI + auto-rollback, don't branch off; YouTube's 50-hour manual regression is the cautionary tale); for "expensive, risky" releases don't slow down but <b>cut cost, raise discipline, make risk incremental + invest in microservices/rewrite</b>; <b>flag-guarding</b> decouples a feature's destiny from the binary release; the <b>release train</b> teaches "no binary is perfect" and "miss it, catch the next"; <b>ship only what gets used</b> (dynamic deployment + A/B against bloat); <b>shift left + make reality your benchmark</b> (diversity is a fact; representative testing / staged rollout / A/B deployment).</p>
+      <p>Culturally, "<b>Always Be Deploying</b>" + "one release responsibility is to protect the product from the developers." Conclusion: faster is not only safer but cheaper; and <b>simply having the structures for continuous deployment generates most of the value — even if you don't push daily.</b></p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>Your releases are expensive and risky; your instinct is to "slow down, lengthen the stability period."</b> The chapter rebuts that: slowing buys short-term stability but long-term kills velocity. The fix is to <b>lower per-release cost, raise discipline, make risk incremental</b> — and invest in long-term architecture (microservices/rewrite), not superficial operational fixes.</div>
+      <div class="why-card"><b>Your team grew and someone wants to branch off "to avoid stepping on toes."</b> An antipattern: comfortable now, painful later at integration and culprit finding. Develop <b>at the shared head + CI + auto-rollback</b> instead. Per ch23's TAP/Build Cop.</div>
+      <div class="why-card"><b>You don't know how to decouple "releasing a feature" from "releasing a binary."</b> <b>Flag-guarding</b> is the answer: old and new codepaths coexist, controlled by dynamic config, fixable without re-releasing, flippable right before an announcement.</div>
+      <div class="why-card"><b>You're agonizing over delaying a release for a bug or feature.</b> Two rules: <b>no binary is perfect</b> (threshold KPIs and error-budget thinking) + <b>miss the release train, catch the next</b> (regular releases make it a matter of hours).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">THESIS</span> Faster is safer: small vs large batches <span class="en2">smaller batches = higher quality</span></h3>
+      <div class="claim">The core tenet of CD/Agile: <b>smaller batches over time yield higher quality.</b> Few changes between releases makes debugging trivial, risk incremental, adaptation faster.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="Small, frequent releases (small per-release risk, easy debugging) vs large, infrequent releases (big risk, hard culprit finding)">
+          <text x="180" y="24" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">small, frequent releases</text>
+          <text x="540" y="24" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">large, infrequent releases</text>
+          <line x1="30" y1="120" x2="350" y2="120" stroke="var(--border)" stroke-width="1.4"/>
+          <g fill="var(--theme-scale)">
+            <circle cx="60" cy="120" r="6"/><circle cx="100" cy="120" r="6"/><circle cx="140" cy="120" r="6"/>
+            <circle cx="180" cy="120" r="6"/><circle cx="220" cy="120" r="6"/><circle cx="260" cy="120" r="6"/>
+            <circle cx="300" cy="120" r="6"/><circle cx="340" cy="120" r="6"/>
+          </g>
+          <text x="190" y="150" class="fig-mut" font-size="10" text-anchor="middle">each carries few changes</text>
+          <text x="190" y="166" class="fig-mut" font-size="10" text-anchor="middle">→ trivial debugging, fast rollback</text>
+          <text x="190" y="182" class="fig-mut" font-size="10" text-anchor="middle">→ minimal divergence from known-good</text>
+          <line x1="390" y1="120" x2="710" y2="120" stroke="var(--border)" stroke-width="1.4"/>
+          <circle cx="470" cy="120" r="20" fill="var(--theme-trade)" opacity=".85"/>
+          <circle cx="630" cy="120" r="20" fill="var(--theme-trade)" opacity=".85"/>
+          <text x="550" y="152" class="fig-mut" font-size="10" text-anchor="middle">each holds months of sweat</text>
+          <text x="550" y="168" class="fig-mut" font-size="10" text-anchor="middle">→ superlinear risk, hard culprit finding</text>
+          <text x="550" y="184" class="fig-mut" font-size="10" text-anchor="middle">→ abandon-or-push-blind dilemma</text>
+          <text x="360" y="214" class="fig-txt" font-size="11.5" text-anchor="middle" font-weight="700">faster is safer — and cheaper (lower per-release and abandoned-release cost)</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — "faster is safer": left, <b>small, frequent releases</b> — each carries few changes, so debugging is trivial, rollback fast, and divergence from a known-good position minimal; right, <b>large, infrequent releases</b> — each holds months of sweat, risk grows <b>superlinearly</b>, culprit finding is hard, and you're stuck in an "abandon a quarter's work or push without confidence" dilemma. Health and speed are not opposed.</figcaption>
+      </figure>
+      <div class="impl"><b>Velocity is a team sport:</b> as the team grows, don't branch off "to avoid stepping on toes" (painful later at integration and culprit finding) — develop at the shared head + CI + auto-rollback (see ch23). For expensive, risky releases, <b>don't slow down</b> (only short-term stability, long-term killing velocity); the fix is to <b>cut cost, raise discipline, make risk incremental</b>, resisting superficial operational fixes and investing in long-term architecture (<b>microservices, even a rewrite</b>).</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">DECOUPLE</span> Flag-guarding &amp; the release train <span class="en2">decouple feature destiny from binary release</span></h3>
+      <div class="claim">The key to reliable continuous releases: <b>flag-guard all changes</b>, <b>decoupling a single feature's destiny from the binary release.</b></div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="Old and new codepaths coexist in the binary guarded by a flag; the binary rides a regular release train, feature destiny controlled independently by dynamic config">
+          <text x="360" y="22" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">Flag-guarding: decouple "feature destiny" from "binary release"</text>
+          <rect x="40" y="44" width="250" height="96" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+          <text x="165" y="64" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle">one binary</text>
+          <rect x="58" y="78" width="100" height="46" rx="8" fill="#16241f" stroke="var(--theme-scale)" stroke-width="1.5"/>
+          <text x="108" y="98" class="fig-txt" font-size="10.5" text-anchor="middle">old codepath</text>
+          <text x="108" y="113" class="fig-mut" font-size="9" text-anchor="middle">stable · shipped</text>
+          <rect x="172" y="78" width="100" height="46" rx="8" fill="#211c12" stroke="var(--theme-time)" stroke-width="1.5"/>
+          <text x="222" y="98" class="fig-txt" font-size="10.5" text-anchor="middle">new codepath</text>
+          <text x="222" y="113" class="fig-mut" font-size="9" text-anchor="middle">flag-guarded</text>
+          <rect x="430" y="60" width="120" height="40" rx="9" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="490" y="84" class="fig-txt" font-size="11" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">dynamic config</text>
+          <path d="M272 100 C340 100 370 80 426 80" stroke="var(--theme-trade)" stroke-width="1.6" fill="none" stroke-dasharray="4 4"/>
+          <text x="350" y="74" class="fig-mut" font-size="9.5" text-anchor="middle">update flag</text>
+          <text x="350" y="116" class="fig-mut" font-size="9.5" text-anchor="middle">no binary re-release</text>
+          <text x="490" y="120" class="fig-mut" font-size="9.5" text-anchor="middle">flip right before</text>
+          <text x="490" y="134" class="fig-mut" font-size="9.5" text-anchor="middle">a press release · less leak risk</text>
+          <line x1="40" y1="170" x2="690" y2="170" stroke="var(--border)" stroke-width="1.4"/>
+          <text x="40" y="190" class="fig-mut" font-size="10">release train (regular cadence, e.g. every 2 days):</text>
+          <g fill="var(--accent)"><circle cx="120" cy="170" r="6"/><circle cx="240" cy="170" r="6"/><circle cx="360" cy="170" r="6"/><circle cx="480" cy="170" r="6"/><circle cx="600" cy="170" r="6"/></g>
+          <text x="600" y="190" class="fig-mut" font-size="10" text-anchor="end">miss it → catch the next (hours, not days)</text>
+          <text x="360" y="216" class="fig-mut" font-size="10.5" text-anchor="middle" fill="var(--theme-time)">No binary is perfect: threshold KPIs / error budget let "imperfect but good enough" features ship</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — <b>Flag-guarding</b>: old and new codepaths coexist in <b>one binary</b>, the new code flag-guarded; the feature's destiny is controlled independently via <b>dynamic config</b> — fix by updating the flag without re-releasing the binary, flip it right before an announcement to cut leak risk. The binary itself rides a regular <b>release train</b> (e.g., every two days); <b>miss it and catch the next</b> (hours, not days). Paired with "no binary is perfect" — threshold KPIs / error budget let imperfect-but-good-enough features ship.</figcaption>
+      </figure>
+      <div class="impl"><b>Ship only what's used:</b> bloat makes users' devices pay in space/data for unused features; <b>dynamic deployment + A/B</b> ship only valuable code and decouple "how often a viable release is created" from "how often users receive it," making the choice intentional. <b>Shift left / reality as benchmark:</b> client diversity is a fact, not a problem — representative testing, staged rollouts, <b>A/B deployment</b> (merely pushing an update moves metrics, so ship the update vs a placebo; if the userbase is small, aim for change-neutral). Culture: <b>Always Be Deploying</b> + protect the product from the developers.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Over time, smaller batches of changes result in higher quality; in other words, faster is safer."</span><span class="zh">The core tenet of CD and Agile, and the chapter's thesis.</span><div class="note">Idioms of Continuous Delivery.</div></blockquote>
+    <blockquote class="q"><span class="en">"The value of code is not realized at the time of submission but when features are available to your users."</span><span class="zh">Velocity is bottlenecked by deployment time.</span><div class="note">The chapter introduction.</div></blockquote>
+    <blockquote class="q"><span class="en">"It turns out that no matter how small your island, you should get reliable and accurate search results."</span><span class="zh">"No binary is perfect" doesn't mean sacrificing the few; this time the call was to delay and fix.</span><div class="note">No Binary Is Perfect — the Philippine-island dialect bug.</div></blockquote>
+    <blockquote class="q"><span class="en">"If you're late for the release train, it will leave without you. ... deadlines are certain, life is not."</span><span class="zh">Regular releases turn "the next train" from days into hours.</span><div class="note">Meet Your Release Deadline.</div></blockquote>
+    <blockquote class="q"><span class="en">"Simply having the structures in place that enable continuous deployment generates the majority of the value, even if you don't actually push those releases out to users."</span><span class="zh">The value is in being able to deploy — needing process, real-time metrics, and clear policies.</span><div class="note">Conclusion.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Continuous Delivery (CD)</span><br>Continuously assembling and promoting RCs so you can always release reliably; core tenet: small batches yield high quality.</div>
+      <div class="kw"><span class="term">Faster is safer</span><br>The thesis; small, frequent batches make changes incremental, debugging trivial, adaptation faster, and both per-release and abandoned-release costs lower.</div>
+      <div class="kw"><span class="term">Velocity / launch and iterate</span><br>Competitiveness is time to market, bottlenecked by deployment; value is realized when features reach users, so release early, often, iterate.</div>
+      <div class="kw"><span class="term">Flag-guarding / feature flag</span><br>Wrap each change in a flag, old and new codepaths coexisting, controlled by dynamic config; decouples a feature's destiny from the binary release.</div>
+      <div class="kw"><span class="term">Release train</span><br>A regular, predictable cadence; miss it and catch the next (mere hours), cutting panic and burnout (Search reached every-other-day).</div>
+      <div class="kw"><span class="term">No binary is perfect</span><br>Software is fundamentally complex, so every release is a trade-off; threshold KPIs (echoing error budgets) let imperfect-but-good-enough features ship.</div>
+      <div class="kw"><span class="term">Bloat / ship only what gets used</span><br>The more successful a product, the more bloated; dynamic deployment + A/B ship only valuable code, sparing space/data costs.</div>
+      <div class="kw"><span class="term">Dynamic deployment</span><br>Modularity enables configurable deployments, decoupling "how often a viable release is created" from "how often users receive it."</div>
+      <div class="kw"><span class="term">Reality as benchmark / representative testing</span><br>Client diversity is a fact, not a problem; when exhaustive testing is infeasible, do representative testing + staged rollouts.</div>
+      <div class="kw"><span class="term">A/B deployment / change-neutral release</span><br>Ship the update vs a placebo to compare, since pushing an update moves metrics; when the userbase is small, test only deployment stability.</div>
+      <div class="kw"><span class="term">Always Be Deploying</span><br>Make deployment a high-frequency, low-risk daily discipline; frequent trains minimize divergence from a known-good position.</div>
+      <div class="kw"><span class="term">Protect the product from the developers</span><br>A release responsibility; a developer's feature passion can't trump the existing product's UX, so isolate new features behind strong-contract interfaces.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Are your releases "expensive and risky"? Is your instinct to slow cadence and lengthen the stability period? Will you accept the counterintuitive fix — <b>cut cost, raise discipline, make risk incremental + invest in long-term architecture (microservices/rewrite)</b> over superficial fixes? Where's your YouTube-style 50-hour manual regression?</li>
+      <li>As your team grew, did anyone want to "branch off to avoid stepping on toes"? Could you move to <b>developing at head + CI + auto-rollback + culprit finding</b>? Which ch23 prerequisites do you already have?</li>
+      <li>Do you flag-guard all changes? Can you "fix via a dynamic config flag without re-releasing" and "flip the flag right before an announcement"? Do you have a config service for <b>safe config rollouts</b>?</li>
+      <li>Recall your last agony over delaying a release — did you use <b>threshold KPIs and error-budget thinking</b>, or gut feeling / the loudest voice? How would you call the "Philippine island" question?</li>
+      <li>How much "nobody-uses-it" bloat do you ship? Could you use <b>dynamic deployment + A/B</b> to decouple "creating a viable release" from "users receiving it" and ship only valuable code? Do you measure each feature's cost and value in the wild? Per ch07, ch11.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— CD is built directly on CI; this chapter's RCs, feature flags, and release train assume ch23's CB/CD/green head, TAP, Build Cop, and auto-rollback.</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— "develop at the shared head, don't long-branch" and "config as code in version control" are direct applications of trunk-based development and the One-Version Rule.</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— "faster is safer" rests on tests and CI carrying confidence; representative testing and guardrail metrics follow the testing chapter's trade-offs.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— A/B deployment, guardrail metrics, and "ship only what gets used" need trustworthy metrics; echoes GSM/QUANTS discipline.</span></div>
+      <div class="chip"><a href="ch06.html">ch06 Leading at Scale</a> <span class="rel">— "velocity is a team sport" and "protect the product from the developers" are scaling-leadership trade-offs; error budgets and Good/Fast/Cheap echo "no binary is perfect."</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "programming integrated over time" — CD turns "code has an expected lifespan and must keep shipping" into a daily discipline.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch23.html">← Prev: Continuous Integration</a><a class="idx" href="index.html">⌂ Index</a><a href="ch25.html">Next: Compute as a Service →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

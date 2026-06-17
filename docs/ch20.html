@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 20 章 Static Analysis ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具</div>
+    <div class="ch-no">CHAPTER 20</div>
+    <h1 class="title">Static Analysis</h1>
+    <div class="title-zh">靜態分析</div>
+    <div class="meta-row">
+      <span class="badge">作者 Caitlin Sadowski</span>
+      <span class="badge">PDF p.445–456</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+      <span class="theme-tag t-time">Time 時間</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Focus on developer happiness."</span>
+      <span class="zh">以開發者的幸福感為念——建立反饋迴路、贏得信任，靜態分析才會真正被使用。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p><b>靜態分析</b>是分析<b>原始碼</b>（而非執行中程式＝dynamic）以找 bug、反模式與可在不執行下診斷的問題。它能<b>及早抓 bug</b>，但用途遠不只如此——還用來<b>編碼最佳實務、跟上現代 API、預防技術債</b>，更是 API 棄用防「回潮」的關鍵（ch15、ch22）。</p>
+      <p>兩大特性：<b>Scalability</b>（shardable/incremental，只分析待審變更所影響的檔案/行；擴展分析的數量與種類）與 <b>Usability</b>（權衡成本效益、<b>聚焦新引入的警告</b>、能自動修就自動修、平順整合工作流）。三條關鍵教訓：<b>①以開發者幸福為念</b>（低誤報、反饋迴路、信任；<b>effective false positive</b>＝開發者沒採取正面行動就算誤報）<b>②成為核心工作流的一部分</b>（code review 是甜蜜點）<b>③賦能使用者貢獻</b>（簡單 API 如 Refaster）。</p>
+      <p>平台是 <b>Tricorder</b>（與 Critique 整合、每天 5 萬+ 變更）；新 check 四準則（可理解/可行動易修/&lt;10% 有效誤報/顯著影響潛力，整體 &lt;5%）。其餘：整合工具（Error Prone/clang-tidy）、反饋管道（Not useful/Please fix）、suggested fixes、<b>per-project（非 per-user）客製</b>、presubmits、<b>compiler 整合（從不發 warning——要嘛 error 要嘛不顯示）</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你導入過靜態分析，結果大家嫌吵然後忽略。</b> 關鍵是<b>低誤報率與信任</b>，衡量標準是 <b>effective false positive</b>（開發者沒採取正面行動就算誤報）。建反饋迴路、壓到 10% 以下，工具才會被用。</div>
+      <div class="why-card"><b>你不知道該在哪個環節跑。</b> 完整地圖：<b>IDE（&lt;100ms）→ code review（甜蜜點）→ presubmit（擋提交）→ compiler（break build）</b>——愈左愈早、愈右愈強制。</div>
+      <div class="why-card"><b>你想規模化又不想養龐大工具團隊。</b> 答案是 <b>empower users to contribute</b>：建易 plug-in 的生態、用簡單 API（Refaster：給前後片段）讓領域專家自己寫——100+ 分析器多來自團隊外。</div>
+      <div class="why-card"><b>你在猶豫要不要讓使用者各自關掉檢查。</b> 血淚教訓：<b>做 per-project、不要 per-user</b>——移除 user 客製反而幫忙找出工具真 bug；user 客製只會藏 bug、壓反饋。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">教訓</span> 三條關鍵教訓 <span class="en2">Key Lessons</span></h3>
+      <div class="claim">讓靜態分析有效的可擴展性與可用性，源於三條核心教訓：</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 200" role="img" aria-label="靜態分析三條關鍵教訓：以開發者幸福為念、成為核心工作流一部分、賦能使用者貢獻">
+          <rect x="24" y="44" width="216" height="120" rx="12" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="132" y="70" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle" fill="var(--accent)">① 開發者幸福</text>
+          <text x="132" y="94" class="fig-mut" font-size="11" text-anchor="middle">低誤報率＋信任</text>
+          <text x="132" y="113" class="fig-mut" font-size="11" text-anchor="middle">反饋迴路</text>
+          <text x="132" y="138" class="fig-mut" font-size="10.5" text-anchor="middle">effective false positive</text>
+          <text x="132" y="153" class="fig-mut" font-size="10" text-anchor="middle">＝沒採取正面行動就算誤報</text>
+          <rect x="252" y="44" width="216" height="120" rx="12" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="360" y="70" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">② 核心工作流</text>
+          <text x="360" y="94" class="fig-mut" font-size="11" text-anchor="middle">整合進 code review</text>
+          <text x="360" y="113" class="fig-mut" font-size="11" text-anchor="middle">「甜蜜點」</text>
+          <text x="360" y="138" class="fig-mut" font-size="10.5" text-anchor="middle">改動心態・有時間跑・同儕壓力</text>
+          <text x="360" y="153" class="fig-mut" font-size="10.5" text-anchor="middle">替審查者省時</text>
+          <rect x="480" y="44" width="216" height="120" rx="12" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+          <text x="588" y="70" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle" fill="var(--theme-time)">③ 賦能貢獻</text>
+          <text x="588" y="94" class="fig-mut" font-size="11" text-anchor="middle">領域專家寫分析</text>
+          <text x="588" y="113" class="fig-mut" font-size="11" text-anchor="middle">易 plug-in 的生態</text>
+          <text x="588" y="138" class="fig-mut" font-size="10.5" text-anchor="middle">簡單 API（Refaster）</text>
+          <text x="588" y="153" class="fig-mut" font-size="10.5" text-anchor="middle">把專業規模化</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 三條關鍵教訓：①以開發者幸福為念（低誤報＋信任＋反饋迴路；以 effective false positive 衡量）②成為核心工作流的一部分（code review 是甜蜜點）③賦能使用者貢獻（簡單 API、領域專家、把專業規模化）。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Scalability：</b>shardable/incremental，只對待審變更所影響的檔案/行顯示結果；擴展分析的數量與種類、直接秀給相關工程師避免瓶頸。</li>
+        <li><b>Usability：</b>聚焦新引入的警告（既有運作正常的程式，「修」可能反引入 bug）；能自動修就自動修。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">整合</span> Tricorder 與工作流整合點 <span class="en2">愈左愈早、愈右愈強制</span></h3>
+      <div class="claim"><b>Tricorder</b> 與 Critique 整合（灰色框）、微服務、每天 5 萬+ 變更；新 check 四準則（可理解/可行動易修/&lt;10% 有效誤報/顯著影響潛力）。靜態分析可在工作流的多個點浮現：</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 170" role="img" aria-label="靜態分析的工作流整合點：IDE、code review、presubmit、compiler，愈左愈早愈右愈強制">
+          <defs><marker id="w20" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--theme-time)"/></marker></defs>
+          <g text-anchor="middle">
+            <rect x="24" y="54" width="150" height="56" rx="10" fill="#12151f" stroke="var(--muted)" stroke-width="1.6"/>
+            <text x="99" y="78" class="fig-txt" font-size="12.5" font-weight="700">IDE / 編輯時</text>
+            <text x="99" y="97" class="fig-mut" font-size="10.5">需 &lt;100ms・較麻煩</text>
+            <rect x="190" y="54" width="160" height="56" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2.4"/>
+            <text x="270" y="78" class="fig-txt" font-size="12.5" font-weight="700" fill="var(--accent)">Code Review</text>
+            <text x="270" y="97" class="fig-mut" font-size="10.5">Tricorder・甜蜜點</text>
+            <rect x="366" y="54" width="150" height="56" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="441" y="78" class="fig-txt" font-size="12.5" font-weight="700" fill="var(--theme-scale)">Presubmit</text>
+            <text x="441" y="97" class="fig-mut" font-size="10.5">擋提交</text>
+            <rect x="532" y="54" width="164" height="56" rx="10" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+            <text x="614" y="78" class="fig-txt" font-size="12.5" font-weight="700" fill="var(--theme-trade)">Compiler</text>
+            <text x="614" y="97" class="fig-mut" font-size="10.5">break the build・不發 warning</text>
+          </g>
+          <path d="M30 132 L690 132" stroke="var(--theme-time)" stroke-width="2.5" fill="none" marker-end="url(#w20)"/>
+          <text x="200" y="150" class="fig-mut" font-size="11" text-anchor="middle">愈左：愈早通知</text>
+          <text x="540" y="150" class="fig-mut" font-size="11" text-anchor="middle">愈右：愈強制（無法忽略）</text>
+        </svg>
+        <figcaption><b>Figure 20-1／20-2 概念重繪</b> 靜態分析的工作流整合點：IDE/編輯時（需 &lt;100ms、較麻煩）→ code review（Tricorder，<b>甜蜜點</b>）→ presubmit（擋提交）→ compiler（break the build，<b>從不發 warning</b>——要嘛 error 要嘛不顯示，因開發者會忽略警告）。愈左愈早通知、愈右愈強制。原書 Fig 20-1/20-2 為 Critique 內的灰色警告框與 suggested fix UI 截圖，依 CC BY-NC-ND 不重製。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>整合工具：</b>Error Prone（Java）/clang-tidy（C++）找 AST 反模式（int 右移 32 是 no-op，修了 31 處）；IfThisThenThat、binary size checker；幾乎全是 intraprocedural。</li>
+        <li><b>反饋管道：</b>「Not useful」（對作者開 bug）/「Please fix」；有時<b>修好「訊息」</b>就解決問題（printf %s 例）。</li>
+        <li><b>Suggested fixes：</b>從 Critique 或 CLI 一鍵套用；風格問題該自動修。每天 Please fix 數千次、自動修 ~3,000 次、Not useful ~250 次。</li>
+        <li><b>Per-project 客製：</b>專案層級確保全隊一致視圖；移除 user 客製反而找出真 bug（C++ linter 跑 Obj-C、HTML linter 高誤報）。</li>
+        <li><b>Presubmit：</b>擋提交（DO NOT SUBMIT、測試、格式）；`CLEANUP=` 跳過部分以利 LSC。</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"An issue is an 'effective false positive' if developers did not take some positive action after seeing the issue."</span><span class="zh">一個問題是「有效誤報」，只要開發者在看到它之後沒有採取任何正面行動。</span><div class="note">Focus on Developer Happiness——把誤報從技術定義改為以使用者行動定義。</div></blockquote>
+    <blockquote class="q"><span class="en">"Who wants to wade through hundreds of false reports in search of a few true ones?"</span><span class="zh">誰想為了找出少數幾個真的問題，去涉水翻過數百個假的報告？</span><div class="note">低 false-positive 率為何比減少漏報更重要——工具被真正採用的關鍵。</div></blockquote>
+    <blockquote class="q"><span class="en">"Code review is a sweet spot for analysis results."</span><span class="zh">程式碼審查，是呈現分析結果的甜蜜點。</span><div class="note">改動心態、被阻塞時有時間跑分析、同儕壓力、替審查者省時。</div></blockquote>
+    <blockquote class="q"><span class="en">"Anything that can be fixed automatically should be fixed automatically."</span><span class="zh">任何能被自動修正的，都應該被自動修正。</span><div class="note">Usability／Suggested fixes——降低成本效益裡的「成本」；風格問題不該浪費人工審查時間。</div></blockquote>
+    <blockquote class="q"><span class="en">"We have found repeatedly that developers ignore compiler warnings."</span><span class="zh">我們一再發現：開發者會忽略編譯器警告。</span><div class="note">Compiler Integration——故力求從不發 warning：要嘛當 error（break build），要嘛不顯示。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Static Analysis（靜態分析）</span><br>分析原始碼（非執行中程式）找 bug/反模式；及早抓 bug，也編碼最佳實務、跟上現代 API、預防技術債、防棄用回潮。</div>
+      <div class="kw"><span class="term">Scalability（可擴展）</span><br>shardable/incremental，只分析待審變更所影響的檔案/行；擴展分析數量與種類、直接秀給相關工程師。</div>
+      <div class="kw"><span class="term">Usability（可用性）</span><br>權衡成本效益；聚焦新引入的警告、能自動修就自動修、平順整合工作流。</div>
+      <div class="kw"><span class="term">Effective False Positive（有效誤報）</span><br>以使用者行動定義的誤報：開發者看了沒採取正面行動就算；感知與訊息清晰度同樣重要。</div>
+      <div class="kw"><span class="term">三條關鍵教訓</span><br>開發者幸福（信任、低誤報、反饋迴路）、成為核心工作流（code review 甜蜜點）、賦能使用者貢獻（簡單 API、領域專家）。</div>
+      <div class="kw"><span class="term">Tricorder</span><br>Google 靜態分析平台，與 Critique 整合、微服務、每天 5 萬+ 變更；新 check 四準則、整體有效誤報率 &lt;5%。</div>
+      <div class="kw"><span class="term">Error Prone / clang-tidy</span><br>擴充編譯器找 Java/C++ 的 AST 反模式；Error Prone「ERROR」check 啟用進編譯器防同類錯誤再現。</div>
+      <div class="kw"><span class="term">Refaster</span><br>用前/後程式片段示範期望轉換就能寫分析器；讓非分析/語言專家也能貢獻。</div>
+      <div class="kw"><span class="term">Suggested Fixes（建議修正）</span><br>可從 Critique 或 CLI 一鍵套用；風格問題該自動修（formatter）。</div>
+      <div class="kw"><span class="term">Per-project Customization（專案層級客製）</span><br>客製做在專案層級而非使用者層級，確保全隊一致視圖；user 客製只會藏 bug、壓反饋。</div>
+      <div class="kw"><span class="term">Presubmit（提交前檢查）</span><br>能擋住提交的檢查（DO NOT SUBMIT、測試、格式、特定 Tricorder 類別）；`CLEANUP=` 可跳過以利 LSC。</div>
+      <div class="kw"><span class="term">Never Issue Compiler Warnings（從不發編譯器警告）</span><br>開發者會忽略警告，故要嘛當 error（break build）要嘛不顯示；Go 把未用變數/import 當 error。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你導入的靜態分析工具，<b>false-positive 率</b>是多少？你用「技術正確性」還是 <b>effective false positive</b>（開發者有沒有採取正面行動）來衡量？有沒有一條<b>反饋迴路</b>讓使用者回報「沒用」並真的據以調整？</li>
+      <li>你的靜態分析在<b>哪個環節</b>跑？沿 <b>IDE→code review→presubmit→compiler</b>，你落在哪、該往哪推？哪些檢查機械到可 <b>break the build</b>、哪些該留在 code review？對照 ch19、ch23。</li>
+      <li>你的團隊是不是讓使用者<b>各自關掉</b>煩人的檢查？能不能改成<b>專案層級</b>客製、並把「煩人」當成找 bug 的線索而非壓住反饋？</li>
+      <li>你有沒有把領域專家的知識<b>規模化</b>？哪些「修過一次卻可能再現」的 bug 值得寫成 check 防回潮？有沒有像 Refaster 那樣夠簡單的 API 讓非專家貢獻？</li>
+      <li>你的工具有<b>自動修正</b>嗎？哪些目前靠人工審查者一一指出的問題（格式、風格、deprecated 用法）其實該被 formatter/auto-fix 取代？對照 ch09。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch19.html">ch19 Critique</a> <span class="rel">— 靜態分析的主要整合點；Tricorder 結果以灰色 chip 在 diff 上呈現、附 suggested fix；「Please fix」串起審查者與作者。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 「code review 是甜蜜點」「替審查者省時」直接呼應；自動修風格問題免得浪費人工審查時間。</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— 靜態分析是 backsliding prevention 的核心（Tricorder＋@deprecated）。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— compiler check 啟用前用 MapReduce 清掉既有案例、自動產生 fix；CLEANUP= 跳過自訂 presubmit。</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— presubmit 與 compiler 整合、build 破壞由 CI 或 presubmit 攔下；都是把問題左移。</span></div>
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— 「技術性執行」的核心（clang-tidy、Error Prone）；本章是「C++ 約 90% 規則可被靜態分析驗證」的落實。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「讓昂貴的人工/測試聚焦在非機械可驗證的問題」回扣 Scale 與 Time 主軸。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch19.html">← 上一章：Critique</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch21.html">下一章：Dependency Management →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools</div>
+    <div class="ch-no">CHAPTER 20</div>
+    <h1 class="title">Static Analysis</h1>
+    <div class="title-zh">Build the feedback loop and earn the trust</div>
+    <div class="meta-row">
+      <span class="badge">by Caitlin Sadowski</span>
+      <span class="badge">PDF p.445–456</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+      <span class="theme-tag t-time">Time</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Focus on developer happiness."</span>
+      <span class="zh">Build the feedback loop and earn the trust — that's what makes static analysis actually get used.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p><b>Static analysis</b> analyzes <b>source code</b> (not a running program = dynamic) to find bugs, antipatterns, and issues diagnosable without execution. It catches bugs <b>early</b>, but does far more — <b>codifying best practices, keeping code current with APIs, preventing tech debt</b>, and is key to preventing API-deprecation <b>backsliding</b> (ch15, ch22).</p>
+      <p>Two properties: <b>Scalability</b> (shardable/incremental, analyzing only the files/lines affected by a pending change; scaling the number and variety of analyses) and <b>Usability</b> (weigh cost-benefit, <b>focus on newly introduced warnings</b>, fix automatically when possible, integrate smoothly). Three key lessons: <b>① focus on developer happiness</b> (low false positives, feedback loop, trust; the <b>effective false positive</b> = no positive action taken) <b>② make it part of the core workflow</b> (code review is the sweet spot) <b>③ empower users to contribute</b> (simple APIs like Refaster).</p>
+      <p>The platform is <b>Tricorder</b> (integrated with Critique; 50,000+ changes a day); new checks meet four criteria (understandable / actionable & easy to fix / < 10% effective false positives / significant impact potential; overall < 5%). Plus: integrated tools (Error Prone/clang-tidy), feedback channels (Not useful/Please fix), suggested fixes, <b>per-project (not per-user) customization</b>, presubmits, and <b>compiler integration (never issue warnings — make it an error or don't show it)</b>.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You rolled out static analysis and everyone found it noisy and ignored it.</b> The key is <b>low false positives and trust</b>, measured by the <b>effective false positive</b> (no positive action taken). Build a feedback loop, drive it under 10%, and it gets used.</div>
+      <div class="why-card"><b>You don't know where to run it.</b> The full map: <b>IDE (&lt;100ms) → code review (sweet spot) → presubmit (block commit) → compiler (break build)</b> — earlier left, more forcing right.</div>
+      <div class="why-card"><b>You want to scale without a huge tools team.</b> The answer is <b>empower users to contribute</b>: an easy-to-plug-into ecosystem with simple APIs (Refaster: before/after snippets) so domain experts write checks — most of 100+ analyzers come from outside.</div>
+      <div class="why-card"><b>You're tempted to let users turn off annoying checks.</b> The hard lesson: do <b>per-project, not per-user</b> — removing user customization helped find real tool bugs; user customization only hides bugs and suppresses feedback.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">LESSONS</span> The Three Key Lessons</h3>
+      <div class="claim">The scalability and usability that make static analysis effective arise from three core lessons:</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 200" role="img" aria-label="Static analysis's three key lessons: developer happiness, part of the core workflow, empower users to contribute">
+          <rect x="24" y="44" width="216" height="120" rx="12" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="132" y="70" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--accent)">① Developer happiness</text>
+          <text x="132" y="94" class="fig-mut" font-size="11" text-anchor="middle">low false positives + trust</text>
+          <text x="132" y="113" class="fig-mut" font-size="11" text-anchor="middle">a feedback loop</text>
+          <text x="132" y="138" class="fig-mut" font-size="10.5" text-anchor="middle">effective false positive</text>
+          <text x="132" y="153" class="fig-mut" font-size="10" text-anchor="middle">= no positive action taken</text>
+          <rect x="252" y="44" width="216" height="120" rx="12" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="360" y="70" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">② Core workflow</text>
+          <text x="360" y="94" class="fig-mut" font-size="11" text-anchor="middle">integrate into code review</text>
+          <text x="360" y="113" class="fig-mut" font-size="11" text-anchor="middle">the "sweet spot"</text>
+          <text x="360" y="138" class="fig-mut" font-size="10.5" text-anchor="middle">change mindset · time · peer pressure</text>
+          <text x="360" y="153" class="fig-mut" font-size="10.5" text-anchor="middle">saves reviewer time</text>
+          <rect x="480" y="44" width="216" height="120" rx="12" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+          <text x="588" y="70" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-time)">③ Empower contributors</text>
+          <text x="588" y="94" class="fig-mut" font-size="11" text-anchor="middle">domain experts write analyses</text>
+          <text x="588" y="113" class="fig-mut" font-size="11" text-anchor="middle">easy-to-plug-into ecosystem</text>
+          <text x="588" y="138" class="fig-mut" font-size="10.5" text-anchor="middle">simple APIs (Refaster)</text>
+          <text x="588" y="153" class="fig-mut" font-size="10.5" text-anchor="middle">scale expertise</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the three key lessons: ① focus on developer happiness (low false positives + trust + a feedback loop; measured by the effective false positive) ② make it part of the core workflow (code review is the sweet spot) ③ empower users to contribute (simple APIs, domain experts, scaling expertise).</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Scalability:</b> shardable/incremental, showing results only for the files/lines affected by a pending change; scale the number and variety of analyses, show directly to relevant engineers.</li>
+        <li><b>Usability:</b> focus on newly introduced warnings (for working code, "fixing" may introduce a bug); fix automatically when possible.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">INTEGRATION</span> Tricorder &amp; workflow integration points <span class="en2">earlier left, more forcing right</span></h3>
+      <div class="claim"><b>Tricorder</b> is integrated with Critique (gray boxes), microservices, 50,000+ changes a day; four criteria for new checks. Static analysis can surface at several workflow points:</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 170" role="img" aria-label="Static analysis workflow integration points: IDE, code review, presubmit, compiler — earlier left, more forcing right">
+          <defs><marker id="w20e" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--theme-time)"/></marker></defs>
+          <g text-anchor="middle">
+            <rect x="24" y="54" width="150" height="56" rx="10" fill="#12151f" stroke="var(--muted)" stroke-width="1.6"/>
+            <text x="99" y="78" class="fig-txt" font-size="12.5" font-weight="700">IDE / editing</text>
+            <text x="99" y="97" class="fig-mut" font-size="10.5">&lt;100ms · messier</text>
+            <rect x="190" y="54" width="160" height="56" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2.4"/>
+            <text x="270" y="78" class="fig-txt" font-size="12.5" font-weight="700" fill="var(--accent)">Code Review</text>
+            <text x="270" y="97" class="fig-mut" font-size="10.5">Tricorder · sweet spot</text>
+            <rect x="366" y="54" width="150" height="56" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="441" y="78" class="fig-txt" font-size="12.5" font-weight="700" fill="var(--theme-scale)">Presubmit</text>
+            <text x="441" y="97" class="fig-mut" font-size="10.5">blocks commit</text>
+            <rect x="532" y="54" width="164" height="56" rx="10" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+            <text x="614" y="78" class="fig-txt" font-size="12.5" font-weight="700" fill="var(--theme-trade)">Compiler</text>
+            <text x="614" y="97" class="fig-mut" font-size="10.5">break the build · no warnings</text>
+          </g>
+          <path d="M30 132 L690 132" stroke="var(--theme-time)" stroke-width="2.5" fill="none" marker-end="url(#w20e)"/>
+          <text x="200" y="150" class="fig-mut" font-size="11" text-anchor="middle">left: earlier notice</text>
+          <text x="540" y="150" class="fig-mut" font-size="11" text-anchor="middle">right: more forcing (unignorable)</text>
+        </svg>
+        <figcaption><b>Figures 20-1 / 20-2 reconstructed</b> — workflow integration points: IDE/editing (&lt;100ms, messier) → code review (Tricorder, the <b>sweet spot</b>) → presubmit (blocks commit) → compiler (break the build, <b>never issue warnings</b> — make it an error or don't show it, since developers ignore warnings). Earlier to the left, more forcing to the right. The book's Figs 20-1/20-2 are Critique screenshots (a gray warning box and a suggested-fix UI), not reproduced per CC BY-NC-ND.</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Integrated tools:</b> Error Prone (Java)/clang-tidy (C++) find AST antipatterns (an int right-shift by 32 is a no-op — fixed 31 occurrences); IfThisThenThat, a binary-size checker; almost all intraprocedural.</li>
+        <li><b>Feedback channels:</b> "Not useful" (file a bug against the writer) / "Please fix"; sometimes <b>fixing the message</b> fixes the problem (the printf-%s example).</li>
+        <li><b>Suggested fixes:</b> one-click apply from Critique or a CLI; style should be auto-fixed. ~thousands of "Please fix," ~3,000 auto-fixes, ~250 "Not useful" a day.</li>
+        <li><b>Per-project customization:</b> a consistent team view; removing user customization revealed real bugs (a C++ linter on Obj-C, a high-false-positive HTML linter).</li>
+        <li><b>Presubmit:</b> blocks commits (DO NOT SUBMIT, tests, formatting); `CLEANUP=` skips some to ease LSCs.</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"An issue is an 'effective false positive' if developers did not take some positive action after seeing the issue."</span><span class="zh">Redefines "false positive" by user action, not technical correctness.</span><div class="note">Focus on Developer Happiness.</div></blockquote>
+    <blockquote class="q"><span class="en">"Who wants to wade through hundreds of false reports in search of a few true ones?"</span><span class="zh">Why low false-positive rates matter more than reducing false negatives — the key to adoption.</span><div class="note">Focus on Developer Happiness.</div></blockquote>
+    <blockquote class="q"><span class="en">"Code review is a sweet spot for analysis results."</span><span class="zh">Change mindset, time while blocked on reviewers, peer pressure, saves reviewer time.</span><div class="note">Make Static Analysis Part of the Core Workflow.</div></blockquote>
+    <blockquote class="q"><span class="en">"Anything that can be fixed automatically should be fixed automatically."</span><span class="zh">Auto-fixing lowers the "cost" side; style issues shouldn't waste a human reviewer's time.</span><div class="note">Usability / Suggested fixes.</div></blockquote>
+    <blockquote class="q"><span class="en">"We have found repeatedly that developers ignore compiler warnings."</span><span class="zh">So Google never issues warnings: make it an error (break the build) or don't show it.</span><div class="note">Compiler Integration.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Static analysis</span><br>Analyzing source code (not a running program) to find bugs/antipatterns; catches bugs early, codifies best practices, keeps code current, prevents tech debt and deprecation backsliding.</div>
+      <div class="kw"><span class="term">Scalability</span><br>Shardable/incremental, analyzing only the files/lines affected by a pending change; scale the number and variety, show directly to relevant engineers.</div>
+      <div class="kw"><span class="term">Usability</span><br>Weigh the cost-benefit; focus on newly introduced warnings, fix automatically when possible, integrate smoothly.</div>
+      <div class="kw"><span class="term">Effective false positive</span><br>A false positive defined by user action: any issue where the developer took no positive action; perception and message clarity matter as much as correctness.</div>
+      <div class="kw"><span class="term">The three key lessons</span><br>Developer happiness (trust, low false positives, feedback loop), part of the core workflow (code review sweet spot), empower users to contribute (simple APIs, domain experts).</div>
+      <div class="kw"><span class="term">Tricorder</span><br>Google's static-analysis platform, integrated with Critique, microservices, 50,000+ changes a day; four criteria for new checks; overall effective-false-positive rate &lt; 5%.</div>
+      <div class="kw"><span class="term">Error Prone / clang-tidy</span><br>Extend the compiler to find Java/C++ AST antipatterns; Error Prone "ERROR" checks are enabled in the compiler to prevent recurrence.</div>
+      <div class="kw"><span class="term">Refaster</span><br>Write an analyzer from before/after code snippets; lets non-analysis/language experts contribute.</div>
+      <div class="kw"><span class="term">Suggested fixes</span><br>One-click apply from Critique or a CLI; style issues should be auto-fixed (formatters).</div>
+      <div class="kw"><span class="term">Per-project customization</span><br>Customize at the project, not user, level, ensuring a consistent team view; user customization only hides bugs and suppresses feedback.</div>
+      <div class="kw"><span class="term">Presubmit</span><br>A commit-blocking check (DO NOT SUBMIT, tests, formatting, specific Tricorder categories); `CLEANUP=` can skip some to ease LSCs.</div>
+      <div class="kw"><span class="term">Never issue compiler warnings</span><br>Developers ignore warnings, so make it an error (break the build) or don't show it; Go treats unused variables/imports as errors.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>What's your tool's <b>false-positive rate</b>? Do you measure by "technical correctness" or the <b>effective false positive</b> (did the developer take positive action)? Do you have a <b>feedback loop</b> for users to report "not useful" and actually retune?</li>
+      <li>Where does your static analysis run? Along <b>IDE → code review → presubmit → compiler</b>, where are you and where should you push? Which checks are mechanical enough to <b>break the build</b>, which belong in code review? Per ch19, ch23.</li>
+      <li>Does your team let users <b>turn off</b> annoying checks individually? Could you switch to <b>project-level</b> customization and treat "annoying" as a bug-finding clue rather than suppressing feedback?</li>
+      <li>Have you <b>scaled</b> domain-expert knowledge? Which "fixed once but could recur" bugs deserve a check? Is there an API simple enough (like Refaster) for non-experts to contribute?</li>
+      <li>Does your tooling <b>auto-fix</b>? Which problems your reviewers point out one by one (formatting, style, deprecated usage) should be replaced by a formatter/auto-fix? Per ch09.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch19.html">ch19 Critique</a> <span class="rel">— the main integration point; Tricorder results show as gray chips on the diff with suggested fixes; "Please fix" connects reviewers and authors.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— "code review is the sweet spot" and "saves reviewer time" echo Ch.9; auto-fixing style spares human review time.</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— static analysis is the heart of backsliding prevention (Tricorder + @deprecated).</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— enabling a compiler check first cleans up all instances via MapReduce with auto-fixes; CLEANUP= skips custom presubmits.</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— presubmit and compiler integration, with build breakages caught by CI or presubmits; all shift left.</span></div>
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— the heart of "technical enforcement" (clang-tidy, Error Prone); realizes "~90% of C++ rules are statically verifiable."</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "let expensive human/testing focus on the non-mechanically-verifiable" ties to the Scale and Time themes.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch19.html">← Prev: Critique</a><a class="idx" href="index.html">⌂ Index</a><a href="ch21.html">Next: Dependency Management →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

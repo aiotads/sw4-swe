@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 15 章 Deprecation ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes ｜ 流程（末章）</div>
+    <div class="ch-no">CHAPTER 15</div>
+    <h1 class="title">Deprecation</h1>
+    <div class="title-zh">棄用</div>
+    <div class="meta-row">
+      <span class="badge">作者 Hyrum Wright</span>
+      <span class="badge">PDF p.339–352</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Removing things is often more difficult than building them to begin with."</span>
+      <span class="zh">移除一個東西，往往比當初建造它還難——因為既有使用者經常以超出它原始設計的方式在用它。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p><b>所有系統都會老。</b> 即使位元不腐，新技術與生態演進也會讓舊系統過時——而它們需要持續維護、艱澀專業、隨生態偏離愈來愈費工。<b>Deprecation（棄用）</b>就是「有序遷移離開、並最終移除過時系統」的流程，屬軟體工程（管理跨時間）而非單純程式設計。根本前提呼應 ch09：<b>程式碼是負債，不是資產</b>——帶來價值的是功能；該最大化的是<b>「每單位程式碼交付多少功能」</b>，而移除不再需要的系統正是最容易的辦法之一。</p>
+      <p><b>為何這麼難？</b> ①<b>Hyrum's Law</b>（移除＝終極變更，抖出意外依賴）②新系統必然<b>不同</b>（一對一對應罕見）③<b>情感依附</b>（「我喜歡這段程式！」）④<b>政治與經費</b>（苟延殘喘的成本不易觀察）。故<b>原地漸進演進通常比完全替換便宜</b>。</p>
+      <p>棄用最好<b>在設計時就規劃</b>（像核電廠把除役納入）。它是一個<b>光譜</b>：<b>advisory（無期限無強制，「hope is not a strategy」）</b> ↔ <b>compulsory（有期限與強制機制、且必須配人力做到完成）</b>。管理：要有明確 <b>process owner</b>、設<b>漸進里程碑</b>、用三類工具（<b>discovery／migration／backsliding prevention</b>）。棄用警告必須同時 <b>actionable 與 relevant</b>，否則造成 <b>alert fatigue</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你的程式碼庫塞滿「沒人敢關、也沒人維護」的舊系統。</b> 本章說明為何該關（程式碼是負債、多系統並存拖慢新系統演進）與為何難關（Hyrum's Law、情感依附、政治經費）。「移除」會變成正當的一招。</div>
+      <div class="why-card"><b>你只在舊系統上貼個 deprecated 警告就走人。</b> 直接點破：「<b>hope is not a strategy</b>」——advisory 鮮少真的讓人遷移；要完成得靠 <b>compulsory＋專門團隊配人力</b>。</div>
+      <div class="why-card"><b>你被派去做沒人想做、看不到進度的清理專案。</b> 方法：設<b>漸進里程碑</b>（刪一個關鍵子元件就慶祝）、<b>集中專業到一個團隊</b>、當「重要但不緊急」的 20% 時間題材。</div>
+      <div class="why-card"><b>你在設計新系統。</b> 少見卻關鍵的視角：<b>為未來的除役而設計</b>（像核電廠）；謹記「<b>別啟動組織不打算支撐其預期壽命的專案</b>」。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">為何</span> Why Deprecate? <span class="en2">程式碼是負債</span></h3>
+      <div class="claim">起點是 <b>「程式碼是負債，不是資產」</b>。<b>系統老不等於過時</b>（LaTeX）；棄用最適合「<b>可證明已過時、且有功能相當替代品</b>」者。多系統並存的維護成本長期大幅成長、且<b>拖慢新系統演進</b>（仍要相容）。該最大化<b>「每單位程式碼的功能」</b>——移除過時系統是最容易的辦法之一。</div>
+      <div class="impl"><b>但有上限：</b>組織能同時進行的棄用工作有限（道路鋪設比喻：全封施工誰都動不了，集中火力反而更快）——審慎選、並承諾做完。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">為何難</span> Why Is Deprecation So Hard? <span class="en2">四個阻力</span></h3>
+      <ul class="tight">
+        <li><b>Hyrum's Law：</b>使用者愈多愈可能有人以未預期方式依賴；移除是<b>終極變更</b>，抖出意外依賴者。</li>
+        <li><b>新系統必然不同：</b>「更好」也意味「不同」（否則沒遷移誘因）→一對一對應罕見。</li>
+        <li><b>情感依附：</b>「我喜歡這段程式！」——對策：repo <b>可搜尋歷史</b>（移除的程式找得回來，見 ch17）。</li>
+        <li><b>政治與經費：</b>苟延殘喘的成本不易觀察 →用 ch07 研究方法提供證據。</li>
+      </ul>
+      <div class="impl"><b>故：</b>原地漸進演進（in-place refactoring）通常比完全替換便宜；整體遷移極貴且常被低估。設計時就規劃棄用（像核電廠把除役納入）——問「使用者多好遷移？能否漸進替換？」並謹記「別啟動組織不打算支撐其預期壽命的專案」。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">類型</span> Advisory ↔ Compulsory <span class="en2">棄用的光譜</span></h3>
+      <div class="claim">棄用不是單一流程，而是一個<b>光譜</b>——從「希望某天關掉」到「明天就消失，客戶最好準備好」。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="棄用光譜：advisory（無期限無強制）到 compulsory（有期限與強制機制、配人力）">
+          <defs><marker id="d15" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-time)"/></marker></defs>
+          <rect x="28" y="50" width="300" height="120" rx="12" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="178" y="78" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--accent)">Advisory 建議性</text>
+          <text x="178" y="104" class="fig-mut" font-size="12" text-anchor="middle">無期限・無強制・非高優先</text>
+          <text x="178" y="126" class="fig-mut" font-size="12" text-anchor="middle">擅長宣傳新系統、輕推</text>
+          <text x="178" y="150" class="fig-mut" font-size="12" text-anchor="middle">「hope is not a strategy」</text>
+          <rect x="392" y="50" width="300" height="120" rx="12" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+          <text x="542" y="78" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">Compulsory 強制性</text>
+          <text x="542" y="104" class="fig-mut" font-size="12" text-anchor="middle">有期限＋強制機制</text>
+          <text x="542" y="126" class="fig-mut" font-size="12" text-anchor="middle">專門團隊配人力做到完成</text>
+          <text x="542" y="150" class="fig-mut" font-size="12" text-anchor="middle">否則＝無經費的強制令</text>
+          <path d="M328 110 L388 110" stroke="var(--theme-time)" stroke-width="3" fill="none" marker-end="url(#d15)"/>
+          <text x="360" y="200" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">舊系統對新用法有「概念/技術拉力」——只貼警告鮮少讓人主動遷移</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 棄用的光譜：advisory（無期限、無強制、靠 nudge）→ compulsory（有期限與強制機制、由專門團隊配人力做到完成）。好處須「變革性」而非「漸進性」才會讓人自願遷移；發現未知依賴可安排逐次拉長的計畫性停機（類似 DiRT）。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">警告</span> Deprecation Warnings <span class="en2">actionable＋relevant</span></h3>
+      <div class="impl">「標了就 hope 它消失」行不通；警告累積（尤其遞移情境）會造成 <b>alert fatigue（警告疲勞）</b>。好警告需兩性質：<b>actionability（可行動——告訴下一步）</b> 與 <b>relevance（相關——在使用者正要做該動作時浮現）</b>。Google 用 ErrorProne／clang-tidy 把警告<b>限定在新改動的行</b>（見 ch20），更具侵入性的只給強制棄用。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">管理</span> Managing the Process <span class="en2">owner・里程碑・三類工具</span></h3>
+      <div class="claim">沒有明確 <b>process owner</b>，棄用幾乎不會有進展（替代方案：永不棄用＝永遠維護；或委派給使用者＝退化成 advisory）。被遺棄的專案仍需棄用專家、<b>以移除為主要目標</b>（「重要但不緊急」的 20% 時間題材）。別把「完全移除」當唯一里程碑——設<b>漸進里程碑</b>並慶祝（如刪掉一個關鍵子元件）。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 170" role="img" aria-label="棄用工具三類：發現、遷移、防回潮">
+          <defs><marker id="t15" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <g text-anchor="middle">
+            <rect x="24" y="48" width="200" height="74" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="124" y="74" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-scale)">① Discovery 發現</text>
+            <text x="124" y="96" class="fig-mut" font-size="11">誰在用？意外依賴什麼？</text>
+            <text x="124" y="113" class="fig-mut" font-size="11">Code Search・Kythe・全域測試</text>
+            <rect x="260" y="48" width="200" height="74" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="360" y="74" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--accent)">② Migration 遷移</text>
+            <text x="360" y="96" class="fig-mut" font-size="11">大規模更新指向新庫/服務</text>
+            <text x="360" y="113" class="fig-mut" font-size="11">LSC 流程與工具（ch22）</text>
+            <rect x="496" y="48" width="200" height="74" rx="11" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="596" y="74" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-trade)">③ Backsliding 防回潮</text>
+            <text x="596" y="96" class="fig-mut" font-size="11">防新增用法（打地鼠）</text>
+            <text x="596" y="113" class="fig-mut" font-size="11">Tricorder・@deprecated・whitelist</text>
+          </g>
+          <path d="M224 85 L256 85" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#t15)"/>
+          <path d="M460 85 L492 85" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#t15)"/>
+          <text x="360" y="148" class="fig-mut" font-size="11.5" text-anchor="middle">不防回潮，棄用就變成「打地鼠」——既無生產力又打擊士氣</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 棄用工具三類：<b>discovery</b>（Code Search／Kythe／全域測試當 oracle）→ <b>migration</b>（LSC 流程）→ <b>backsliding prevention</b>（Tricorder＋<span class="mono">@deprecated</span>，build 系統 visibility whitelist）。缺了防回潮，棄用就淪為打地鼠。</figcaption>
+      </figure>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Code is a liability, not an asset."</span><span class="zh">程式碼是負債，不是資產。</span><div class="note">Why Deprecate？——全章根本前提（呼應 ch09）；帶來價值的是功能，故最大化「每單位程式碼的功能」。</div></blockquote>
+    <blockquote class="q"><span class="en">"Just because something is old, it does not follow that it is obsolete."</span><span class="zh">一個東西老，並不代表它就過時了。</span><div class="note">以 LaTeX 為例——棄用最適合「可證明已過時且有功能相當替代品」者，而非單純「年紀大」。</div></blockquote>
+    <blockquote class="q"><span class="en">"Hope is not a strategy."</span><span class="zh">希望，不是一種策略。</span><div class="note">SRE 名言，用於 advisory deprecation——只貼警告、希望使用者自行遷移鮮少奏效。</div></blockquote>
+    <blockquote class="q"><span class="en">"Don't start projects that your organization isn't committed to support for the expected lifespan of the organization."</span><span class="zh">不要啟動一個你的組織不打算支撐其預期壽命的專案。</span><div class="note">Deprecation During Design——是否長期支撐的決定在「決定建它」那一刻就做下了；像核電廠把除役納入。</div></blockquote>
+    <blockquote class="q"><span class="en">"Removing things is often more difficult than building them to begin with, because existing users are often using the system beyond its original design."</span><span class="zh">移除一個東西，往往比當初建造它還難——因為既有使用者經常以超出它原始設計的方式在用它。</span><div class="note">TL;DRs——Hyrum's Law 在棄用上的直接後果。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Deprecation（棄用）</span><br>有序遷移離開、並最終移除過時系統的流程；屬軟體工程（管理跨時間）而非程式設計。</div>
+      <div class="kw"><span class="term">Code Is a Liability（程式碼是負債）</span><br>帶來價值的是功能而非程式本身；應最大化「每單位程式碼交付的功能」，移除過時系統是最容易的辦法之一（呼應 ch09）。</div>
+      <div class="kw"><span class="term">Obsolete ≠ Old（過時 ≠ 老）</span><br>棄用適合「可證明已過時且有功能相當替代品」者；LaTeX 般歷久彌新雖老卻非過時。</div>
+      <div class="kw"><span class="term">Advisory Deprecation（建議性）</span><br>無期限、無強制、非高優先；擅長宣傳新系統、輕推，但不能指望它完成遷移（好處須變革性）。</div>
+      <div class="kw"><span class="term">Compulsory Deprecation（強制性）</span><br>帶移除期限與強制機制；須由專門團隊配足人力做到完成，否則淪為「無經費的強制令」。</div>
+      <div class="kw"><span class="term">Hope Is Not a Strategy</span><br>SRE 名言；只貼 deprecated 警告而不主動遷移，鮮少奏效。</div>
+      <div class="kw"><span class="term">In-place Refactoring vs Replacement</span><br>含 turndown 成本後，原地漸進演進通常比換新系統便宜；整體遷移極貴且常被低估。</div>
+      <div class="kw"><span class="term">Actionability & Relevance</span><br>好棄用警告的兩性質：能據以採取行動、且在對的時機浮現；否則造成 alert fatigue。</div>
+      <div class="kw"><span class="term">Alert Fatigue（警告疲勞）</span><br>警告累積到使用者全部忽略；故 Google 把警告限定在新改動的行（ErrorProne/clang-tidy）。</div>
+      <div class="kw"><span class="term">Backsliding Prevention（防回潮）</span><br>防止新增對「正在移除之物」的用法；微觀 Tricorder＋@deprecated，宏觀 build 系統 visibility whitelist。</div>
+      <div class="kw"><span class="term">Process Owner（流程負責人）</span><br>棄用必須有明確 owner、以移除為主要目標；否則退化成 advisory 或永久維護。</div>
+      <div class="kw"><span class="term">Discovery / Migration / Backsliding</span><br>三類棄用工具：Code Search/Kythe＋全域測試（發現）、LSC（遷移）、Tricorder/whitelist（防回潮）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>盤點你程式碼庫裡「<b>沒人敢關、也沒人明確擁有</b>」的舊系統：它們真的「過時」（有替代品）還是只是「老」？用「<b>每單位程式碼的功能</b>」這把尺，移除哪一個投報率最高？對照 ch09。</li>
+      <li>你最近一次推遷移，是只貼警告就走人（advisory），還是有<b>期限＋專門團隊配人力</b>（compulsory）？「hope is not a strategy」在你身上應驗了嗎？舊系統的「概念拉力」有多強？</li>
+      <li>你的棄用警告<b>可行動且相關</b>嗎？有告訴使用者下一步、且在他正要寫用到它的程式時浮現嗎？還是淪為被全部忽略的 <b>alert fatigue</b>？能不能<b>限定在新改動的行</b>？</li>
+      <li>你正在設計的新系統，有沒有<b>為未來的除役而設計</b>？問核電廠的兩個問題：使用者要遷走多容易？能否漸進替換各部分？你的組織真打算支撐它的預期壽命嗎？</li>
+      <li>假設你被派一個棄用專案：你會設哪些<b>漸進里程碑</b>？用哪三類工具（discovery/migration/backsliding）？能不能把遷移專業<b>集中到一個團隊</b>並爭取強制權與人力？對照 ch22。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 「程式碼是負債」是兩章共同前提；棄用是「最好的修改有時是刪除」的制度化。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— Hyrum's Law（移除＝終極變更，抖出意外依賴）與「整合時間維度」是棄用之難的根源。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— compulsory deprecation 的遷移大量仰賴 LSC 流程與工具；集中專業到一個團隊正是 LSC 的運作方式。</span></div>
+      <div class="chip"><a href="ch17.html">ch17 Code Search</a> <span class="rel">— discovery（誰在用舊系統）靠 Code Search；「可搜尋歷史」減輕情感依附。</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— backsliding prevention 的 Tricorder、把警告限定在新改動行、@deprecated 都是靜態分析的應用。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— 用研究方法提供「棄用值得做」的證據，對抗「成本不易觀察」的政治阻礙。</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— 「如何提供與消費依賴」「monorepo 依賴圖給棄用洞察」直接連到下一篇（Part IV Tools 起點）。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch14.html">← 上一章：Larger Testing</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch16.html">下一章：Version Control →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes (final chapter)</div>
+    <div class="ch-no">CHAPTER 15</div>
+    <h1 class="title">Deprecation</h1>
+    <div class="title-zh">Deleting is harder than building — people depend on it in unforeseen ways</div>
+    <div class="meta-row">
+      <span class="badge">by Hyrum Wright</span>
+      <span class="badge">PDF p.339–352</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+      <span class="theme-tag t-scale">Scale</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Removing things is often more difficult than building them to begin with."</span>
+      <span class="zh">Deleting is harder than building — because people depend on the system in ways it was never designed for.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p><b>All systems age.</b> Even though bits don't rot, new tech and an evolving ecosystem render old systems obsolete — demanding ongoing maintenance, esoteric expertise, and ever more work as they diverge. <b>Deprecation</b> is the orderly migration away from, and eventual removal of, obsolete systems — software engineering (managing over time), not programming. The foundational premise echoes ch09: <b>code is a liability, not an asset</b> — value comes from functionality, so maximize <b>functionality per unit of code</b>, and removing systems no longer needed is one of the easiest ways.</p>
+      <p><b>Why so hard?</b> ① <b>Hyrum's Law</b> (removal = the ultimate change, shaking loose unexpected dependents) ② a new system is necessarily <b>different</b> (one-to-one matches are rare) ③ <b>emotional attachment</b> ("I like this code!") ④ <b>politics and funding</b> (the cost of limping along isn't observable). So <b>evolving in place is usually cheaper than full replacement</b>.</p>
+      <p>Deprecation is best <b>planned at design time</b> (like a power plant designed for decommissioning). It's a <b>continuum</b>: <b>advisory</b> (no deadline, no enforcement — "hope is not a strategy") ↔ <b>compulsory</b> (a deadline with enforcement, staffed to completion). Management: have an explicit <b>process owner</b>, set <b>incremental milestones</b>, use three tool categories (<b>discovery / migration / backsliding prevention</b>). Warnings must be both <b>actionable and relevant</b>, or they cause <b>alert fatigue</b>.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>Your codebase is full of systems nobody dares turn off and nobody maintains.</b> This explains why to turn them off (code is a liability; coexistence slows the new system) and why it's hard (Hyrum's Law, attachment, politics). "Removal" becomes a legitimate move.</div>
+      <div class="why-card"><b>You slap a deprecation warning on the old system and walk away.</b> Blunt: "<b>hope is not a strategy</b>" — advisory rarely makes people migrate; finishing needs <b>compulsory + a staffed team</b>.</div>
+      <div class="why-card"><b>You're assigned a thankless cleanup project with no visible progress.</b> How: set <b>incremental milestones</b> (celebrate deleting a key subcomponent), <b>centralize expertise in one team</b>, treat it as 20%-time "important-not-urgent" work.</div>
+      <div class="why-card"><b>You're designing a new system.</b> A rare but crucial lens: <b>design for eventual decommissioning</b> (like a power plant); remember "<b>don't start projects your org isn't committed to support for its lifespan</b>."</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">WHY</span> Why Deprecate? <span class="en2">code is a liability</span></h3>
+      <div class="claim">The starting point is <b>"code is a liability, not an asset."</b> <b>Old ≠ obsolete</b> (LaTeX); deprecate the <b>demonstrably obsolete with a comparable replacement</b>. Coexisting systems' maintenance costs grow substantially and <b>slow the new system's evolution</b>. Maximize <b>functionality per unit of code</b> — removal is one of the easiest ways.</div>
+      <div class="impl"><b>But there's a limit:</b> an org can only do so much deprecation at once (the road-paving analogy — close every road and nobody moves; focused crews finish faster) — choose carefully and commit to finishing.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">WHY HARD</span> Why Is Deprecation So Hard? <span class="en2">four sources of resistance</span></h3>
+      <ul class="tight">
+        <li><b>Hyrum's Law:</b> more users, more unforeseen dependence; removal is the <b>ultimate change</b>, shaking loose unexpected dependents.</li>
+        <li><b>A new system is necessarily different:</b> "better" means "different" (or no migration incentive) → one-to-one matches are rare.</li>
+        <li><b>Emotional attachment:</b> "I like this code!" — mitigation: a repo <b>searchable historically</b> (removed code is findable, see ch17).</li>
+        <li><b>Politics and funding:</b> the cost of limping along isn't observable → use ch07 research methods for evidence.</li>
+      </ul>
+      <div class="impl"><b>So:</b> in-place refactoring is usually cheaper than full replacement; wholesale migrations are extremely expensive and underestimated. Plan deprecation at design time (a power plant accounts for decommissioning) — ask "how easily can users migrate? can I replace incrementally?" and remember "don't start projects your org isn't committed to support for its lifespan."</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">TYPES</span> Advisory ↔ Compulsory <span class="en2">the deprecation continuum</span></h3>
+      <div class="claim">Deprecation isn't a single process but a <b>continuum</b> — from "we hope to turn this off someday" to "this goes away tomorrow, be ready."</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="Deprecation continuum: advisory (no deadline, no enforcement) to compulsory (deadline, enforcement, staffed)">
+          <defs><marker id="d15e" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-time)"/></marker></defs>
+          <rect x="28" y="50" width="300" height="120" rx="12" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="178" y="78" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--accent)">Advisory</text>
+          <text x="178" y="104" class="fig-mut" font-size="12" text-anchor="middle">no deadline · no enforcement</text>
+          <text x="178" y="126" class="fig-mut" font-size="12" text-anchor="middle">advertises a new system, nudges</text>
+          <text x="178" y="150" class="fig-mut" font-size="12" text-anchor="middle">"hope is not a strategy"</text>
+          <rect x="392" y="50" width="300" height="120" rx="12" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+          <text x="542" y="78" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">Compulsory</text>
+          <text x="542" y="104" class="fig-mut" font-size="12" text-anchor="middle">deadline + enforcement</text>
+          <text x="542" y="126" class="fig-mut" font-size="12" text-anchor="middle">staffed team to completion</text>
+          <text x="542" y="150" class="fig-mut" font-size="12" text-anchor="middle">else = an unfunded mandate</text>
+          <path d="M328 110 L388 110" stroke="var(--theme-time)" stroke-width="3" fill="none" marker-end="url(#d15e)"/>
+          <text x="360" y="200" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">the old system exerts a "conceptual/technical pull" — a warning alone rarely migrates anyone</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the deprecation continuum: advisory (no deadline, no enforcement, nudges) → compulsory (deadline + enforcement, staffed to completion). Benefits must be transformative, not incremental, to make users migrate; discover unknown dependencies via planned outages of increasing duration (like DiRT).</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">WARNINGS</span> Deprecation Warnings <span class="en2">actionable + relevant</span></h3>
+      <div class="impl">"Mark it and hope" doesn't work; warnings accumulate (especially transitively) into <b>alert fatigue</b>. A good warning needs two properties: <b>actionability</b> (tells the next step) and <b>relevance</b> (surfaces when the user does the action). Google uses ErrorProne/clang-tidy to <b>limit warnings to newly changed lines</b> (see ch20); more intrusive warnings only for compulsory deprecations.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">MANAGING</span> Managing the Process <span class="en2">owner · milestones · three tools</span></h3>
+      <div class="claim">Without an explicit <b>process owner</b>, deprecation rarely progresses (alternatives: never deprecate = maintain forever; or delegate to users = degrade to advisory). Abandoned projects still need experts with <b>removal as the primary goal</b> (great 20%-time work). Don't make "complete removal" the only milestone — set <b>incremental milestones</b> and celebrate them (deleting a key subcomponent).</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 170" role="img" aria-label="Three deprecation tool categories: discovery, migration, backsliding prevention">
+          <defs><marker id="t15e" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <g text-anchor="middle">
+            <rect x="24" y="48" width="200" height="74" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="124" y="74" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-scale)">① Discovery</text>
+            <text x="124" y="96" class="fig-mut" font-size="11">who uses it? what's depended on?</text>
+            <text x="124" y="113" class="fig-mut" font-size="11">Code Search · Kythe · global tests</text>
+            <rect x="260" y="48" width="200" height="74" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="360" y="74" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--accent)">② Migration</text>
+            <text x="360" y="96" class="fig-mut" font-size="11">en-masse update to new libs/services</text>
+            <text x="360" y="113" class="fig-mut" font-size="11">LSC process and tooling (ch22)</text>
+            <rect x="496" y="48" width="200" height="74" rx="11" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="596" y="74" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-trade)">③ Backsliding</text>
+            <text x="596" y="96" class="fig-mut" font-size="11">stop new uses (whack-a-mole)</text>
+            <text x="596" y="113" class="fig-mut" font-size="11">Tricorder · @deprecated · whitelist</text>
+          </g>
+          <path d="M224 85 L256 85" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#t15e)"/>
+          <path d="M460 85 L492 85" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#t15e)"/>
+          <text x="360" y="148" class="fig-mut" font-size="11.5" text-anchor="middle">without backsliding prevention, deprecation becomes whack-a-mole — unproductive and demoralizing</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — three deprecation tool categories: <b>discovery</b> (Code Search/Kythe/the global test suite as an oracle) → <b>migration</b> (the LSC process) → <b>backsliding prevention</b> (Tricorder + <span class="mono">@deprecated</span>, build-system visibility whitelists). Without backsliding prevention, deprecation degenerates into whack-a-mole.</figcaption>
+      </figure>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Code is a liability, not an asset."</span><span class="zh">Value comes from functionality, not lines of code — so maximize functionality per unit of code.</span><div class="note">Why Deprecate? — the foundational premise (echoing ch09).</div></blockquote>
+    <blockquote class="q"><span class="en">"Just because something is old, it does not follow that it is obsolete."</span><span class="zh">Deprecate the demonstrably obsolete (with a comparable replacement), not the merely old (LaTeX).</span><div class="note">Why Deprecate?</div></blockquote>
+    <blockquote class="q"><span class="en">"Hope is not a strategy."</span><span class="zh">Posting a warning and hoping people migrate rarely works; finishing needs compulsory deprecation with a staffed team.</span><div class="note">Advisory deprecation (an SRE maxim).</div></blockquote>
+    <blockquote class="q"><span class="en">"Don't start projects that your organization isn't committed to support for the expected lifespan of the organization."</span><span class="zh">The decision to support long-term is made when you decide to build — design for decommissioning like a power plant.</span><div class="note">Deprecation During Design.</div></blockquote>
+    <blockquote class="q"><span class="en">"Removing things is often more difficult than building them to begin with, because existing users are often using the system beyond its original design."</span><span class="zh">Hyrum's Law's direct consequence — removal is the "ultimate change."</span><div class="note">TL;DRs.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Deprecation</span><br>The orderly migration away from, and eventual removal of, obsolete systems; software engineering (managing over time), not programming.</div>
+      <div class="kw"><span class="term">Code is a liability</span><br>Value comes from functionality, not code itself; maximize functionality per unit of code, with removal one of the easiest ways (echoes ch09).</div>
+      <div class="kw"><span class="term">Obsolete ≠ old</span><br>Deprecate the demonstrably obsolete with a comparable replacement; an enduring system like LaTeX is old but not obsolete.</div>
+      <div class="kw"><span class="term">Advisory deprecation</span><br>No deadline, no enforcement, not high priority; good for advertising and nudging, but can't be counted on for migration (benefits must be transformative).</div>
+      <div class="kw"><span class="term">Compulsory deprecation</span><br>A removal deadline with an enforcement mechanism; must be staffed to completion, or it's an "unfunded mandate."</div>
+      <div class="kw"><span class="term">Hope is not a strategy</span><br>An SRE maxim; merely posting a warning rarely causes migration.</div>
+      <div class="kw"><span class="term">In-place refactoring vs replacement</span><br>Including turndown costs, evolving in place is usually cheaper; wholesale migrations are extremely expensive and underestimated.</div>
+      <div class="kw"><span class="term">Actionability & relevance</span><br>A good warning's two properties: it enables an action and surfaces at the right moment; else alert fatigue.</div>
+      <div class="kw"><span class="term">Alert fatigue</span><br>Warnings accumulate until users ignore them all; hence limit warnings to newly changed lines (ErrorProne/clang-tidy).</div>
+      <div class="kw"><span class="term">Backsliding prevention</span><br>Stopping new uses of what's being removed; micro via Tricorder + @deprecated, macro via build-system visibility whitelists.</div>
+      <div class="kw"><span class="term">Process owner</span><br>Deprecation needs an explicit owner with removal as the primary goal; otherwise it degrades to advisory or perpetual maintenance.</div>
+      <div class="kw"><span class="term">Discovery / migration / backsliding</span><br>Three tool categories: Code Search/Kythe + global tests (discovery), LSC (migration), Tricorder/whitelists (backsliding prevention).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Inventory the old systems "nobody dares turn off and nobody clearly owns": truly *obsolete* (with a replacement) or merely *old*? By "functionality per unit of code," which has the best ROI to remove? Per ch09.</li>
+      <li>Was your last migration push just a posted-and-abandoned warning (advisory), or a <b>deadline + a staffed team</b> (compulsory)? Did "hope is not a strategy" prove true? How strong was the old system's "conceptual pull"?</li>
+      <li>Are your warnings <b>actionable and relevant</b>? Do they tell the next step and surface *while writing code using it*? Or are they ignored <b>alert fatigue</b>? Can you <b>limit them to newly changed lines</b>?</li>
+      <li>Is the new system you're designing <b>designed for eventual decommissioning</b>? Ask the power-plant questions: how easily can users migrate? can parts be replaced incrementally? Is your org committed to <b>support its lifespan</b>?</li>
+      <li>Assigned a deprecation project: what <b>incremental milestones</b> would you set? Which three tool categories (discovery/migration/backsliding)? Can you <b>centralize expertise in one team</b> and win the authority and staffing? Per ch22.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— "code is a liability" is the shared premise; deprecation institutionalizes "sometimes the best change is a deletion."</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— Hyrum's Law (removal = the ultimate change) and "integrated over time" are the roots of deprecation's difficulty.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— compulsory deprecation's migrations rely on the LSC process; centralizing expertise in one team is how LSCs work.</span></div>
+      <div class="chip"><a href="ch17.html">ch17 Code Search</a> <span class="rel">— discovery (who uses the old system) relies on Code Search; "searchable history" eases attachment.</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— backsliding prevention's Tricorder, limiting warnings to changed lines, and @deprecated are static-analysis applications.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— research methods provide evidence that "deprecation is worthwhile," countering the "costs aren't observable" hurdle.</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— "how to provide and consume dependencies" and "the monorepo dependency graph gives deprecation insight" lead into Part IV (Tools).</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch14.html">← Prev: Larger Testing</a><a class="idx" href="index.html">⌂ Index</a><a href="ch16.html">Next: Version Control →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

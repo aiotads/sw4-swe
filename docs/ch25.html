@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 25 章 Compute as a Service ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具</div>
+    <div class="ch-no">CHAPTER 25</div>
+    <h1 class="title">Compute as a Service</h1>
+    <div class="title-zh">運算即服務</div>
+    <div class="meta-row">
+      <span class="badge">作者 Onufry Wojtaszczyk</span>
+      <span class="badge">PDF p.545–574</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"I don't try to understand computers. I try to understand the programs." —Barbara Liskov</span>
+      <span class="zh">我不試著去理解電腦，我試著去理解程式。——Barbara Liskov</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>寫完程式後你需要硬體來跑它——<b>這本質上就是 Compute as a Service（CaaS，運算即服務）</b>。本章（全書最後一章）追蹤 Google 內部 <b>Borg</b>（Kubernetes/Mesos 的先驅）的演化，講「給我硬體跑我的東西」如何長成能隨組織擴展的系統，分四部：<b>馴服運算環境／為受管運算寫軟體／CaaS 隨時間與規模／選擇運算服務</b>。</p>
+      <p>貫穿全章的是「<b>cattle, not pets（把機器當牛、不當寵物）</b>」——壞了能全自動 stamp out 替換、不需人工，由此自癒；這被視為 Google 15 年成功的根本工具。最大敵人是<b>狀態</b>：本機狀態當短暫、真儲存外置到複本同步的持久系統（GFS/Bigtable/Spanner），靠 service discovery 與 idempotency 補位。<b>容器</b>初為隔離/多租戶（cgroups 2007 由 Google 貢獻進 kernel），更重要的是成了應用與機器間的<b>抽象邊界</b>。</p>
+      <p><b>Hyrum's Law 在容器抽象上特別猛</b>（PID 32,000 案例修了八年仍未完）。<b>Borg 一統 batch 與 serving</b>：serving 變牛省線性管理成本、batch 填 serving slack 幾乎免費跑。<b>選運算服務是高 lock-in 的取捨</b>：集中 vs 客製、抽象層級（serverless 要真正無狀態、犧牲環境控制；Google 不重押）、公有 vs 私有（外包 overhead、怕 lock-in，用開源/多雲/混合雲緩解）。結論：規模需要<b>統一的共用運算基礎設施</b>，容器是關鍵，用好它要把應用設計成「牛」。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你還在 SSH 進機器、手動部署與重啟行程。</b> 本章從 Jeff Dean 2002 的「50+ 台手動啟動/監控/遷移」惡夢講起，給你清楚的演化路徑：簡單自動化 → 自動排程 → 容器化多租戶 → rightsizing/autoscaling。你會知道 naive 解法在什麼規模、為什麼會崩。</div>
+      <div class="why-card"><b>你的服務是「寵物」，壞了得有人 panic 地救。</b> 「cattle, not pets」是核心心法：能全自動 stamp out 替換的牛，維護負擔才不會隨 fleet 線性/超線性成長。但本章誠實提醒：當牛還不夠，<b>狀態</b>才是真正的難關。</div>
+      <div class="why-card"><b>你在為團隊/組織選運算服務（VM？容器？serverless？公有雲？）。</b> 最後一節講清楚<b>高 lock-in</b> 的本質、集中 vs 客製的張力、serverless 的真正比較對象（持久容器而非 VM 寵物）、以及公有/多雲/混合雲緩解 lock-in 的手法。</div>
+      <div class="why-card"><b>你想理解 Hyrum's Law 在基礎設施層有多可怕。</b> PID 32,000 案例：一個沒人承諾的實作細節被無數系統當保證依賴，修起來跨八年、分三階段、還要 backport 資料。永久改變你對「可觀察行為＝API」的警覺。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-scale">演化</span> 管理運算的光譜：寵物 → 牛 → serverless <span class="en2">pets → cattle → serverless</span></h3>
+      <div class="claim">naive 的 SSH/SFTP 手動解法在規模下崩潰；馴服運算環境是一條「抽象漸增、管理 overhead 漸減」的演化路徑——但<b>抽象越多越好</b>並不成立，每一步都是取捨。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="管理運算的演化光譜：bare-metal 寵物→VM→容器當牛→serverless，抽象漸增、管理 overhead 漸減、控制權漸失">
+          <text x="360" y="22" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">管理運算的光譜</text>
+          <rect x="24" y="48" width="150" height="66" rx="11" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="99" y="72" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">bare-metal 寵物</text>
+          <text x="99" y="90" class="fig-mut" font-size="9.5" text-anchor="middle">手動 SSH/部署</text>
+          <text x="99" y="104" class="fig-mut" font-size="9.5" text-anchor="middle">維護隨 fleet 線性↑</text>
+          <rect x="190" y="48" width="150" height="66" rx="11" fill="#211c12" stroke="var(--theme-time)" stroke-width="1.8"/>
+          <text x="265" y="72" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--theme-time)">VM</text>
+          <text x="265" y="90" class="fig-mut" font-size="9.5" text-anchor="middle">IaaS→可帶自己的 OS</text>
+          <text x="265" y="104" class="fig-mut" font-size="9.5" text-anchor="middle">開銷大、開機慢</text>
+          <rect x="356" y="48" width="158" height="66" rx="11" fill="#16241f" stroke="var(--theme-scale)" stroke-width="2.4"/>
+          <text x="435" y="72" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">容器當牛</text>
+          <text x="435" y="90" class="fig-mut" font-size="9.5" text-anchor="middle">輕量隔離＋抽象邊界</text>
+          <text x="435" y="104" class="fig-mut" font-size="9.5" text-anchor="middle">Borg/K8s：規模化的解</text>
+          <rect x="530" y="48" width="166" height="66" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+          <text x="613" y="72" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--accent)">serverless</text>
+          <text x="613" y="90" class="fig-mut" font-size="9.5" text-anchor="middle">只寫 Handler·縮到零</text>
+          <text x="613" y="104" class="fig-mut" font-size="9.5" text-anchor="middle">要真正無狀態</text>
+          <path d="M40 140 L690 140" stroke="var(--border)" stroke-width="1.4"/>
+          <text x="40" y="160" class="fig-mut" font-size="10">抽象漸增 →　管理 overhead 漸減 →　環境控制權漸失 →</text>
+          <text x="40" y="196" class="fig-txt" font-size="10.5" font-weight="700">Google 的判斷：</text>
+          <text x="40" y="214" class="fig-mut" font-size="10">「管牛不管寵物」是規模化的解；選了牛，容器是自然選擇（更輕、可設定）。</text>
+          <text x="40" y="232" class="fig-mut" font-size="10">serverless 比較對象是「持久容器」而非「VM 寵物」；Google 不重押（Borg 已涵蓋多數好處、且許多應用無法真正無狀態）。</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 管理運算的演化光譜：<b>bare-metal 寵物</b>（手動 SSH，維護隨 fleet 線性↑）→ <b>VM</b>（能帶自己的 OS，但開銷大）→ <b>容器當牛</b>（輕量隔離＋抽象邊界，Borg/K8s，規模化的解）→ <b>serverless</b>（只寫 Handler、能縮到零，但要真正無狀態）。越右抽象越多、管理 overhead 越少，但環境控制權也漸失——「抽象越多越好」並不成立，每步都是取捨。</figcaption>
+      </figure>
+      <div class="impl"><b>馴服運算環境：</b>簡單自動化（部署腳本、自癒重啟）→ 自動排程（中央服務管機器清單、故障重排）→ 容器化多租戶（按資源需求 bin-pack、需隔離；cgroups 2007 進 kernel）→ rightsizing/autoscaling（自動定資源/複本數，免人工填數字，「簡單的事該簡單」）。<b>為失敗而設計：</b>工作切成可動態分配的小 chunk；狀態當短暫、真儲存外置（state replication，GFS/Bigtable/Spanner）；service discovery 取代寫死 hostname；mutating 請求要 idempotency。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">效率</span> 一統天下：Borg 把 batch 填進 serving slack <span class="en2">one service to rule them all</span></h3>
+      <div class="claim">把 batch 與 serving 併成單一池有兩大效率：<b>serving 變牛</b>（免每隊各管一池的線性成本）＋<b>batch 填 serving 為抗尖峰保留的閒置</b>，使 batch 幾乎免費跑。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 240" role="img" aria-label="一台機器：serving job 為抗尖峰 over-provision 只用 30%，batch job 填進閒置的 70%，serving 一需要就回收">
+          <text x="360" y="22" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">同一台機器：batch 填進 serving 的閒置容量</text>
+          <text x="180" y="48" class="fig-mut" font-size="11" text-anchor="middle">只跑 serving（傳統）</text>
+          <rect x="110" y="58" width="140" height="150" rx="8" fill="#0c0e15" stroke="var(--border)" stroke-width="1.4"/>
+          <rect x="110" y="148" width="140" height="60" rx="0" fill="var(--theme-time)" opacity=".5"/>
+          <text x="180" y="183" class="fig-txt" font-size="11" text-anchor="middle">serving 實用 30%</text>
+          <rect x="110" y="58" width="140" height="90" fill="url(#none)" stroke="none"/>
+          <text x="180" y="105" class="fig-mut" font-size="10.5" text-anchor="middle">閒置 70%</text>
+          <text x="180" y="122" class="fig-mut" font-size="9.5" text-anchor="middle">（為抗尖峰/故障保留）</text>
+          <text x="180" y="226" class="fig-mut" font-size="9.5" text-anchor="middle" fill="var(--theme-trade)">→ 機器被低度利用、浪費</text>
+          <text x="540" y="48" class="fig-mut" font-size="11" text-anchor="middle">serving＋batch（Borg）</text>
+          <rect x="470" y="58" width="140" height="150" rx="8" fill="#0c0e15" stroke="var(--border)" stroke-width="1.4"/>
+          <rect x="470" y="148" width="140" height="60" fill="var(--theme-time)" opacity=".5"/>
+          <text x="540" y="183" class="fig-txt" font-size="11" text-anchor="middle">serving 30%</text>
+          <rect x="470" y="58" width="140" height="90" fill="var(--theme-scale)" opacity=".35"/>
+          <text x="540" y="100" class="fig-txt" font-size="11" text-anchor="middle" fill="var(--theme-scale)">batch 填 70%</text>
+          <text x="540" y="118" class="fig-mut" font-size="9" text-anchor="middle">serving 一需要就回收</text>
+          <text x="540" y="226" class="fig-mut" font-size="9.5" text-anchor="middle" fill="var(--theme-scale)">→ batch 幾乎免費跑</text>
+          <text x="330" y="133" class="fig-mut" font-size="20" text-anchor="middle">→</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 「一統天下」的第二個效率：serving job 必須 over-provision（為抗尖峰/故障保留容量）故只用 ~30%、機器被低度利用。Borg 把 <b>batch job 填進閒置的 70%</b>，政策是 serving 一需要就從 batch 收回（CPU 凍結、RAM 殺掉）——因 batch 關心聚合吞吐、複本本就是牛，樂於吸收。結果 <b>batch 幾乎免費跑</b>。第一個效率則是 serving 機器變成「牛」，免去每隊各管一池的線性管理成本。</figcaption>
+      </figure>
+      <div class="impl"><b>容器作為抽象／Hyrum's Law：</b>容器隔開應用與機器，機器變了只有容器層要適配。但 <b>PID 32,000</b>：Borg 把 PID 限在 0–32,000 成了被依賴的隱式「API」（log 假設五位數），修法分三階段（暫時上限→拆執行緒/行程 PID 空間→PID namespace），<b>八年後仍在進行</b>——故用廣社群開發的容器系統有價值。<b>選運算服務高 lock-in：</b>集中 vs 客製（Borg 為 Cloud VM/Search 磁碟做 bifurcation 讓 API 龐雜）、公有 vs 私有（怕 Zimki 式倒閉，用開源/多雲/混合雲＋破繭路徑緩解）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"I don't try to understand computers. I try to understand the programs." —Barbara Liskov</span><span class="zh">我不試著去理解電腦，我試著去理解程式。——Barbara Liskov</span><div class="note">開章引言。CaaS 的本質正是把「理解、管理硬體」這層雜務抽象掉。</div></blockquote>
+    <blockquote class="q"><span class="en">"Machines are anonymous: programs don't care which machine they run on as long as it has the right characteristics."</span><span class="zh">機器是匿名的：程式不在乎自己跑在哪一台機器上，只要那台機器具備正確的特性就好。</span><div class="note">Borg 設計文件對「cattle, not pets」的精煉表述。</div></blockquote>
+    <blockquote class="q"><span class="en">"Provision the cache to meet your latency goals, but provision the core application for the total load."</span><span class="zh">快取要按你的延遲目標來配置，但核心應用要按總負載來配置。</span><div class="note">Managing State——這樣快取層整個掛掉也不致 outage，只是延遲變高。</div></blockquote>
+    <blockquote class="q"><span class="en">"By Hyrum's Law, the fact that the PIDs ... were limited to the 0...32,000 range became an implicit API guarantee that people started depending on."</span><span class="zh">依 Hyrum's Law，行程拿到的 PID 被限制在 0…32,000 這個事實，變成了一個大家開始依賴的隱式 API 保證。</span><div class="note">全書 Hyrum's Law 最生動的基礎設施案例，修正工程八年後仍在進行。</div></blockquote>
+    <blockquote class="q"><span class="en">"Scale requires a common infrastructure for running workloads in production."</span><span class="zh">規模，要求一套用來在生產環境執行工作負載的共用基礎設施。</span><div class="note">TL;DR 之首，也是全章與全書工具篇的收束。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Compute as a Service（CaaS，運算即服務）</span><br>「給我硬體跑我的東西」長成的受管運算系統；Borg 是 Kubernetes/Mesos 的先驅。</div>
+      <div class="kw"><span class="term">Cattle, not Pets（把機器當牛、不當寵物）</span><br>把伺服器設計成能全自動 stamp out 替換的牛而非要人搶救的寵物；規模化與自癒的根本。</div>
+      <div class="kw"><span class="term">Bin-packing（裝箱）／Multitenancy（多租戶）</span><br>按程式資源需求把複本裝箱到機器池共享機器；需隔離以免互相干擾。</div>
+      <div class="kw"><span class="term">Isolation（隔離）／Container（容器）</span><br>多租戶必備；容器是比 VM 輕量的隔離（cgroups 2007 由 Google 貢獻進 kernel）＋應用與機器間的抽象邊界。</div>
+      <div class="kw"><span class="term">Rightsizing / Autoscaling</span><br>自動決定資源需求與複本數，免人工填數字；「簡單的事該簡單、複雜的事該可能」。</div>
+      <div class="kw"><span class="term">Architecting for Failure（為失敗而設計）</span><br>工作切成可動態分配的小 chunk、serving job 收下線預告後優雅排空；當牛還不夠。</div>
+      <div class="kw"><span class="term">Batch vs Serving</span><br>batch 關心吞吐、短命、可無預警殺；serving 關心延遲、長命、重排要節流且需下線預告。</div>
+      <div class="kw"><span class="term">State Replication／Transient Local Storage</span><br>本機狀態當短暫、真儲存外置到複本同步的持久系統（GFS/Bigtable/Spanner）；快取按延遲、核心按總負載配置。</div>
+      <div class="kw"><span class="term">Service Discovery／Idempotency（冪等性）</span><br>一層間接定址取代寫死 hostname；retry 與重複請求的解藥是冪等（client 指派 ID）。</div>
+      <div class="kw"><span class="term">Hyrum's Law（在容器抽象上）</span><br>PID 32,000 案例：沒人承諾的實作細節被當 API 依賴，修正跨八年三階段；故用廣社群開發的容器系統有價值。</div>
+      <div class="kw"><span class="term">One Service to Rule Them All</span><br>Borg 把 batch 與 serving 併成單一池：serving 變牛省線性管理成本＋batch 填 serving slack 幾乎免費跑。</div>
+      <div class="kw"><span class="term">Serverless / Lock-in</span><br>只寫 Handler、框架 server 多租戶、能縮到零；要求真正無狀態、犧牲環境控制權；比較對象是持久容器。運算服務選擇高 lock-in，用開源/多雲/混合雲緩解。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你的服務是「寵物」還是「牛」？能不能做到「一台壞了，自動化全自動 stamp out 一台新的、不需任何人 SSH 進去設定」？若不行，卡在哪——部署不自動，還是藏了<b>狀態</b>（行程內/本機磁碟/寫死 hostname）讓它無法替換？對照 ch22。</li>
+      <li>你把本機狀態當「短暫」了嗎？哪些其實該外置到持久儲存？你的快取是「按延遲目標配置、核心按總負載配置」，還是把快取當不能失去的依賴（一掛就 outage）？你的 mutating API 有 <b>idempotency</b> 嗎？</li>
+      <li>你的基礎設施有沒有「PID 32,000」式的隱式依賴——某個沒人承諾的實作細節（埠範圍、ID 格式、檔案佈局）被無數地方當保證依賴？要改估得出代價嗎？這正是 ch01 Hyrum's Law 在基礎設施層的體現。</li>
+      <li>你在選運算服務嗎？評估過 <b>lock-in</b> 的真實代價（Hyrum's Law＋周邊工具生態難遷移）嗎？你的需求是真正無狀態（適合 serverless）還是有狀態（需持久容器）？小團隊用公有雲 serverless、大組織用統一容器——你在哪一格？</li>
+      <li>你的組織是 batch/serving 各管一池，還是有機會像 Borg 那樣<b>統一</b>以吃到「serving 變牛省管理成本＋batch 填 slack 幾乎免費」？你算過各隊各管一池的線性管理成本嗎？對照 ch07。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— Hyrum's Law 在 PID 32,000、容器抽象、lock-in 反覆現身；「整合時間維度」正是 CaaS 要對抗的，容器提供「時間上的韌性」。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— 「cattle, not pets」兩章共用；Borg 清理 API（PID namespace、label）正是需要 LSC 能力的大規模遷移。</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— 標準化設定語言是部署自動化的前提；CD 的 RC/flag/release train 都跑在本章的受管運算之上。</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— TAP、Build Cop、自動回退都跑在 Borg 上；「serving 收下線預告優雅排空」呼應 CI 的 fast feedback 與穩定性。</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— 「設定當程式碼進版控、別靠部落知識」呼應 monorepo/Source of Truth；提交式設定 vs 文件/腦中參數。</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— 「依賴文件與部落知識會隨時間腐化」直接引用第 3 章；提交式設定語言是把知識編碼進程式的實踐。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— 統一運算基礎設施避免「每隊各管一池」的線性管理成本，呼應次線性擴展與生產力量測。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch24.html">← 上一章：Continuous Delivery</a><a class="idx" href="index.html">⌂ 總索引</a><a href="index.html">全書完 ｜ 回索引 →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools</div>
+    <div class="ch-no">CHAPTER 25</div>
+    <h1 class="title">Compute as a Service</h1>
+    <div class="title-zh">Just give me hardware to run my stuff — at scale, over time</div>
+    <div class="meta-row">
+      <span class="badge">by Onufry Wojtaszczyk</span>
+      <span class="badge">PDF p.545–574</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"I don't try to understand computers. I try to understand the programs." —Barbara Liskov</span>
+      <span class="zh">CaaS abstracts away the toil of managing hardware so engineers can focus on the programs.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>After writing code you need hardware to run it — <b>that, in essence, is Compute as a Service (CaaS).</b> This final chapter traces Google's <b>Borg</b> (precursor to Kubernetes/Mesos), showing how "just give me hardware to run my stuff" grows into a system that scales with the org, in four parts: <b>taming the compute environment / writing software for managed compute / CaaS over time and scale / choosing a compute service.</b></p>
+      <p>Running through it all is "<b>cattle, not pets</b>" — a new instance stamped out fully automatically, no manual setup, yielding self-healing; held to be fundamental to Google's 15 years. The biggest enemy is <b>state</b>: treat local state as transient and externalize real storage to a replicated persistent system (GFS/Bigtable/Spanner), backed by service discovery and idempotency. <b>Containers</b> began for isolation/multitenancy (cgroups, into the kernel in 2007) but mattered more as an <b>abstraction boundary</b> between application and machine.</p>
+      <p><b>Hyrum's Law hits the container abstraction especially hard</b> (the PID-32,000 case, still being fixed eight years on). <b>Borg unifying batch and serving</b>: serving becomes cattle (saving linear management cost), batch fills serving's slack (running effectively for free). <b>Choosing a compute service is a high-lock-in trade-off</b>: centralization vs customization, level of abstraction (serverless demands true statelessness and cedes control; Google didn't bet heavily on it), and public vs private (outsource overhead, fear lock-in, mitigate with open source / multicloud / hybrid). Conclusion: scale requires a <b>common shared compute infrastructure</b>; containers are key; use it well by designing applications as cattle.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You're still SSH-ing into machines, manually deploying and restarting.</b> The chapter starts from Jeff Dean's 2002 nightmare ("start/monitor/migrate by hand on 50+ machines") and gives a clear evolution: simple automation → automated scheduling → containerized multitenancy → rightsizing/autoscaling. You'll learn at what scale, and why, the naive solution collapses.</div>
+      <div class="why-card"><b>Your service is a "pet" that needs human rescue.</b> "Cattle, not pets" is the core: cattle that can be stamped out fully automatically, so maintenance doesn't grow linearly/superlinearly with the fleet. But it's honest: cattle isn't enough — <b>state</b> is the real challenge.</div>
+      <div class="why-card"><b>You're choosing a compute service (VM? containers? serverless? public cloud?).</b> The final section spells out the <b>high-lock-in</b> nature, the centralization-vs-customization tension, serverless's real comparison (persistent containers, not VM pets), and public/multi/hybrid-cloud mitigations.</div>
+      <div class="why-card"><b>You want to grasp how terrifying Hyrum's Law is at the infrastructure layer.</b> The PID-32,000 case: an unpromised detail depended on as a guarantee everywhere, whose fix spans eight years, three phases, and data backfill. It permanently sharpens "observable behavior = API."</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-scale">EVOLUTION</span> The spectrum of managing compute: pets → cattle → serverless</h3>
+      <div class="claim">The naive SSH/SFTP manual solution collapses at scale; taming the compute environment is a path of "increasing abstraction, decreasing management overhead" — but "more abstraction is always better" is false; each step is a trade-off.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="The evolution spectrum: bare-metal pets → VM → containers as cattle → serverless, with abstraction rising, management overhead falling, and control ceding">
+          <text x="360" y="22" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">The spectrum of managing compute</text>
+          <rect x="24" y="48" width="150" height="66" rx="11" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="99" y="72" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">bare-metal pets</text>
+          <text x="99" y="90" class="fig-mut" font-size="9.5" text-anchor="middle">manual SSH/deploy</text>
+          <text x="99" y="104" class="fig-mut" font-size="9.5" text-anchor="middle">upkeep grows linearly</text>
+          <rect x="190" y="48" width="150" height="66" rx="11" fill="#211c12" stroke="var(--theme-time)" stroke-width="1.8"/>
+          <text x="265" y="72" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--theme-time)">VM</text>
+          <text x="265" y="90" class="fig-mut" font-size="9.5" text-anchor="middle">IaaS → bring your own OS</text>
+          <text x="265" y="104" class="fig-mut" font-size="9.5" text-anchor="middle">heavy, slow to boot</text>
+          <rect x="356" y="48" width="158" height="66" rx="11" fill="#16241f" stroke="var(--theme-scale)" stroke-width="2.4"/>
+          <text x="435" y="72" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">containers as cattle</text>
+          <text x="435" y="90" class="fig-mut" font-size="9.5" text-anchor="middle">light isolation + abstraction</text>
+          <text x="435" y="104" class="fig-mut" font-size="9.5" text-anchor="middle">Borg/K8s: the scale solution</text>
+          <rect x="530" y="48" width="166" height="66" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+          <text x="613" y="72" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--accent)">serverless</text>
+          <text x="613" y="90" class="fig-mut" font-size="9.5" text-anchor="middle">write only Handler · scale to 0</text>
+          <text x="613" y="104" class="fig-mut" font-size="9.5" text-anchor="middle">demands true statelessness</text>
+          <path d="M40 140 L690 140" stroke="var(--border)" stroke-width="1.4"/>
+          <text x="40" y="160" class="fig-mut" font-size="10">abstraction rises →　management overhead falls →　environment control cedes →</text>
+          <text x="40" y="196" class="fig-txt" font-size="10.5" font-weight="700">Google's judgment:</text>
+          <text x="40" y="214" class="fig-mut" font-size="10">"cattle, not pets" is the scale solution; given cattle, containers are the natural choice (lighter, configurable).</text>
+          <text x="40" y="232" class="fig-mut" font-size="10">serverless's comparison is "persistent containers," not "VM pets"; Google didn't bet on it (Borg covers most benefits; many apps aren't stateless).</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the evolution spectrum: <b>bare-metal pets</b> (manual SSH, upkeep grows linearly with the fleet) → <b>VM</b> (bring your own OS, but heavy) → <b>containers as cattle</b> (light isolation + abstraction boundary, Borg/K8s, the scale solution) → <b>serverless</b> (write only the Handler, scales to zero, but demands true statelessness). Rightward: more abstraction, less management overhead — but environment control cedes too. "More abstraction is always better" is false; each step is a trade-off.</figcaption>
+      </figure>
+      <div class="impl"><b>Taming the compute environment:</b> simple automation (deploy scripts, self-healing restart) → automated scheduling (a central service owns the machine list, reschedules on failure) → containerized multitenancy (bin-pack by resource needs, requires isolation; cgroups into the kernel in 2007) → rightsizing/autoscaling (auto-determine resources/replicas, sparing manual sizing). <b>Architect for failure:</b> chunk work for dynamic assignment; treat state as transient and externalize real storage (state replication, GFS/Bigtable/Spanner); service discovery instead of hardcoded hostnames; mutating requests need idempotency.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">EFFICIENCY</span> One service to rule them all: batch fills serving's slack</h3>
+      <div class="claim">Unifying batch and serving into one pool brings two efficiencies: <b>serving becomes cattle</b> (no per-team linear cost) + <b>batch fills the slack serving reserves for spikes</b>, so batch runs effectively for free.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 240" role="img" aria-label="One machine: a serving job over-provisioned for spikes uses only 30%, batch fills the idle 70%, serving reclaims on demand">
+          <text x="360" y="22" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">One machine: batch fills serving's idle capacity</text>
+          <text x="180" y="48" class="fig-mut" font-size="11" text-anchor="middle">serving only (traditional)</text>
+          <rect x="110" y="58" width="140" height="150" rx="8" fill="#0c0e15" stroke="var(--border)" stroke-width="1.4"/>
+          <rect x="110" y="148" width="140" height="60" fill="var(--theme-time)" opacity=".5"/>
+          <text x="180" y="183" class="fig-txt" font-size="11" text-anchor="middle">serving uses 30%</text>
+          <text x="180" y="105" class="fig-mut" font-size="10.5" text-anchor="middle">idle 70%</text>
+          <text x="180" y="122" class="fig-mut" font-size="9.5" text-anchor="middle">(reserved for spikes/outages)</text>
+          <text x="180" y="226" class="fig-mut" font-size="9.5" text-anchor="middle" fill="var(--theme-trade)">→ underutilized, wasteful</text>
+          <text x="540" y="48" class="fig-mut" font-size="11" text-anchor="middle">serving + batch (Borg)</text>
+          <rect x="470" y="58" width="140" height="150" rx="8" fill="#0c0e15" stroke="var(--border)" stroke-width="1.4"/>
+          <rect x="470" y="148" width="140" height="60" fill="var(--theme-time)" opacity=".5"/>
+          <text x="540" y="183" class="fig-txt" font-size="11" text-anchor="middle">serving 30%</text>
+          <rect x="470" y="58" width="140" height="90" fill="var(--theme-scale)" opacity=".35"/>
+          <text x="540" y="100" class="fig-txt" font-size="11" text-anchor="middle" fill="var(--theme-scale)">batch fills 70%</text>
+          <text x="540" y="118" class="fig-mut" font-size="9" text-anchor="middle">serving reclaims on demand</text>
+          <text x="540" y="226" class="fig-mut" font-size="9.5" text-anchor="middle" fill="var(--theme-scale)">→ batch runs effectively for free</text>
+          <text x="330" y="133" class="fig-mut" font-size="20" text-anchor="middle">→</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the second efficiency of "one service to rule them all": a serving job must be over-provisioned (capacity reserved for spikes/outages), so it uses only ~30% and the machine is underutilized. Borg <b>fills the idle 70% with batch jobs</b>, reclaiming from batch when serving needs it (freeze CPU, kill RAM) — since batch cares about aggregate throughput and its replicas are cattle anyway, it happily soaks it up. The result: <b>batch runs effectively for free.</b> The first efficiency is serving machines becoming cattle, avoiding every team's linear management cost.</figcaption>
+      </figure>
+      <div class="impl"><b>Containers as abstraction / Hyrum's Law:</b> containers separate application from machine, so only the container layer adapts when the machine changes. But <b>PID 32,000</b>: Borg limiting PIDs to 0–32,000 became a depended-on implicit "API" (logs assumed five digits), fixed in three phases (temporary cap → split thread/process PID space → PID namespaces), <b>still ongoing eight years on</b> — hence the value of a broadly-used container system. <b>Choosing is high-lock-in:</b> centralization vs customization (Borg's Cloud-VM/Search-disk bifurcations made the API unwieldy), public vs private (fearing a Zimki-style shutdown, mitigated by open source / multicloud / hybrid + a break-out path).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"I don't try to understand computers. I try to understand the programs." —Barbara Liskov</span><span class="zh">CaaS is exactly this — abstracting away the toil of understanding and managing hardware.</span><div class="note">The chapter epigraph.</div></blockquote>
+    <blockquote class="q"><span class="en">"Machines are anonymous: programs don't care which machine they run on as long as it has the right characteristics."</span><span class="zh">The Borg design doc's crisp statement of "cattle, not pets."</span><div class="note">One Service to Rule Them All.</div></blockquote>
+    <blockquote class="q"><span class="en">"Provision the cache to meet your latency goals, but provision the core application for the total load."</span><span class="zh">So losing the whole cache layer is a latency hit, not an outage.</span><div class="note">Managing State.</div></blockquote>
+    <blockquote class="q"><span class="en">"By Hyrum's Law, the fact that the PIDs ... were limited to the 0...32,000 range became an implicit API guarantee that people started depending on."</span><span class="zh">The book's most vivid infrastructure case of Hyrum's Law; still being fixed eight years later.</span><div class="note">Containers and implicit dependencies.</div></blockquote>
+    <blockquote class="q"><span class="en">"Scale requires a common infrastructure for running workloads in production."</span><span class="zh">The first TL;DR and the close of the Tools part.</span><div class="note">The TL;DRs.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Compute as a Service (CaaS)</span><br>The managed compute system "just give me hardware to run my stuff" grows into; Borg is the precursor to Kubernetes/Mesos.</div>
+      <div class="kw"><span class="term">Cattle, not pets</span><br>Design servers as cattle stamped out fully automatically, not pets a human rescues; the root of scaling and self-healing.</div>
+      <div class="kw"><span class="term">Bin-packing / multitenancy</span><br>Pack replicas onto a machine pool by resource needs to share machines; requires isolation to prevent interference.</div>
+      <div class="kw"><span class="term">Isolation / container</span><br>What multitenancy needs; lighter isolation than VMs (cgroups, into the kernel in 2007) plus an abstraction boundary between application and machine.</div>
+      <div class="kw"><span class="term">Rightsizing / autoscaling</span><br>Auto-determine resource needs and replica counts, sparing manual sizing; "easy things easy, complex things possible."</div>
+      <div class="kw"><span class="term">Architecting for failure</span><br>Chunk work for dynamic assignment; serving jobs drain gracefully on a shutdown notice; being cattle isn't enough.</div>
+      <div class="kw"><span class="term">Batch vs serving</span><br>batch cares about throughput, short-lived, killable without warning; serving cares about latency, long-lived, needs throttled rescheduling and notice.</div>
+      <div class="kw"><span class="term">State replication / transient local storage</span><br>Treat local state as transient, externalize real storage to a replicated persistent system; provision cache for latency, core for total load.</div>
+      <div class="kw"><span class="term">Service discovery / idempotency</span><br>A layer of indirection instead of hardcoded hostnames; the antidote to retries/duplicates is idempotency (client-assigned IDs).</div>
+      <div class="kw"><span class="term">Hyrum's Law (on the container abstraction)</span><br>The PID-32,000 case: an unpromised detail depended on as API, fixed over eight years and three phases; hence the value of a broadly-used container system.</div>
+      <div class="kw"><span class="term">One service to rule them all</span><br>Borg unifying batch and serving: serving becomes cattle (saving linear management cost) + batch fills serving slack (effectively free).</div>
+      <div class="kw"><span class="term">Serverless / lock-in</span><br>Write only the Handler, multitenant servers, scales to zero; demands true statelessness, cedes control; compared to persistent containers. Compute choices are high-lock-in, mitigated by open source / multicloud / hybrid.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Is your service a "pet" or "cattle"? Can you do "one dies, automation stamps out a new one, no SSH required"? If not, where are you stuck — non-automated deploy, or hidden <b>state</b> (in-process / local disk / hardcoded hostnames)? Per ch22.</li>
+      <li>Do you treat local state as transient? What should be externalized? Is your cache "provisioned for latency, core for total load," or a dependency you can't lose (an outage when it dies)? Does your mutating API have <b>idempotency</b>?</li>
+      <li>Does your infrastructure have a "PID-32,000" implicit dependency — an unpromised detail (port range, ID format, file layout) depended on as a guarantee everywhere? Can you estimate the cost of changing it? This is ch01's Hyrum's Law at the infrastructure layer.</li>
+      <li>Choosing a compute service? Have you assessed the real cost of <b>lock-in</b> (Hyrum's Law + the tooling ecosystem)? Are your needs truly stateless (serverless) or stateful (persistent containers)? Small team on serverless, big org on unified containers — which box?</li>
+      <li>Does your org run batch and serving in separate pools, or could you <b>unify</b> like Borg for "serving becomes cattle + batch fills the slack (free)"? Have you measured the linear management cost of every team running its own pool? Per ch07.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— Hyrum's Law recurs in PID-32,000, the container abstraction, and lock-in; "integrated over time" is what CaaS fights, with containers providing "resilience over time."</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— "cattle, not pets" is shared; Borg's API cleanup (PID namespaces, labels) is exactly the large-scale migration that needs LSC capability.</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— a standardized config language is a prerequisite for deployment automation; CD's RC/flag/release train run on this chapter's managed compute.</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— TAP, Build Cop, and auto-rollback run on Borg; "serving drains gracefully on a shutdown notice" echoes CI's fast feedback and stability.</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— "config as code in version control, not tribal knowledge" echoes monorepo/Source of Truth; submitted config vs documentation.</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— "documentation and tribal knowledge deteriorate over time" directly cites Ch.3; a submitted config language encodes knowledge into code.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— unified compute infrastructure avoids the linear management cost of every team running its own pool, echoing sublinear scaling.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch24.html">← Prev: Continuous Delivery</a><a class="idx" href="index.html">⌂ Index</a><a href="index.html">End of book ｜ Back to index →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

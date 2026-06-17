@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 12 章 Unit Testing ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes ｜ 流程</div>
+    <div class="ch-no">CHAPTER 12</div>
+    <h1 class="title">Unit Testing</h1>
+    <div class="title-zh">單元測試</div>
+    <div class="meta-row">
+      <span class="badge">作者 Erik Kuefler</span>
+      <span class="badge">PDF p.259–284</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Test behaviors, not methods. Follow DAMP over DRY when sharing code for tests."</span>
+      <span class="zh">測試「行為」而非「方法」；共用程式碼時奉行 DAMP（描述性而有意義）而非 DRY。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>接續 ch11 的 size／scope 兩軸，本章聚焦 <b>unit test（範圍窄、通常 size 小）</b>——Google 最常見的測試（建議約 <b>80% 單元／20% 較廣</b>，一天常跑數千個）。整章核心只有一個詞：<b>maintainability（可維護性）</b>。可維護的測試「就是會動」——寫完不必再想，直到失敗，而失敗指向<b>有清楚成因的真實 bug</b>。Mary 的故事是反例：改幾行卻被噴一整頁錯誤、修一整天，這些測試沒抓到真 bug，只是壞在對程式<b>內部結構</b>的假設上。</p>
+      <p>可維護性的兩大敵人是 <b>brittle（脆弱）</b> 與 <b>unclear（不清晰）</b>。防脆弱三招：<b>①追求「不會變」的測試</b>（四種變更只有「改變既有行為」該動測試）；<b>②透過 public API 測</b>（走正門，而非戳實作細節）；<b>③測『狀態』而非『互動』</b>（過度依賴 mock 是元兇）。寫清晰測試：<b>完整且精簡、測行為而非方法（given/when/then、以行為命名）、別放邏輯、寫清楚的失敗訊息</b>。共用程式碼：<b>DAMP, not DRY</b>——一點重複可以，只要更具描述性與意義。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你每次小改動都被一堆測試噴錯，卻沒introduce 任何 bug。</b> 那是 <b>brittle tests</b>。三帖藥：追求不會變的測試、透過 public API 測、測狀態而非互動。讀完你會寫「改 production 不必跟著改」的測試。</div>
+      <div class="why-card"><b>你習慣「一個 method 配一個 testXxx」。</b> 那會隨 method 變複雜而失控。改成<b>測行為</b>——given… when… then…——每個測試只管一個行為，讀來像自然語言、失敗時一眼定位。</div>
+      <div class="why-card"><b>你以為測試也該 DRY。</b> 反直覺：測試該 <b>DAMP</b>。因為<b>測試本身沒有測試</b>，複雜度代價更高；把資訊藏進 helper 反而讓測試「不完整」、藏住 bug。一點重複換來「讀完就懂」很划算。</div>
+      <div class="why-card"><b>你被難懂的測試拖垮、想直接刪掉。</b> 刪掉看不懂的測試＝開個你不知道的覆蓋率洞，且代表它可能<b>多年來價值為零</b>。不如一開始就寫清晰、不放邏輯、失敗訊息明確的測試。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">核心</span> The Importance of Maintainability <span class="en2">可維護性為何最重要</span></h3>
+      <div class="claim">抓 bug 之後，測試最重要的目的是<b>提升生產力</b>。但 Mary 的故事顯示反面：壞測試讓生產力不增反減——改動沒引入真 bug，卻因綁死內部結構被迫逐一修補。壞測試<b>必須在 check-in 前修好</b>。問題分兩類：<b>brittle</b> 與 <b>unclear</b>。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">防脆弱①</span> Strive for Unchanging Tests <span class="en2">追求不會變的測試</span></h3>
+      <div class="claim">理想的測試是<b>不會變的</b>——除非被測系統的<b>需求</b>改變，否則永不需動。對照工程師對 production 做的四種變更：</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="四種程式變更與測試是否該改：純重構、新功能、修 bug 不改；行為變更才改">
+          <g font-size="13">
+            <rect x="30" y="36" width="430" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="48" y="58" class="fig-txt" font-weight="700">① 純重構 Pure refactoring</text>
+            <rect x="480" y="36" width="210" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="585" y="58" class="fig-txt" font-size="12.5" text-anchor="middle" fill="var(--theme-scale)">測試不該變 ✗</text>
+            <rect x="30" y="80" width="430" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="48" y="102" class="fig-txt" font-weight="700">② 新功能 New features</text>
+            <rect x="480" y="80" width="210" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="585" y="102" class="fig-txt" font-size="12.5" text-anchor="middle" fill="var(--theme-scale)">只加新測試，舊的不變 ✗</text>
+            <rect x="30" y="124" width="430" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="48" y="146" class="fig-txt" font-weight="700">③ 修 bug Bug fixes</text>
+            <rect x="480" y="124" width="210" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="585" y="146" class="fig-txt" font-size="12.5" text-anchor="middle" fill="var(--theme-scale)">補漏掉的 case，舊的不變 ✗</text>
+            <rect x="30" y="168" width="430" height="34" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="48" y="190" class="fig-txt" font-weight="700" fill="var(--theme-trade)">④ 行為變更 Behavior change</text>
+            <rect x="480" y="168" width="210" height="34" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="585" y="190" class="fig-txt" font-size="12.5" text-anchor="middle" fill="var(--theme-trade)">才該改測試 ✓（且最貴）</text>
+          </g>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 四種程式變更與測試該不該改：純重構／新功能／修 bug<b>都不該</b>動既有測試（要動表示綁錯了抽象層級）；只有<b>改變既有行為</b>（打破明示契約）才該改——且通常遠比其他三種昂貴。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">防脆弱②③</span> Public APIs、State not Interactions <span class="en2">走正門、測狀態</span></h3>
+      <ul class="tight">
+        <li><b>透過 public API 測：</b>用<b>使用者的方式</b>呼叫系統（「先走正門」），而非戳實作細節（拿掉 private、戳 isValid/saveToDatabase）。能弄壞測試的改動<b>按定義也會弄壞使用者</b> →形成明示契約、更不脆弱、還能當文件。</li>
+        <li><b>測狀態，而非互動：</b>state＝觀察呼叫後系統變成什麼；interaction＝檢查對協作者做了哪些呼叫。互動測試更脆弱（在乎「如何抵達」而非「結果」）——<span class="mono">verify(database).put(...)</span> 兩種出錯方式。元兇是<b>過度依賴 mocking 框架</b>；能用真實物件就用（見 ch13）。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">清晰</span> Writing Clear Tests <span class="en2">測行為、別放邏輯、好失敗訊息</span></h3>
+      <div class="claim">測試遲早會失敗（好事）。失敗只有兩因：①系統有問題（測試正做該做的事）②測試本身有瑕疵（brittle）。診斷速度取決於 <b>clarity</b>——而<b>測試常比寫它的人活得更久</b>，看不懂就刪＝開覆蓋率洞、且它可能多年價值為零。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="測行為而非方法：method 與 behavior 多對多，行為以 given/when/then 表達">
+          <defs><marker id="m12" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"/></marker></defs>
+          <text x="150" y="32" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--accent)">方法 Methods</text>
+          <text x="430" y="32" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">行為 Behaviors（多對多）</text>
+          <g font-size="12">
+            <rect x="60" y="50" width="180" height="34" rx="8" fill="#12151f" stroke="var(--accent)" stroke-width="1.6"/><text x="150" y="72" class="fig-txt" text-anchor="middle">displayResults()</text>
+            <rect x="60" y="100" width="180" height="34" rx="8" fill="#12151f" stroke="var(--accent)" stroke-width="1.6"/><text x="150" y="122" class="fig-txt" text-anchor="middle">transferFunds()</text>
+            <rect x="340" y="44" width="270" height="30" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="475" y="64" class="fig-txt" font-size="11.5" text-anchor="middle">顯示購買的品名</text>
+            <rect x="340" y="82" width="270" height="30" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="475" y="102" class="fig-txt" font-size="11.5" text-anchor="middle">餘額低時顯示警告</text>
+            <rect x="340" y="120" width="270" height="30" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="475" y="140" class="fig-txt" font-size="11.5" text-anchor="middle">成功移轉金額</text>
+          </g>
+          <path d="M240 67 L338 59" stroke="var(--muted)" stroke-width="1.3" fill="none" marker-end="url(#m12)"/>
+          <path d="M240 67 L338 97" stroke="var(--muted)" stroke-width="1.3" fill="none" marker-end="url(#m12)"/>
+          <path d="M240 117 L338 135" stroke="var(--muted)" stroke-width="1.3" fill="none" marker-end="url(#m12)"/>
+          <rect x="60" y="175" width="600" height="56" rx="10" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.8"/>
+          <text x="360" y="197" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-time)">每個行為＝ given（設定）→ when（動作）→ then（驗證）</text>
+          <text x="360" y="219" class="fig-mut" font-size="11.5" text-anchor="middle">「given 帳戶為空，when 試圖提款，then 交易被拒」——以行為命名（should…）、一測一行為</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 測行為而非方法：一個 method 常實作多個 behavior、一個 behavior 可能跨多個 method（多對多）。每個行為以 <b>given/when/then</b> 表達、以行為命名（「should…」讀成一句話），每個測試只管單一行為。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>完整且精簡：</b>本體含理解「如何得到結果」的一切（完整）、無分散注意的雜訊（精簡）。</li>
+        <li><b>別在測試裡放邏輯：</b>清晰的測試<b>一看就對</b>；URL 例子裡僅一個字串串接就藏住「兩條斜線」的 bug——攤平即現形。寧用直線程式碼。</li>
+        <li><b>寫清楚的失敗訊息：</b>清楚區分<b>預期 vs 實際</b>＋脈絡。Google 的 <b>Truth</b> 庫比 JUnit <span class="mono">assertTrue</span> 訊息更有用。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">共用</span> DAMP, Not DRY <span class="en2">描述性而有意義</span></h3>
+      <div class="claim">DRY（每概念只一處）在 production 划算；但測試裡利弊不同——好測試本就該穩定、你<b>希望</b>它在系統變時壞掉，且<b>測試本身沒有測試</b>、複雜度代價更高。故測試該 <b>DAMP（Descriptive And Meaningful Phrases）</b>：一點重複可以，只要更清晰。DAMP 與 DRY <b>互補</b>。</div>
+      <ul class="tight">
+        <li><b>Shared Values：</b>用<b>帶預設值的 helper</b>（具名參數／Builder）勝過語意含糊的共用常數；可輕微隨機化未設的預設。</li>
+        <li><b>Shared Setup：</b><span class="mono">@Before</span> 適合建被測物件與協作者；但測試在乎的特定值該<b>在本體直接覆寫</b>（別藏在 setup）。</li>
+        <li><b>Shared Helpers / Validation：</b>避免每測結尾的固定 <span class="mono">validate()</span>（不以行為驅動）；好的 validation helper 只斷言<b>單一概念事實</b>。</li>
+        <li><b>Test Infrastructure：</b>跨多 suite 共用＝更像 production，<b>須有自己的測試</b>、儘早標準化（Google 強制 Mockito 為唯一 Java mock 框架）。</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"The ideal test is unchanging: after it's written, it never needs to change unless the requirements of the system under test change."</span><span class="zh">理想的測試是不會變的：寫完之後，除非被測系統的「需求」改變，否則它永遠不需要更動。</span><div class="note">Strive for Unchanging Tests——四種變更只有「改變既有行為」該動測試，呼應全書 Time 主軸。</div></blockquote>
+    <blockquote class="q"><span class="en">"Tests using only public APIs are, by definition, accessing the system under test in the same manner that its users would."</span><span class="zh">只用 public API 的測試，按定義，是用和使用者一模一樣的方式在存取被測系統。</span><div class="note">Test via Public APIs——「先走正門」；弄壞測試＝弄壞使用者，形成明示契約。</div></blockquote>
+    <blockquote class="q"><span class="en">"Rather than writing a test for each method, write a test for each behavior."</span><span class="zh">與其為每個方法寫一個測試，不如為每個行為寫一個測試。</span><div class="note">Test Behaviors, Not Methods——method 與 behavior 多對多；以 given/when/then 表達。</div></blockquote>
+    <blockquote class="q"><span class="en">"If you feel like you need to write a test to verify your test, something has gone wrong!"</span><span class="zh">如果你覺得需要再寫一個測試來驗證你的測試，那就是哪裡出錯了！</span><div class="note">Don't Put Logic in Tests——測試該「一看就對」；人類很難一眼看出迴圈/條件裡的 bug。</div></blockquote>
+    <blockquote class="q"><span class="en">"Instead of being completely DRY, test code should often strive to be DAMP—that is, to promote 'Descriptive And Meaningful Phrases.'"</span><span class="zh">測試程式碼與其完全 DRY，不如常常追求 DAMP——「描述性而有意義的語句」。</span><div class="note">DAMP, Not DRY——測試本身沒測試、複雜度代價更高；一點重複換來清晰。與 DRY 互補。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Unit Test（單元測試）</span><br>範圍窄（單一 class/method）、通常 size 小；Google 最常見、建議約 80%；首要價值是可維護地提升生產力。</div>
+      <div class="kw"><span class="term">Maintainability（可維護性）</span><br>可維護的測試「就是會動」：寫完不必再想，直到失敗，且失敗指向有清楚成因的真實 bug。本章核心。</div>
+      <div class="kw"><span class="term">Brittle Test（脆弱測試）</span><br>在不引入真 bug 的無關改動下仍失敗；多因綁死實作細節。與 flaky（非確定性失敗）不同。</div>
+      <div class="kw"><span class="term">Unchanging Tests（不會變的測試）</span><br>除非系統需求改變否則永不需動；四種變更中只有「改變既有行為」該更新既有測試。</div>
+      <div class="kw"><span class="term">Test via Public APIs（透過 public API 測）</span><br>用使用者的方式呼叫系統（走正門）而非戳實作細節；弄壞測試＝弄壞使用者，形成明示契約。</div>
+      <div class="kw"><span class="term">State vs Interaction Testing（測狀態 vs 測互動）</span><br>state＝觀察呼叫後系統變成什麼；interaction＝檢查對協作者做了哪些呼叫。互動測試較脆弱。</div>
+      <div class="kw"><span class="term">Behaviors, Not Methods（行為而非方法）</span><br>為每個行為寫一個測試；behavior 是「某狀態下對輸入的回應保證」，用 given/when/then 表達，與 method 多對多。</div>
+      <div class="kw"><span class="term">Given / When / Then</span><br>行為的三部分（arrange/act/assert）：設定／動作／驗證；讓測試可在名稱、註解、程式三種粒度閱讀。</div>
+      <div class="kw"><span class="term">DAMP（Descriptive And Meaningful Phrases）</span><br>測試的程式共用哲學：容忍一點重複以換取描述性與意義；與 DRY 互補（因測試本身無測試）。</div>
+      <div class="kw"><span class="term">Truth</span><br>Google 的 Java 斷言庫，能產生比 JUnit assertTrue 更有用的失敗訊息（明確點出 subject 與預期）。</div>
+      <div class="kw"><span class="term">Test Infrastructure（測試基礎設施）</span><br>跨多 suite 共用的程式碼；更像 production，須有自己的測試、儘早標準化（如強制 Mockito）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>拿你「改 production 卻被迫跟著改一堆測試」的經驗：那些測試是不是綁死了<b>實作細節</b>（戳 private、verify 互動）？若改成<b>透過 public API 測狀態</b>，這次改動還會弄壞它們嗎？你動到的是「四種變更」的哪一種？</li>
+      <li>翻一個你寫的 <span class="mono">testXxx</span>（對應某 method）：它是不是其實在測<b>多個行為</b>？用 <b>given/when/then</b> 拆成數個 behavior-driven 測試、用「should…」重新命名——失敗報告會不會更快告訴你哪個行為壞了？</li>
+      <li>你的測試裡有沒有<b>邏輯</b>（迴圈、條件、字串拼接）？挑一段攤平成直線程式碼——會不會像 URL 例子一樣，攤平後看見一個原本藏住的 bug？</li>
+      <li>你的套件「太 DRY」還是「DAMP」？有沒有把關鍵資訊藏進 <span class="mono">createX</span>／<span class="mono">validateX</span> helper，導致讀單一測試得跳出去好幾處？哪些 helper 該<b>內聯回本體</b>？</li>
+      <li>你團隊的<b>測試基礎設施</b>有沒有自己的測試？mocking／斷言庫有沒有<b>標準化成一套</b>？值不值得像 Google 強制 Mockito 那樣收斂？對照 ch13。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— 本章承接其 size／scope 兩軸；unit test＝窄範圍（多為小 size），是金字塔底層 80% 的主體。</span></div>
+      <div class="chip"><a href="ch13.html">ch13 Test Doubles</a> <span class="rel">— 「測狀態而非互動」「過度用 mock 造成脆弱」「能用真實物件就用」在第 13 章展開。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— 「追求不會變的測試」對 LSC 尤其關鍵：純重構若得改測試就無法規模化；一次 LSC 可觸發數十萬測試。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 「壞測試必須在 check-in 前修好」靠 code review 把關；附清晰測試讓審查更簡單。</span></div>
+      <div class="chip"><a href="ch10.html">ch10 Documentation</a> <span class="rel">— 「測試可當文件與範例」呼應第 10 章「測試是可執行的文件」。</span></div>
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— 「標準化測試框架（強制 Mockito）」「測試命名一致」是「規則」在測試上的延伸。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「測試常比寫它的人活得更久」「不會變的測試讓系統能在規模上演進」回扣「整合時間維度」。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch11.html">← 上一章：Testing Overview</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch13.html">下一章：Test Doubles →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes</div>
+    <div class="ch-no">CHAPTER 12</div>
+    <h1 class="title">Unit Testing</h1>
+    <div class="title-zh">Test what the system promises, not how it's built</div>
+    <div class="meta-row">
+      <span class="badge">by Erik Kuefler</span>
+      <span class="badge">PDF p.259–284</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Test behaviors, not methods. Follow DAMP over DRY when sharing code for tests."</span>
+      <span class="zh">Test what the system promises, not how it's built — and let tests repeat a little if it makes them clear.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>Continuing ch11's size/scope axes, this chapter focuses on the <b>unit test</b> (narrow scope, usually small) — Google's most common (mix ≈ <b>80% unit / 20% broader</b>, thousands run daily). The whole chapter turns on one word: <b>maintainability</b>. Maintainable tests "just work" — forgotten after writing until they fail, with failures pointing to <b>real bugs with clear causes</b>. Mary's story is the anti-example: a few-line change yields a screenful of errors that catch no real bug — they merely broke on assumptions about <b>internal structure</b>.</p>
+      <p>Maintainability's two enemies are <b>brittleness</b> and <b>unclarity</b>. Three cures for brittleness: <b>① strive for unchanging tests</b> (of four kinds of change, only "changing existing behavior" should touch existing tests); <b>② test via public APIs</b> (front door, not implementation details); <b>③ test state, not interactions</b> (mock over-use is the chief cause). For clarity: <b>complete and concise, test behaviors not methods (given/when/then, named after the behavior), don't put logic in tests, write clear failure messages</b>. For code sharing: <b>DAMP, not DRY</b> — a little duplication is fine if it's more descriptive and meaningful.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>Every small change gives you a wall of failures, with no bug introduced.</b> Those are <b>brittle tests</b>. Three cures: strive for unchanging tests, test via public APIs, test state not interactions. You'll write tests that don't change when production does.</div>
+      <div class="why-card"><b>You write one `testXxx` per method.</b> That spirals as methods grow. Switch to <b>testing behaviors</b> — given… when… then… — one behavior per test, reading like natural language, pointing at the broken behavior.</div>
+      <div class="why-card"><b>You assume tests should be DRY too.</b> Counterintuitively, tests should be <b>DAMP</b>: since <b>tests aren't themselves tested</b>, complexity costs more; hiding info in helpers makes tests incomplete and hides bugs. Duplication buys "read it top to bottom."</div>
+      <div class="why-card"><b>Unintelligible tests drag you down, tempting you to delete them.</b> Deleting one opens an unknown coverage hole and signals it gave <b>zero value for years</b>. Better to write clear, logic-free tests with explicit failure messages.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">CORE</span> The Importance of Maintainability</h3>
+      <div class="claim">After catching bugs, a test's top purpose is <b>improving productivity</b>. But Mary's story shows the flip side: bad tests drain it — her change introduced no bug, yet tests coupled to internal structure forced patching. Bad tests <b>must be fixed before check-in</b>. Problems split into <b>brittle</b> and <b>unclear</b>.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">CURE 1</span> Strive for Unchanging Tests</h3>
+      <div class="claim">The ideal test is <b>unchanging</b> — never needs changing unless the system's <b>requirements</b> change. Map against the four kinds of production change:</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="Four kinds of change and whether tests should change: refactor, new feature, bug fix don't; behavior change does">
+          <g font-size="13">
+            <rect x="30" y="36" width="430" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="48" y="58" class="fig-txt" font-weight="700">① Pure refactoring</text>
+            <rect x="480" y="36" width="210" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="585" y="58" class="fig-txt" font-size="12.5" text-anchor="middle" fill="var(--theme-scale)">tests shouldn't change ✗</text>
+            <rect x="30" y="80" width="430" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="48" y="102" class="fig-txt" font-weight="700">② New features</text>
+            <rect x="480" y="80" width="210" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="585" y="102" class="fig-txt" font-size="12.5" text-anchor="middle" fill="var(--theme-scale)">add new tests only ✗</text>
+            <rect x="30" y="124" width="430" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="48" y="146" class="fig-txt" font-weight="700">③ Bug fixes</text>
+            <rect x="480" y="124" width="210" height="34" rx="8" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="585" y="146" class="fig-txt" font-size="12.5" text-anchor="middle" fill="var(--theme-scale)">add the missing case ✗</text>
+            <rect x="30" y="168" width="430" height="34" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="48" y="190" class="fig-txt" font-weight="700" fill="var(--theme-trade)">④ Behavior change</text>
+            <rect x="480" y="168" width="210" height="34" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="585" y="190" class="fig-txt" font-size="12.5" text-anchor="middle" fill="var(--theme-trade)">update tests ✓ (most costly)</text>
+          </g>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — four kinds of change vs whether tests should change: refactor / new feature / bug fix <b>shouldn't</b> touch existing tests (if they must, the abstraction level was wrong); only <b>changing existing behavior</b> (breaking an explicit contract) should — and it's usually far costlier than the other three.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CURES 2 &amp; 3</span> Public APIs, State not Interactions</h3>
+      <ul class="tight">
+        <li><b>Test via public APIs:</b> call the system <b>as a user would</b> ("use the front door"), not via implementation details (dropping private, poking isValid/saveToDatabase). A change that breaks the test <b>by definition breaks a user</b> → an explicit contract, less brittle, doubles as docs.</li>
+        <li><b>Test state, not interactions:</b> state = observe what the system becomes; interaction = check calls on collaborators. Interaction tests are more brittle (care about "how," not "result") — <span class="mono">verify(database).put(...)</span> can go wrong two ways. The cause is <b>mock over-use</b>; prefer real objects (see ch13).</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CLARITY</span> Writing Clear Tests</h3>
+      <div class="claim">Tests will eventually fail (good). Failures have two causes: ① the system has a problem (what tests are for) ② the test is flawed (brittle). Diagnosis speed depends on <b>clarity</b> — and <b>tests outlive their authors</b>, so deleting what you can't understand opens a coverage hole and may have given zero value for years.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="Test behaviors not methods: methods and behaviors are many-to-many, behaviors via given/when/then">
+          <defs><marker id="m12e" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"/></marker></defs>
+          <text x="150" y="32" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--accent)">Methods</text>
+          <text x="430" y="32" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">Behaviors (many-to-many)</text>
+          <g font-size="12">
+            <rect x="60" y="50" width="180" height="34" rx="8" fill="#12151f" stroke="var(--accent)" stroke-width="1.6"/><text x="150" y="72" class="fig-txt" text-anchor="middle">displayResults()</text>
+            <rect x="60" y="100" width="180" height="34" rx="8" fill="#12151f" stroke="var(--accent)" stroke-width="1.6"/><text x="150" y="122" class="fig-txt" text-anchor="middle">transferFunds()</text>
+            <rect x="340" y="44" width="270" height="30" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="475" y="64" class="fig-txt" font-size="11.5" text-anchor="middle">shows item name</text>
+            <rect x="340" y="82" width="270" height="30" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="475" y="102" class="fig-txt" font-size="11.5" text-anchor="middle">warns on low balance</text>
+            <rect x="340" y="120" width="270" height="30" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="475" y="140" class="fig-txt" font-size="11.5" text-anchor="middle">moves funds successfully</text>
+          </g>
+          <path d="M240 67 L338 59" stroke="var(--muted)" stroke-width="1.3" fill="none" marker-end="url(#m12e)"/>
+          <path d="M240 67 L338 97" stroke="var(--muted)" stroke-width="1.3" fill="none" marker-end="url(#m12e)"/>
+          <path d="M240 117 L338 135" stroke="var(--muted)" stroke-width="1.3" fill="none" marker-end="url(#m12e)"/>
+          <rect x="60" y="175" width="600" height="56" rx="10" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.8"/>
+          <text x="360" y="197" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-time)">each behavior = given (set up) → when (act) → then (validate)</text>
+          <text x="360" y="219" class="fig-mut" font-size="11.5" text-anchor="middle">"given an empty account, when withdrawing, then it's rejected" — name with should…, one behavior per test</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — test behaviors, not methods: one method often implements many behaviors, and a behavior may span methods (many-to-many). Express each behavior as <b>given/when/then</b>, name it after the behavior ("should…" reads as a sentence), one behavior per test.</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Complete &amp; concise:</b> the body holds all info to understand "how it reaches its result" (complete) and nothing distracting (concise).</li>
+        <li><b>Don't put logic in tests:</b> clear tests are <b>obviously correct on inspection</b>; in the URL example a single concatenation hid a double-slash bug — flattening reveals it. Prefer straight-line code.</li>
+        <li><b>Write clear failure messages:</b> distinguish <b>expected vs actual</b> with context. Google's <b>Truth</b> gives more useful messages than JUnit's <span class="mono">assertTrue</span>.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">SHARING</span> DAMP, Not DRY</h3>
+      <div class="claim">DRY (one canonical place) pays off in production; but the calculus differs for tests — good tests should be stable, you <b>want</b> them to break when the system changes, and <b>tests aren't themselves tested</b>, so complexity costs more. So tests should be <b>DAMP (Descriptive And Meaningful Phrases)</b>: a little duplication is fine if clearer. DAMP <b>complements</b> DRY.</div>
+      <ul class="tight">
+        <li><b>Shared values:</b> prefer <b>helper methods with defaults</b> (named params / Builder) over ambiguous shared constants; even slightly randomize unset defaults.</li>
+        <li><b>Shared setup:</b> <span class="mono">@Before</span> suits the object under test and collaborators; values a test cares about should be <b>overridden in the body</b> (not hidden in setup).</li>
+        <li><b>Shared helpers / validation:</b> avoid a fixed <span class="mono">validate()</span> at every test's end (not behavior-driven); good validation helpers assert a <b>single conceptual fact</b>.</li>
+        <li><b>Test infrastructure:</b> code shared across suites is more like production, <b>needs its own tests</b>, standardized early (Google mandated Mockito as the only Java mocking framework).</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"The ideal test is unchanging: after it's written, it never needs to change unless the requirements of the system under test change."</span><span class="zh">Of the four kinds of change, only changing existing behavior should touch existing tests — that's what lets tests work at scale.</span><div class="note">Strive for Unchanging Tests; ties to the Time theme.</div></blockquote>
+    <blockquote class="q"><span class="en">"Tests using only public APIs are, by definition, accessing the system under test in the same manner that its users would."</span><span class="zh">"Use the front door" — a change that breaks such a test also breaks a real user, so it's a real contract.</span><div class="note">Test via Public APIs.</div></blockquote>
+    <blockquote class="q"><span class="en">"Rather than writing a test for each method, write a test for each behavior."</span><span class="zh">Methods↔behaviors is many-to-many; express behaviors as given/when/then so failures point at the broken behavior.</span><div class="note">Test Behaviors, Not Methods.</div></blockquote>
+    <blockquote class="q"><span class="en">"If you feel like you need to write a test to verify your test, something has gone wrong!"</span><span class="zh">Tests should be obviously correct on inspection; humans miss bugs hidden in loops/conditionals.</span><div class="note">Don't Put Logic in Tests.</div></blockquote>
+    <blockquote class="q"><span class="en">"Instead of being completely DRY, test code should often strive to be DAMP—that is, to promote 'Descriptive And Meaningful Phrases.'"</span><span class="zh">A little duplication buys "read it top to bottom" — worth more in tests, which aren't themselves tested.</span><div class="note">DAMP, Not DRY — complementary, not a replacement.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Unit test</span><br>Narrow-scope (one class/method), usually small; Google's most common, ~80% recommended; its prime value is improving productivity maintainably.</div>
+      <div class="kw"><span class="term">Maintainability</span><br>Maintainable tests "just work": forgotten after writing until they fail, with failures pointing to real bugs with clear causes. The chapter's core.</div>
+      <div class="kw"><span class="term">Brittle test</span><br>Fails on an unrelated change introducing no real bug; usually coupled to implementation details. Distinct from flaky (nondeterministic).</div>
+      <div class="kw"><span class="term">Unchanging tests</span><br>Never need changing unless requirements change; only "changing existing behavior" should update existing tests.</div>
+      <div class="kw"><span class="term">Test via public APIs</span><br>Call the system as a user would (front door), not via implementation details; breaking the test = breaking a user, an explicit contract.</div>
+      <div class="kw"><span class="term">State vs interaction testing</span><br>State = observe what the system becomes; interaction = check calls on collaborators. Interaction tests are more brittle.</div>
+      <div class="kw"><span class="term">Behaviors, not methods</span><br>A test per behavior; a behavior is a "guarantee about response to inputs in a state," expressed as given/when/then; method↔behavior is many-to-many.</div>
+      <div class="kw"><span class="term">Given / when / then</span><br>The three parts of a behavior (arrange/act/assert): set up / act / validate; readable at name, comment, and code granularities.</div>
+      <div class="kw"><span class="term">DAMP (Descriptive And Meaningful Phrases)</span><br>The test code-sharing philosophy: tolerate some duplication for descriptiveness; complementary to DRY (tests aren't themselves tested).</div>
+      <div class="kw"><span class="term">Truth</span><br>Google's Java assertion library, producing more useful failure messages than JUnit's assertTrue (names the subject and expectation).</div>
+      <div class="kw"><span class="term">Test infrastructure</span><br>Code shared across suites; more like production, needs its own tests and early standardization (e.g., mandating Mockito).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Take a "changed production, forced to change many tests" experience: were those tests coupled to <b>implementation details</b> (poking privates, verifying interactions)? Testing <b>state via the public API</b>, would this change still break them? Which of the "four kinds" was yours?</li>
+      <li>Pick a <span class="mono">testXxx</span> (mapped to a method): is it testing <b>multiple behaviors</b>? Split it into behavior-driven tests with <b>given/when/then</b>, renamed "should…" — would failures now tell you faster which behavior broke?</li>
+      <li>Is there <b>logic</b> in your tests (loops, conditionals, concat)? Flatten one into straight-line code — like the URL example, does it reveal a hidden bug?</li>
+      <li>Is your suite "too DRY" or "DAMP"? Have you hidden key info in <span class="mono">createX</span>/<span class="mono">validateX</span> helpers, so reading one test means jumping around? Which should be <b>inlined back</b>?</li>
+      <li>Does your <b>test infrastructure</b> have its own tests? Are your mocking/assertion libraries <b>standardized to one</b>? Worth converging like Google's Mockito mandate? Per ch13.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— this chapter inherits its size/scope axes; the unit test (narrow scope, usually small) is the 80% base of the pyramid.</span></div>
+      <div class="chip"><a href="ch13.html">ch13 Test Doubles</a> <span class="rel">— "test state not interactions," "mock over-use causes brittleness," and "prefer real objects" are developed in Ch.13.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— "strive for unchanging tests" is crucial for LSCs: a pure refactor forcing test changes can't scale; one LSC can trigger hundreds of thousands of tests.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— "bad tests must be fixed before check-in" is gated by code review; clear tests make reviews simpler.</span></div>
+      <div class="chip"><a href="ch10.html">ch10 Documentation</a> <span class="rel">— "tests as documentation and examples" echoes Ch.10's "tests are executable documentation."</span></div>
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— "standardize test frameworks (mandate Mockito)" and "consistent test naming" are "rules" applied to tests.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "tests outlive their authors" and "unchanging tests let systems evolve at scale" tie back to "programming integrated over time."</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch11.html">← Prev: Testing Overview</a><a class="idx" href="index.html">⌂ Index</a><a href="ch13.html">Next: Test Doubles →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

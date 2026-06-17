@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 9 章 Code Review ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes ｜ 流程</div>
+    <div class="ch-no">CHAPTER 09</div>
+    <h1 class="title">Code Review</h1>
+    <div class="title-zh">程式碼審查</div>
+    <div class="meta-row">
+      <span class="badge">作者 Tom Manshreck、Caitlin Sadowski</span>
+      <span class="badge">PDF p.193–212</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Code review acts as the glue connecting engineers with one another."</span>
+      <span class="zh">程式碼審查是把工程師彼此黏在一起的膠水——測試、靜態分析、CI 全都掛在它上面。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>程式碼審查（code review）是「由作者以外的人來審視程式碼、通常在程式進入程式碼庫之前」的流程。Google 的版本極端徹底：<b>幾乎每一次變更、不論多小，都要在提交前被審（precommit review）</b>；而每位工程師既發起審查、也審查別人。本章談「流程」而非工具（工具 Critique 另闢 ch19）。</p>
+      <p>審查的終點是另一位工程師的 <b>LGTM（looks good to me）</b>。但 Google 把「批准」拆成<b>三個獨立的權限位元</b>：①另一位工程師的 <b>LGTM</b>（正確且可理解）；②<b>owner 核准</b>（適不適合放這塊程式碼庫）；③具<b>readability</b> 者核准（符合語言風格）。常由一人扮演全部，但拆開來才能<b>靈活又能擴展</b>——「為何不讓一人包辦？答案是規模」。</p>
+      <p>審查帶來六項效益：<b>正確性、可理解性、一致性、集體擁有感、知識分享、歷史紀錄</b>。書中明言：<b>正確性並非首要效益</b>——「程式長期是否可被理解與維護」更重要，因為<b>程式被讀遠多於被寫</b>。最後是讓流程擴展的最佳實務：<b>有禮且專業、寫小變更（約 200 行）、寫好說明、審查者降到最低（多半剛好一人）、能自動化就自動化</b>。一句根本心法：<b>程式碼是負債</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你把 review 當成「抓 bug 的關卡」。</b> 這章翻轉認知：抓正確性<b>不是</b> Google 最看重的效益。真正的長期價值是<b>可理解性、一致性、知識分享、歷史紀錄</b>——全為時間與規模服務。看懂這點，你寫留言的角度會完全不同。</div>
+      <div class="why-card"><b>你的 review 又慢又痛。</b> 本章把「慢」歸因到<b>實作方式</b>而非審查本身：<b>寫小變更</b>（約 200 行、35% 只動一檔）、<b>24 個工作小時內回饋</b>、<b>別擠牙膏式給意見</b>、<b>審查者降到一人</b>（「最重要的是第一個 LGTM」）。</div>
+      <div class="why-card"><b>「擁有權」「readability」到底在解什麼？</b> 答案是 <b>scale</b>：把 LGTM／owner／readability 三個位元拆開，讓 intern 與 tech lead 走同一套流程卻有不同路徑；<span class="mono">OWNERS</span> 檔讓「誰負責」沿目錄樹一查就到，無需中央登記。</div>
+      <div class="why-card"><b>不同類型的變更該用不同力道審。</b> greenfield 最嚴、bug fix 最聚焦（別順手改別的）、機器產生的 LSC 只挑「你這塊特有」的問題（不能對流程行使否決權）。把力道用對地方，是讓 review 規模化的關鍵。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">流程</span> Code Review Flow <span class="en2">審查的六步流程</span></h3>
+      <div class="claim">Google 採 <b>precommit review</b>（提交前審查）。終點是拿到 <b>LGTM</b>——一個「必要的權限位元」，但要和 owner／readability 位元組合才放行提交。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 248" role="img" aria-label="審查流程：作者上傳快照與 diff、寄給審查者、留言與修改循環、LGTM、提交">
+          <defs><marker id="a9" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--accent)"/></marker>
+          <marker id="a9t" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-time)"/></marker></defs>
+          <!-- step boxes -->
+          <rect x="20" y="40" width="150" height="62" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="95" y="64" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">① 寫變更</text>
+          <text x="95" y="84" class="fig-mut" font-size="11" text-anchor="middle">上傳快照＝patch＋描述</text>
+          <rect x="200" y="40" width="150" height="62" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="275" y="64" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">② 自審＋寄出</text>
+          <text x="275" y="84" class="fig-mut" font-size="11" text-anchor="middle">產生 diff，mail 給審查者</text>
+          <rect x="380" y="40" width="150" height="62" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="455" y="64" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">③ 審查者留言</text>
+          <text x="455" y="84" class="fig-mut" font-size="11" text-anchor="middle">對 diff 提問／FYI</text>
+          <rect x="380" y="150" width="150" height="62" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="455" y="174" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">④ 作者修改</text>
+          <text x="455" y="194" class="fig-mut" font-size="11" text-anchor="middle">上傳新快照、回覆</text>
+          <rect x="560" y="40" width="140" height="62" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="630" y="64" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">⑤ LGTM</text>
+          <text x="630" y="84" class="fig-mut" font-size="11" text-anchor="middle">預設只需一個</text>
+          <rect x="560" y="150" width="140" height="62" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="630" y="174" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">⑥ 提交</text>
+          <text x="630" y="194" class="fig-mut" font-size="11" text-anchor="middle">解決留言＋approval</text>
+          <!-- arrows -->
+          <path d="M170 71 L196 71" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#a9)"/>
+          <path d="M350 71 L376 71" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#a9)"/>
+          <path d="M530 71 L556 71" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#a9)"/>
+          <path d="M630 102 L630 146" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#a9)"/>
+          <!-- loop ③↔④ -->
+          <path d="M445 102 L445 146" stroke="var(--theme-trade)" stroke-width="2" fill="none" marker-end="url(#a9)"/>
+          <path d="M465 146 L465 104" stroke="var(--theme-trade)" stroke-width="2" fill="none" marker-end="url(#a9)"/>
+          <text x="455" y="128" class="fig-mut" font-size="10.5" text-anchor="middle" fill="var(--theme-trade)">可重複</text>
+          <text x="360" y="22" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-time)">precommit：程式進庫前必須先過審</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 提交前審查（precommit）的六步流程：上傳快照／diff → 自審＋寄出 → 留言↔修改循環 → LGTM → 解決留言並取得 approval → 提交。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">心法</span> Code Is a Liability <span class="en2">程式碼是負債</span></h3>
+      <div class="claim"><b>程式碼本身是負債，而非資產。</b> 就算必要，它對某時某地的某人也終究是維護工作——像飛機的燃油，有重量。動筆前先確認功能值得；重複碼甚至比沒有更糟。「<b>如果你在從頭造輪子，你大概做錯了。</b>」</div>
+      <div class="impl"><b>工程意涵：</b>審查<b>不是</b>重開設計辯論的場合。設計該在設計審查／API 審查就定案；code review 既不該為「全新程式」感到意外，也不該被當成翻舊帳的機會。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">核心</span> 三個批准位元 <span class="en2">The three approval bits</span></h3>
+      <div class="claim">任何變更要被「批准」，牽涉三種審查——三個位元<b>可任意組合</b>，由一人或多人扮演。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="三個批准位元：LGTM、owner 核准、readability，組合後才放行提交">
+          <defs><marker id="b9" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-scale)"/></marker></defs>
+          <rect x="20" y="34" width="210" height="78" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="125" y="58" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--accent)">① LGTM</text>
+          <text x="125" y="80" class="fig-mut" font-size="11.5" text-anchor="middle">正確性＋可理解性</text>
+          <text x="125" y="98" class="fig-mut" font-size="11" text-anchor="middle">由另一位工程師給</text>
+          <rect x="20" y="124" width="210" height="78" rx="11" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="125" y="148" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">② Owner 核准</text>
+          <text x="125" y="170" class="fig-mut" font-size="11.5" text-anchor="middle">適不適合放這塊程式碼庫</text>
+          <text x="125" y="188" class="fig-mut" font-size="11" text-anchor="middle">OWNERS 檔・目錄守門人</text>
+          <rect x="250" y="79" width="210" height="78" rx="11" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+          <text x="355" y="103" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-time)">③ Readability</text>
+          <text x="355" y="125" class="fig-mut" font-size="11.5" text-anchor="middle">符合語言風格與最佳實務</text>
+          <text x="355" y="143" class="fig-mut" font-size="11" text-anchor="middle">全公司認證池</text>
+          <rect x="510" y="79" width="190" height="78" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2.5"/>
+          <text x="605" y="108" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">批准 → 提交</text>
+          <text x="605" y="132" class="fig-mut" font-size="11" text-anchor="middle">三位元可隱含、可任意組合</text>
+          <path d="M230 73 L300 100" stroke="var(--theme-scale)" stroke-width="1.8" fill="none"/>
+          <path d="M230 163 L300 136" stroke="var(--theme-scale)" stroke-width="1.8" fill="none"/>
+          <path d="M460 118 L506 118" stroke="var(--theme-scale)" stroke-width="2.4" fill="none" marker-end="url(#b9)"/>
+          <text x="360" y="232" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">「為何不讓一人包辦三種審查？短答：scale（規模）」——拆開帶來彈性</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 三個批准位元：LGTM（正確性／可理解性）＋ owner 核准（適不適合放這塊）＋ readability（語言風格）。可由一人或多人扮演、任意組合——拆開是為了彈性與規模。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>兩步常態：</b>多數需多重批准者先拿 peer 的 LGTM（聚焦正確性），再找 owner／readability 核准（owner 更關心「會不會難維護？增加技術債？我們有能力維護嗎？」）。</li>
+        <li><b>彈性：</b>既是 owner 又有 readability 的 tech lead，只要再一個 LGTM 就能提交；intern 送同一變更則需「具 readability 的 owner」核准。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">擁有權</span> Ownership <span class="en2">OWNERS 檔・stewardship（by Hyrum Wright）</span></h3>
+      <div class="claim">小團隊把全 repo 開給所有人；團隊一大就<b>撐不住</b>。Google 用 <b>ownership</b> 記錄「誰對哪一塊有知識與責任」——<b>不是「佔有」程式碼，而是 stewardship（受託管理）</b>（作者自承「stewards 管家」是更好的詞）。</div>
+      <ul class="tight">
+        <li><b>機制：</b><span class="mono">OWNERS</span> 檔列出某目錄及子目錄負責人；<b>階層式相加</b>（一檔由其目錄樹上方所有 OWNERS 成員的聯集擁有），最終解析到個人；鼓勵<b>小而聚焦</b>。</li>
+        <li><b>支撐其他實務：</b>root OWNERS 可當 LSC（ch22）的<b>全域核准者</b>；OWNERS 本身是一種<b>文件</b>（沿樹往上找負責人）；新專案<b>放一個新 OWNERS 就成立</b>，無需中央登記。已穩定擴展二十年。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">效益</span> Code Review Benefits <span class="en2">六項效益</span></h3>
+      <ul class="tight">
+        <li><b>正確性：</b>多一雙眼睛確認做到所宣稱的事；IBM 研究指出越早發現缺陷越省時——<b>但前提是流程必須輕量</b>。作者享有 deference，審查者只在能改善可理解性/功能時才提替代。<b>令人意外：正確性並非首要效益。</b></li>
+        <li><b>可理解性：</b>第一次有「作者以外的人」給<b>不受作者偏誤影響</b>的回饋；<b>程式被讀遠多於被寫</b>。對可理解性提問用「<b>顧客永遠是對的</b>」——你現在的疑問未來會放大許多倍。正確性＋可理解性＝LGTM 兩大判準。</li>
+        <li><b>一致性：</b>規模化下你的程式會被別人依賴、重構（甚至工具）；一致＋簡單更易被工具更新。這就是 <b>LGTM 與 readability 分離</b>的原因（Java 程式需「Java readability」核准）。</li>
+        <li><b>心理與文化：</b>強化「<b>程式不是『你的』</b>」；流程當「壞人」、審查者當「好人」（工具就叫 Critique）；提供 validation 對抗冒牌者症候群；發起審查逼作者「把 ducks 排好隊」。</li>
+        <li><b>知識分享：</b><b>最被低估</b>的效益。資訊雙向流動；「<b>工程師未必讀每封 email，但傾向回應每個寄來的 code review</b>」——及時、可行動、跨時區跨專案。</li>
+        <li><b>歷史紀錄：</b>每次變更都進庫，審查本身成為可考古的歷史——調出某模式何時被引入、當時那次審查。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">實務</span> Code Review Best Practices <span class="en2">讓流程能擴展</span></h3>
+      <div class="claim">審查的摩擦與延遲<b>多半是實作方式的問題，而非審查本身</b>。保持<b>敏捷、快速</b>才能擴展。</div>
+      <ul class="tight">
+        <li><b>有禮且專業：</b>批評嚴守專業範疇；尊重作者做法；<b>24 個工作小時內</b>回饋；<b>別擠牙膏式</b>給意見。作者也要專業——「<b>你不是你的程式碼</b>」，每個留言當 TODO，不同意用 <b>PTAL</b>（請再看一下）。</li>
+        <li><b>寫小變更：</b>保持敏捷<b>最重要</b>的一條，<b>約 200 行</b>為界；多數<b>約一天內</b>獲初步回饋、<b>約 35% 只動一個檔案</b>；讓「一人審查」與「易回滾」成為可能。當成<b>最佳化</b>，允許偶爾的大變更。</li>
+        <li><b>寫好變更說明：</b><b>第一行是黃金地段</b>（工具摘要、email 主旨、Code Search 歷史那行）；說清「改什麼、為什麼」——「Bug fix」毫無幫助。描述是歷史紀錄。</li>
+        <li><b>審查者降到最低：</b>多數<b>剛好一人</b>。「<b>最重要的是第一個 LGTM</b>，後續邊際效益遞減，成本很快超過價值」；確需多人時各自聚焦不同面向。</li>
+        <li><b>能自動化就自動化：</b>用 <b>presubmit</b>（提交前檢查）在寄給審查者前攔下問題、退回作者先修，讓人專注在比格式更重要的事（見 ch20）。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">分類</span> Types of Code Reviews <span class="en2">四種類型，不同力道</span></h3>
+      <ul class="tight">
+        <li><b>Greenfield（全新程式）：</b>最不常見、卻<b>最該嚴審</b>——評估「能否經得起時間與規模」最重要的時機。確認 API 符合議定設計、完整測試、有 owner（常先審一個 OWNERS 檔）、足夠註解、納入 CI（ch23）。</li>
+        <li><b>行為變更／改良／最佳化：</b>多數變更屬此。判準：<b>必要嗎？改善了程式碼庫嗎？</b>（<b>最棒的修改有些其實是刪除！</b>）行為變更要連帶修測試；最佳化可能需附 benchmark。</li>
+        <li><b>修錯與回滾：</b><b>抗拒順手改別的</b>——bug fix 只修這個 bug＋補一個能攔住它的測試。<b>Rollback</b> 數秒可生成但<b>仍需審查</b>；故所有變更都該<b>小而原子化</b>，以免回滾連鎖弄壞下游。</li>
+        <li><b>重構與 LSC：</b>許多變更<b>機器自動產生</b>（作者是機器）但<b>仍要審</b>。審機器變更時<b>只標「你這塊特有」的疑慮，別質疑底層工具／流程</b>（流程已被審過、個別團隊不能否決，否則無法擴展）；也<b>別擴大範圍</b>。</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"At Google, essentially every change is reviewed before being committed, and every engineer is responsible for initiating reviews and reviewing changes."</span><span class="zh">在 Google，基本上每一個變更在提交前都會被審查；而每位工程師都有責任去發起審查、也去審查別人的變更。</span><div class="note">開章定義 Google 版 code review 的兩個極端特徵——普遍且雙向。</div></blockquote>
+    <blockquote class="q"><span class="en">"It's important to remember (and accept) that code itself is a liability."</span><span class="zh">要記得（並接受）一件事：程式碼本身就是一項負債。</span><div class="note">Code Is a Liability——像飛機的燃油，有重量、是維護成本；重複碼比沒有更糟。</div></blockquote>
+    <blockquote class="q"><span class="en">"The short answer is scale. Separating the three roles adds flexibility to the code review process."</span><span class="zh">簡短的答案是：規模。把三個角色拆開，為審查流程帶來了彈性。</span><div class="note">回答「為何不讓一人包辦三種審查」——三個權限位元可任意組合，正是擴展的設計。</div></blockquote>
+    <blockquote class="q"><span class="en">"An engineer may not read every email sent to them, but they tend to respond to every code review sent."</span><span class="zh">工程師未必會讀每一封寄給他的 email，但他們傾向回應每一個寄來的程式碼審查。</span><div class="note">Knowledge Sharing——code review 是知識傳遞的絕佳載體，及時又可行動。</div></blockquote>
+    <blockquote class="q"><span class="en">"Remember that you are not your code, and that this change you propose is not 'yours' but the team's."</span><span class="zh">記住：你不是你的程式碼；你提出的這個變更不是「你的」，而是團隊的。</span><div class="note">Be Polite and Professional——把程式與自我分離，是讓審查不情緒化的心理基礎。</div></blockquote>
+    <blockquote class="q"><span class="en">"The most important LGTM is the first one, and subsequent ones don't add as much as you might think to the equation."</span><span class="zh">最重要的是第一個 LGTM；後續那些，並不如你想像的那樣為這道方程式加分。</span><div class="note">Keep Reviewers to a Minimum——多審查者邊際效益遞減，這是讓審查能規模化的節制。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Precommit Review（提交前審查）</span><br>程式進庫前必須先被審。Google 對幾乎所有變更（不論大小）都強制執行，是少數的全面性流程之一。</div>
+      <div class="kw"><span class="term">LGTM（looks good to me）</span><br>審查者對「正確性＋可理解性」的同意，是一個必要的權限位元；預設只需一個。</div>
+      <div class="kw"><span class="term">三個批准位元（The three approval bits）</span><br>LGTM、owner approval、readability。可由一人或多人扮演、任意組合，拆開是為了彈性與規模。</div>
+      <div class="kw"><span class="term">OWNERS 檔（OWNERS file）</span><br>列出某目錄及子目錄負責人；階層式相加、解析到個人。讓「誰負責」沿目錄樹一查就到，新專案放一個就成立。</div>
+      <div class="kw"><span class="term">Ownership / Stewardship（擁有權／受託管理）</span><br>不是「佔有」程式碼，而是以公司最大利益看顧某段程式碼的責任（作者自承「stewards」是更好的詞）。</div>
+      <div class="kw"><span class="term">Code Is a Liability（程式碼是負債）</span><br>程式本身是維護成本而非資產；動筆前先確認功能值得，重複碼甚至比沒有更糟。</div>
+      <div class="kw"><span class="term">Readability（可讀性認證）</span><br>經該語言可讀性訓練取得、能核准「符合語言風格與最佳實務」的資格；與 LGTM 分離，專責一致性與可維護性。</div>
+      <div class="kw"><span class="term">Small Changes（小變更）</span><br>保持審查敏捷最重要的實務，約以 200 行為界；多數一天內獲初步回饋、約 35% 只動一檔；讓「一人審查」與「易回滾」成為可能。</div>
+      <div class="kw"><span class="term">PTAL（please take another look）</span><br>作者不同意審查者時，提出替代方案並請對方再看一次的禮貌用語，用來保持討論文明。</div>
+      <div class="kw"><span class="term">Presubmit（提交前檢查）</span><br>變更送審時自動跑的靜態分析／格式檢查，在寄給審查者前先攔問題、退回作者，讓人專注在更重要的事。</div>
+      <div class="kw"><span class="term">Rollback（回滾）</span><br>撤銷前一變更、回到已知狀態的變更；數秒可生成但仍需審查。故所有變更都應小而原子化。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你團隊把 code review 的價值主要押在「抓 bug」上嗎？若 Google 說正確性<b>不是</b>首要效益，那你們從審查得到的<b>可理解性、一致性、知識分享、歷史紀錄</b>有被認真對待嗎？下次寫留言時，你會不會多問一句「半年後的人讀得懂嗎」？</li>
+      <li>把你最近送審的變更量一量行數：有多少超過約 200 行？哪些其實可以<b>切成數個小而原子化的變更</b>？回想一次「為了等大 review 而卡住後續工作」——小變更能不能根治它？</li>
+      <li>你們的審查需要幾個人點頭才放行？對照「<b>最重要的是第一個 LGTM</b>」：你們是不是在用「找一群人取得一致同意」換安心，卻付出遞延與遞減效益？哪些變更其實一人審就夠？</li>
+      <li>套用「<b>三個批准位元</b>」想像你的團隊：你們有沒有把「正確性」「這塊程式碼庫的擁有權」「語言風格一致性」<b>混成一團、由同一種人一次審完</b>？拆開會不會讓 intern 與資深工程師都更好走？你們的 <span class="mono">OWNERS</span> 清楚嗎？</li>
+      <li>你修 bug 時會不會「順手」改其他東西？回想一次因此<b>難以回滾或回歸測試</b>的痛。你能不能養成「bug fix 只修這個 bug＋補一個能攔住它的測試」的紀律？對照「程式碼是負債」——你上次審查時，有沒有想過「<b>最好的修改其實是刪除</b>」？</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— 規則的「社會性執行」主要靠 code review 落實；本章與第 8 章互為「規範 ↔ 落實」，readability 是交會點。</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— 審查是知識分享「最被低估」的載體；readability 認證、師徒式回饋、心理安全感都直接呼應第 3 章。</span></div>
+      <div class="chip"><a href="ch19.html">ch19 Critique: Google's Code Review Tool</a> <span class="rel">— 本章談「流程」，第 19 章談支撐流程的「工具」Critique；兩者一體兩面。</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— 樹狀程式碼庫與階層式 OWNERS、precommit 模型、回滾的原子性，都建立在版本控制設計之上。</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— presubmit／自動靜態分析把正確性與格式檢查左移，讓人類審查者專注在更重要的事。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— 機器產生的 LSC「仍需審查」但「只挑你這塊特有的問題」；root OWNERS 可當全域核准者。</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— greenfield 與 behavioral 變更都要求「測試齊全、假設改變時測試會失敗」，bug fix 要補能攔住錯的測試。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch08.html">← 上一章：Style Guides and Rules</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch10.html">下一章：Documentation →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes</div>
+    <div class="ch-no">CHAPTER 09</div>
+    <h1 class="title">Code Review</h1>
+    <div class="title-zh">The glue that connects engineers — and every other process</div>
+    <div class="meta-row">
+      <span class="badge">by Tom Manshreck & Caitlin Sadowski</span>
+      <span class="badge">PDF p.193–212</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Code review acts as the glue connecting engineers with one another."</span>
+      <span class="zh">Code review is the connective tissue — testing, static analysis, and CI all hang off it.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>Code review is "a process in which code is reviewed by someone other than the author, often before the introduction of that code into a codebase." Google's version is unusually thorough: <b>essentially every change, no matter how small, is reviewed before being committed (a precommit review)</b>, and every engineer both initiates and performs reviews. This chapter is about the <b>process</b>, not the tool — Critique gets its own chapter (ch19).</p>
+      <p>The end goal is another engineer's <b>LGTM ("looks good to me")</b>. But Google splits "approval" into <b>three independent permission bits</b>: ① an <b>LGTM</b> (correct and comprehensible); ② <b>code-owner approval</b> (appropriate for this part of the codebase); ③ <b>readability</b> approval (conforms to the language's style). One person often plays all three, but keeping them separable is what makes review <b>flexible *and* able to scale</b> — "why not one all-powerful reviewer? The short answer is scale."</p>
+      <p>Review yields six benefits: <b>correctness, comprehension, consistency, collective ownership, knowledge sharing, and a historical record.</b> Strikingly, <b>correctness is not the primary benefit</b> — whether code stays understandable and maintainable matters more, because <b>code is read far more than written.</b> Then the practices that let it scale: <b>be polite and professional, write small changes (~200 lines), write good descriptions, keep reviewers to a minimum (usually exactly one), and automate where possible.</b> One root idea: <b>code is a liability.</b></p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You treat review as "the bug-catching gate."</b> This flips that: catching correctness is <b>not</b> the benefit Google values most. The real payoff is <b>comprehension, consistency, knowledge sharing, and a historical record</b> — all serving time and scale. Internalize it and your comments change.</div>
+      <div class="why-card"><b>Your reviews are slow and painful.</b> The chapter pins "slow" on the <b>implementation</b>, not review itself: <b>write small changes</b> (~200 lines; ~35% touch one file), <b>feedback within 24 working hours</b>, <b>don't review piecemeal</b>, <b>keep reviewers to one</b> ("the most important LGTM is the first one").</div>
+      <div class="why-card"><b>What do "ownership" and "readability" actually solve?</b> The answer is <b>scale</b>: splitting LGTM / owner / readability lets an intern and a tech lead run the same process by different paths; <span class="mono">OWNERS</span> files answer "who's responsible" by walking the tree — no central registry.</div>
+      <div class="why-card"><b>Different changes need different review effort.</b> Greenfield gets the strictest look; a bug fix stays focused (don't fix unrelated things); a machine-generated LSC gets only comments specific to <b>your</b> code (you can't veto the process). Putting effort where it belongs is how review scales.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">FLOW</span> Code Review Flow</h3>
+      <div class="claim">Google does <b>precommit review</b>. The end goal is an <b>LGTM</b> — a *necessary* permission bit, but it combines with the owner and readability bits before a commit is allowed.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 248" role="img" aria-label="Review flow: upload snapshot and diff, mail reviewers, comment-revise loop, LGTM, commit">
+          <defs><marker id="a9e" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--accent)"/></marker></defs>
+          <rect x="20" y="40" width="150" height="62" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="95" y="64" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">① Write change</text>
+          <text x="95" y="84" class="fig-mut" font-size="11" text-anchor="middle">upload snapshot = patch+desc</text>
+          <rect x="200" y="40" width="150" height="62" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="275" y="64" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">② Self-review + mail</text>
+          <text x="275" y="84" class="fig-mut" font-size="11" text-anchor="middle">produces diff, to reviewers</text>
+          <rect x="380" y="40" width="150" height="62" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="455" y="64" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">③ Reviewers comment</text>
+          <text x="455" y="84" class="fig-mut" font-size="11" text-anchor="middle">on the diff / FYI</text>
+          <rect x="380" y="150" width="150" height="62" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="455" y="174" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">④ Author revises</text>
+          <text x="455" y="194" class="fig-mut" font-size="11" text-anchor="middle">new snapshot, replies</text>
+          <rect x="560" y="40" width="140" height="62" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="630" y="64" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">⑤ LGTM</text>
+          <text x="630" y="84" class="fig-mut" font-size="11" text-anchor="middle">one required by default</text>
+          <rect x="560" y="150" width="140" height="62" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="630" y="174" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">⑥ Commit</text>
+          <text x="630" y="194" class="fig-mut" font-size="11" text-anchor="middle">resolve comments + approval</text>
+          <path d="M170 71 L196 71" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#a9e)"/>
+          <path d="M350 71 L376 71" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#a9e)"/>
+          <path d="M530 71 L556 71" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#a9e)"/>
+          <path d="M630 102 L630 146" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#a9e)"/>
+          <path d="M445 102 L445 146" stroke="var(--theme-trade)" stroke-width="2" fill="none" marker-end="url(#a9e)"/>
+          <path d="M465 146 L465 104" stroke="var(--theme-trade)" stroke-width="2" fill="none" marker-end="url(#a9e)"/>
+          <text x="455" y="128" class="fig-mut" font-size="10.5" text-anchor="middle" fill="var(--theme-trade)">repeats</text>
+          <text x="360" y="22" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-time)">precommit: reviewed before it can enter the codebase</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the six-step precommit flow: upload snapshot/diff → self-review + mail → comment↔revise loop → LGTM → resolve comments and get approval → commit.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">MINDSET</span> Code Is a Liability</h3>
+      <div class="claim"><b>Code itself is a liability, not an asset.</b> Even a necessary one is a maintenance task for someone down the line — like an airplane's fuel: it has weight. Confirm a feature is warranted before writing it; duplicated code can be worse than none. "<b>If you're writing it from scratch, you're doing it wrong!</b>"</div>
+      <div class="impl"><b>Takeaway:</b> a review is <b>not</b> the place to rehash design. Design belongs in design/API reviews; a review of brand-new code shouldn't surprise, and review isn't a chance to relitigate the past.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">CORE</span> The Three Approval Bits</h3>
+      <div class="claim">Three aspects require "approval" for any change — three bits that <b>combine freely</b>, played by one or more people.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="Three approval bits: LGTM, owner approval, readability, combining to allow commit">
+          <defs><marker id="b9e" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-scale)"/></marker></defs>
+          <rect x="20" y="34" width="210" height="78" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="125" y="58" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--accent)">① LGTM</text>
+          <text x="125" y="80" class="fig-mut" font-size="11.5" text-anchor="middle">correctness + comprehension</text>
+          <text x="125" y="98" class="fig-mut" font-size="11" text-anchor="middle">from another engineer</text>
+          <rect x="20" y="124" width="210" height="78" rx="11" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="125" y="148" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">② Owner approval</text>
+          <text x="125" y="170" class="fig-mut" font-size="11.5" text-anchor="middle">fit for this part of the codebase</text>
+          <text x="125" y="188" class="fig-mut" font-size="11" text-anchor="middle">OWNERS file · gatekeeper</text>
+          <rect x="250" y="79" width="210" height="78" rx="11" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+          <text x="355" y="103" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-time)">③ Readability</text>
+          <text x="355" y="125" class="fig-mut" font-size="11.5" text-anchor="middle">conforms to language style</text>
+          <text x="355" y="143" class="fig-mut" font-size="11" text-anchor="middle">company-wide pool</text>
+          <rect x="510" y="79" width="190" height="78" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2.5"/>
+          <text x="605" y="108" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">approved → commit</text>
+          <text x="605" y="132" class="fig-mut" font-size="11" text-anchor="middle">bits may be implicit, combine freely</text>
+          <path d="M230 73 L300 100" stroke="var(--theme-scale)" stroke-width="1.8" fill="none"/>
+          <path d="M230 163 L300 136" stroke="var(--theme-scale)" stroke-width="1.8" fill="none"/>
+          <path d="M460 118 L506 118" stroke="var(--theme-scale)" stroke-width="2.4" fill="none" marker-end="url(#b9e)"/>
+          <text x="360" y="232" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">"Why not one all-powerful reviewer? The short answer is scale" — splitting adds flexibility</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the three approval bits: LGTM (correctness/comprehension) + owner approval (fit for this part) + readability (language style). Played by one or more people, combining freely — split for flexibility and scale.</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Two-step norm:</b> most reviews needing more than one approval get a peer's LGTM first (correctness), then owner/readability approval (the owner cares about "hard to maintain? technical debt? do we have the expertise?").</li>
+        <li><b>Flexibility:</b> a tech lead who owns the project and has readability needs only one more LGTM; an intern sending the same change needs approval from an owner with readability.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">OWNERSHIP</span> Ownership <span class="en2">OWNERS files · stewardship (by Hyrum Wright)</span></h3>
+      <div class="claim">Small teams grant everyone everything; as the team grows it <b>fails to scale</b>. Google records "who has what knowledge and responsibility" via <b>ownership</b> — <b>not *possession* of code but *stewardship*</b> (the author admits "stewards" was the better word).</div>
+      <ul class="tight">
+        <li><b>Mechanism:</b> <span class="mono">OWNERS</span> files list the people responsible for a directory and its children; <b>hierarchically additive</b> (a file is owned by the union of all OWNERS above it), resolving to individuals; keep lists <b>small and focused</b>.</li>
+        <li><b>Underpins other practices:</b> the root OWNERS set acts as <b>global approvers</b> for LSCs (ch22); OWNERS double as <b>documentation</b> (walk up the tree); a new project just <b>adds a new OWNERS file</b> — no central registry. Scaled well for two decades.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">BENEFITS</span> Code Review Benefits <span class="en2">the six</span></h3>
+      <ul class="tight">
+        <li><b>Correctness:</b> a second set of eyes; finding defects earlier costs less — <b>but only if the process stays lightweight</b>. Authors get deference; reviewers propose alternatives only to improve comprehension/functionality. <b>Surprisingly, correctness is not the primary benefit.</b></li>
+        <li><b>Comprehension:</b> the first feedback <b>unbiased by the author's perspective</b>; <b>code is read far more than written</b>. Treat comprehension questions by "<b>the customer is always right</b>" — every question now multiplies over time. Correctness + comprehension = the two LGTM criteria.</li>
+        <li><b>Consistency:</b> at scale your code is depended on and refactored by others (and tools); consistent + simple is easier for tools to update. Hence <b>LGTM is separated from readability</b> (Java code needs a "Java readability" approver).</li>
+        <li><b>Psychological & cultural:</b> reinforces "<b>code is not 'yours'</b>"; the process is the "bad cop" so the reviewer stays the "good cop" (the tool is called Critique); offers validation against imposter syndrome; initiating a review makes you "get your ducks in a row."</li>
+        <li><b>Knowledge sharing:</b> the <b>most underrated</b> benefit. Information flows both ways; "<b>an engineer may not read every email, but they tend to respond to every code review sent</b>" — timely, actionable, cross-team.</li>
+        <li><b>Historical record:</b> each change joins the codebase, so review is a record you can do "archeology" on — when a pattern was introduced and the original review.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">PRACTICES</span> Code Review Best Practices <span class="en2">keep it scalable</span></h3>
+      <div class="claim">Friction and delay are <b>usually the chosen implementation, not review itself</b>. Keep it <b>nimble and quick</b> to scale.</div>
+      <ul class="tight">
+        <li><b>Be polite and professional:</b> keep criticism strictly professional; defer to authors' approaches; feedback within <b>24 working hours</b>; <b>don't review piecemeal</b>. Authors too — "<b>you are not your code</b>," treat each comment as a TODO, use <b>PTAL</b> ("please take another look") when you disagree.</li>
+        <li><b>Write small changes:</b> the <b>most important</b> practice for nimble review, bounded at <b>~200 lines</b>; most get initial feedback <b>within a day</b>, <b>~35% touch one file</b>; what makes one-reviewer review and easy rollback possible. Treat "prefer small" as an <b>optimization</b>, allowing occasional larger changes.</li>
+        <li><b>Write good descriptions:</b> the <b>first line is prime real estate</b> (tool summary, email subject, Code Search history line); say <b>what changed and why</b> — "Bug fix" helps no one. The description is the historical record.</li>
+        <li><b>Keep reviewers to a minimum:</b> most are <b>exactly one</b>. "<b>The most important LGTM is the first one</b>; subsequent ones hit diminishing returns; cost soon outweighs value." When multiple are needed, each focuses on a different aspect.</li>
+        <li><b>Automate where possible:</b> use <b>presubmits</b> to catch problems before a change reaches a reviewer (avoiding an awkward email), freeing reviewers for things more important than formatting (see ch20).</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">TYPES</span> Types of Code Reviews <span class="en2">four buckets, different effort</span></h3>
+      <ul class="tight">
+        <li><b>Greenfield (brand-new code):</b> least common, <b>most important to review hard</b> — the best time to judge resilience to time and scale. Ensure the API matches an agreed design, is fully tested, has owners (often a single OWNERS file first), is well-commented, and enters CI (ch23).</li>
+        <li><b>Behavioral changes / improvements / optimizations:</b> most changes. Criteria: <b>is it necessary, does it improve the codebase?</b> (<b>Some of the best changes are deletions!</b>) Behavioral changes need revised tests; optimizations may need benchmarks.</li>
+        <li><b>Bug fixes and rollbacks:</b> <b>resist fixing unrelated things</b> — fix only this bug + a test that catches it. A <b>rollback</b> is created in seconds but <b>still requires review</b>; so all changes should be <b>small and atomic</b> to avoid cascading breakage.</li>
+        <li><b>Refactorings and LSCs:</b> many changes are <b>machine-generated</b> (the author is a machine) but <b>still require review</b>. Review them by <b>flagging only concerns specific to your code, not the underlying tool/process</b> (already reviewed; teams can't veto it, or it couldn't scale); and <b>don't expand scope</b>.</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"At Google, essentially every change is reviewed before being committed, and every engineer is responsible for initiating reviews and reviewing changes."</span><span class="zh">Review is universal (almost no exceptions) and two-way (everyone is both author and reviewer).</span><div class="note">The opening definition of Google's flavor of code review.</div></blockquote>
+    <blockquote class="q"><span class="en">"It's important to remember (and accept) that code itself is a liability."</span><span class="zh">Code is a maintenance cost, like an airplane's fuel — confirm a feature is warranted before writing it; duplicated code is worse than none.</span><div class="note">Code Is a Liability.</div></blockquote>
+    <blockquote class="q"><span class="en">"The short answer is scale. Separating the three roles adds flexibility to the code review process."</span><span class="zh">The three permission bits combine freely — that's what lets review scale to Google's size.</span><div class="note">Answering "why not one all-powerful reviewer."</div></blockquote>
+    <blockquote class="q"><span class="en">"An engineer may not read every email sent to them, but they tend to respond to every code review sent."</span><span class="zh">Review is an unusually reliable channel for knowledge transfer — timely, actionable, cross-team.</span><div class="note">Knowledge Sharing.</div></blockquote>
+    <blockquote class="q"><span class="en">"Remember that you are not your code, and that this change you propose is not 'yours' but the team's."</span><span class="zh">Separating ego from code is the basis for accepting criticism; once submitted, code belongs to no individual.</span><div class="note">Be Polite and Professional.</div></blockquote>
+    <blockquote class="q"><span class="en">"The most important LGTM is the first one, and subsequent ones don't add as much as you might think to the equation."</span><span class="zh">Extra reviewers hit diminishing returns; the cost soon outweighs the value — keep reviewers to a minimum.</span><div class="note">Keep Reviewers to a Minimum.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Precommit review</span><br>Code must be reviewed before entering the codebase. Mandated for almost every change regardless of size — one of Google's few blanket processes.</div>
+      <div class="kw"><span class="term">LGTM ("looks good to me")</span><br>A reviewer's agreement on correctness + comprehension; a necessary permission bit. Only one is required by default.</div>
+      <div class="kw"><span class="term">The three approval bits</span><br>LGTM, owner approval, readability. Played by one or more people, combined freely; split for flexibility and scale.</div>
+      <div class="kw"><span class="term">OWNERS file</span><br>Lists the people responsible for a directory and its children; hierarchically additive, resolving to individuals. Answers "who's responsible" by walking the tree; a new project just adds one.</div>
+      <div class="kw"><span class="term">Ownership / stewardship</span><br>Not *possession* of code but responsibility to steward a section in the company's interest (the author admits "stewards" was the better word).</div>
+      <div class="kw"><span class="term">Code is a liability</span><br>Code is a maintenance cost, not an asset; confirm a feature is warranted first, and duplicated code can be worse than none.</div>
+      <div class="kw"><span class="term">Readability</span><br>A certification, earned via that language's readability training, to approve that code follows the language's style; separated from LGTM, dedicated to consistency and maintainability.</div>
+      <div class="kw"><span class="term">Small changes</span><br>The most important practice for nimble review, bounded at ~200 lines; most get initial feedback within a day, ~35% touch one file; enables one-reviewer review and easy rollback.</div>
+      <div class="kw"><span class="term">PTAL ("please take another look")</span><br>A polite cue from a disagreeing author offering an alternative and asking the reviewer to look again — keeps debates civil.</div>
+      <div class="kw"><span class="term">Presubmit</span><br>Automated static-analysis/format checks run when a change is sent, catching problems before they reach a reviewer.</div>
+      <div class="kw"><span class="term">Rollback</span><br>A change that undoes a prior one to a known state; created in seconds but still requires review. Hence all changes should be small and atomic.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Does your team pin review's value mostly on "catching bugs"? If correctness is <b>not</b> the primary benefit, are you taking <b>comprehension, consistency, knowledge sharing, and the historical record</b> seriously? Next comment, will you also ask "can someone read this in six months"?</li>
+      <li>Measure your recent changes' line counts: how many exceed ~200 lines? Which could be <b>split into small, atomic changes</b>? Recall follow-on work stalling on a big review — would small changes have cured it?</li>
+      <li>How many approvals do your changes need to land? Against "<b>the most important LGTM is the first one</b>": are you buying reassurance with a group's unanimous consent at the cost of delay and diminishing returns? Which changes really need only one reviewer?</li>
+      <li>Apply the <b>three approval bits</b>: do you lump "correctness," "ownership of this codebase," and "language-style consistency" into one review by one kind of person? Would splitting them ease the path for interns and seniors alike? Are your <span class="mono">OWNERS</span> clear?</li>
+      <li>Do you "while I'm here" fix unrelated things in a bug fix? Recall the pain of a change then <b>hard to roll back or regression-test</b>. Can you build the discipline of "fix only this bug + add a test that catches it"? Against "code is a liability" — did your last review consider that <b>the best change might be a deletion</b>?</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— the "social enforcement" of rules runs mainly through code review; this chapter and Ch.8 are "rules ↔ landing them," meeting at readability.</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— review is the "most underrated" vehicle for knowledge sharing; readability, mentor-style feedback, and psychological safety all echo Ch.3.</span></div>
+      <div class="chip"><a href="ch19.html">ch19 Critique: Google's Code Review Tool</a> <span class="rel">— this chapter is the *process*; Ch.19 is the *tool* (Critique) that supports it — two sides of one coin.</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— the tree-structured codebase, hierarchical OWNERS, the precommit model, and rollback atomicity rest on version-control design.</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— presubmit / automatic static analysis shifts correctness and format checks left, freeing human reviewers for what matters more.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— machine-generated LSCs "still require review" but "only flag concerns specific to your code"; root OWNERS as global approvers.</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— greenfield and behavioral changes demand "full tests that fail when assumptions change," and bug fixes a test that catches the error.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch08.html">← Prev: Style Guides and Rules</a><a class="idx" href="index.html">⌂ Index</a><a href="ch10.html">Next: Documentation →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

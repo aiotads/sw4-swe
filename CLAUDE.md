@@ -112,5 +112,22 @@ d:\ah\swe\
 - [x] ch06 完成（雙語 md+html，inline SVG 重繪 Fig 6-1 取捨三角、Fig 6-2 成功螺旋）。
 - [x] ch07 完成（雙語 md+html，含自製 GSM 三層／QUANTS 五面向 SVG）；**Part II 文化篇 ch02–07 完成**。
 - [x] ch08 完成（雙語 md+html，含自製「一致性階層／執行光譜」SVG）；**進入 Part III 流程篇**。
-- [x] index.html 雙語骨架（純 CSS 中／英切換、進度 8/25）。
-- [ ] ch09–25 量產（一次一章，每章：chNN.md + chNN.en.md + 雙語 chNN.html，並更新 index）。
+- [x] ch09 完成（雙語 md+html，含自製「六步審查流程／三個批准位元」SVG）；正確性非首要效益、程式碼是負債。
+- [x] ch10 完成（雙語 md+html，含自製「文件像程式碼／完整-準確-清晰三角」SVG）；為讀者最佳化、GooWiki 崩壞。
+- [x] ch11 完成（雙語 md+html，inline SVG 重繪 Fig 11-2 巢狀 size／11-3·11-4 金字塔+反模式）；測試支撐改變、size vs scope、Beyoncé Rule。
+- [x] ch12 完成（雙語 md+html，含自製「四種變更矩陣／行為非方法」SVG）；unchanging tests、public API、state not interactions、DAMP not DRY。
+- [x] ch13 完成（雙語 md+html，含自製「seam/DI／偏好序」SVG）；classical vs mockist、prefer realism、fake+contract test、@DoNotMock。
+- [x] ch14 完成（雙語 md+html，含 Fig 14-1 保真度光譜／自製大型測試結構 SVG）；fidelity 首要、SUT 形態、config 故障頭號、A/B diff、十種大型測試。
+- [x] ch15 完成（雙語 md+html，含自製「advisory↔compulsory／三類工具」SVG）；程式碼是負債、hope is not a strategy、為除役而設計。**Part III 流程篇 ch08–15 完成**。
+- [x] ch16 完成（雙語 md+html，含自製「trunk vs dev branch／One-Version」SVG）；**進入 Part IV 工具篇**；Source of Truth、trunk-based、Piper/monorepo、VMR。
+- [x] ch17 完成（雙語 md+html，含自製「五意圖／雙索引」SVG；UI 截圖依 CC BY-NC-ND 改 details 文字描述、不重製）；集中式索引、延遲換算工程時間、sparse n-gram。
+- [x] ch18 完成（雙語 md+html，含自製「task vs artifact／分散式建置」SVG）；Fast&Correct、限制彈性提升生產力、Bazel、ObjFS/Forge、One-Version。
+- [x] ch19 完成（雙語 md+html，含自製「六階段流程／三件式評分」SVG；UI 截圖依 CC BY-NC-ND 改 details 描述）；Simplicity、信任的地基、attention set、GwsQ。
+- [x] ch20 完成（雙語 md+html，含自製「三教訓／工作流整合點」SVG）；effective false positive、開發者幸福、Tricorder、per-project 客製、不發 compiler warning。
+- [x] ch21 完成（雙語 md+html，含 Fig 21-1 鑽石依賴／自製四模型 SVG）；寧可版本控制問題、SemVer over/under-constrain、MVS、Live at Head、匯出依賴。
+- [x] ch22 完成（雙語 md+html，含自製「原子上限縮小→Rosie 分片／TAP train 五步」SVG）；最大原子變更反而縮小、No Haunted Graveyards＝測試、unfunded mandate、cattle vs pets、四階段流程＋全域核准者、scoped_ptr→unique_ptr／RoseHub。
+- [x] ch23 完成（雙語 md+html，含重繪 Fig23-1/2「變更一生/shift left」／自製「TAP 持續測試管線＋Build Cop 回退」SVG）；CI v2、快速回饋迴圈、CB true/green head、CD/RC（設定一起測）、presubmit vs post-submit、mid-air collision、CI is alerting、hermetic/record-replay、TAP/Build Cop/culprit finding、Takeout 四幕、「成本左移」。
+- [x] ch24 完成（雙語 md+html，含自製「faster is safer 小/大批次」／「旗標守護＋發布列車」SVG）；CD/Agile「小批次→高品質」、velocity 是團隊運動、別放慢而要投資架構、flag-guarding 解耦、release train、沒有完美 binary、ship only what's used、A/B 部署、Always Be Deploying、保護產品不受開發者傷害。
+- [x] ch25 完成（雙語 md+html，含自製「管理運算光譜：寵物→VM→容器牛→serverless」／「Borg batch 填 serving slack」SVG）；CaaS、cattle vs pets、雜務自動化→自動排程→容器化→rightsizing、為失敗而設計、batch vs serving、管理狀態、service discovery/idempotency、容器作為抽象、Hyrum's Law（PID 32,000）、One Service to Rule Them All、serverless 取捨、lock-in。
+- [x] **🎉 全書 25 章雙語化全部完成（25/25、進度條 100%）；五大 Part 皆涵蓋。** index.html 標記全書完成。
+- [ ]（選用收尾）Afterword 全書回顧文字、全書一致性校對、GitHub Pages 發佈確認。

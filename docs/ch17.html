@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 17 章 Code Search ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  details.fig-orig{margin:14px 0; background:#12151f; border:1px solid var(--border); border-radius:10px; padding:6px 16px}
+  details.fig-orig summary{cursor:pointer; color:var(--accent); font-size:.9rem; font-weight:600; padding:8px 0}
+  details.fig-orig p{color:var(--muted); font-size:.88rem; margin:8px 0}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具</div>
+    <div class="ch-no">CHAPTER 17</div>
+    <h1 class="title">Code Search</h1>
+    <div class="title-zh">程式碼搜尋</div>
+    <div class="meta-row">
+      <span class="badge">作者 Alexander Neubeck、Ben St. John</span>
+      <span class="badge">PDF p.379–398</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Understanding code is key to developing and maintaining it … investing in understanding code will yield dividends."</span>
+      <span class="zh">理解程式碼，是開發與維護它的關鍵；投資於「讓人理解程式碼」會帶來回報。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p><b>Code Search</b> 是 Google 瀏覽與搜尋程式碼的工具（前端 UI＋雲端後端），<b>直接源於「擴展到程式碼庫規模」的需求</b>。整合 <b>Kythe</b>（cross-reference、跳到定義）後從「搜尋」轉向「瀏覽」，並以 <b>「用一次點擊回答關於程式碼的下一個問題」</b> 為原則。與 IDE 不同，它為「<b>大規模地讀、理解、探索</b>」而最佳化。</p>
+      <p>工程師用它回答五類意圖：<b>How（約 1/3，看範例）、What（約 1/4，瀏覽）、Where（16%）、Why（16%，除錯）、Who/When（8%）</b>。<b>為何另做 web 工具？</b> ①Scale：整份程式碼庫塞不進單機；集中式索引<b>做一次、人人受惠、增量更新（線性成本）</b>，IDE 各自建索引是<b>二次方</b>。②零設定全域視野。③特化（不是 IDE 反而是優點）。④與其他工具整合（Code Search 連結＝程式的 canonical「位置」）。</p>
+      <p>實作有兩個索引：<b>即時搜尋索引（增量、中位 &lt; 10 秒）</b> 與 <b>每日 cross-reference 索引（Kythe、無法增量）</b>。關鍵數字：每天逾百萬查詢，<b>每次多 1 秒 ≈ 每天 35 個工程師閒置</b> →鎖定 sub-200ms；索引 1.5TB、200 qps、中位搜尋 &lt; 50ms；trigram → suffix array → <b>sparse n-gram（比暴力解快 500 倍）</b>。取捨圍繞 <b>completeness vs 速度/資源/信任</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你以為「程式碼搜尋」不就是 grep ＋ IDE 索引？</b> 在 Google 規模下整份程式碼庫<b>塞不進單機</b>、IDE 各自建索引是<b>二次方</b>擴展。「集中式索引做一次、人人受惠」會讓你重評你的搜尋/索引基礎設施。</div>
+      <div class="why-card"><b>你想知道工程師在搜尋什麼。</b> 五類意圖中最大宗是「<b>看別人怎麼做的範例（約 1/3）</b>」。提醒你：理解程式（而非只找到它）才是生產力核心，值得投資。</div>
+      <div class="why-card"><b>你在為互動式工具設效能目標。</b> 一把可量化的尺：<b>每次多 1 秒 ≈ 每天 35 個工程師閒置</b>、<b>&lt;200ms 才 responsive、1 秒注意力飄、10 秒 context switch</b>。把延遲換算成工程時間。</div>
+      <div class="why-card"><b>你在做會被全公司用的工具。</b> 成功心法：成為<b>其他工具的平台與 canonical「位置」</b>、<b>讓人知道它存在（Noogler 訓練）</b>、先有「夠用但有限」的版本也能被信任——只要限制被理解。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">意圖</span> How Do Googlers Use Code Search? <span class="en2">五類搜尋意圖</span></h3>
+      <div class="claim">工程師用它回答關於程式碼的問題；依研究，意圖可歸五類——最大宗是「<b>看別人怎麼做的範例</b>」。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 200" role="img" aria-label="Code Search 五類搜尋意圖佔比：How 33%、What 25%、Where 16%、Why 16%、Who/When 8%">
+          <g font-size="12">
+            <rect x="40" y="60" width="231" height="40" rx="6" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="155" y="85" class="fig-txt" font-weight="700" text-anchor="middle">How 33%</text>
+            <rect x="40" y="108" width="175" height="34" rx="6" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="127" y="130" class="fig-txt" text-anchor="middle">What 25%</text>
+            <rect x="223" y="108" width="112" height="34" rx="6" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.8"/>
+            <text x="279" y="130" class="fig-txt" text-anchor="middle">Where 16%</text>
+            <rect x="343" y="108" width="112" height="34" rx="6" fill="#12151f" stroke="var(--theme-trade)" stroke-width="1.8"/>
+            <text x="399" y="130" class="fig-txt" text-anchor="middle">Why 16%</text>
+            <rect x="463" y="108" width="60" height="34" rx="6" fill="#12151f" stroke="var(--muted)" stroke-width="1.6"/>
+            <text x="493" y="130" class="fig-mut" font-size="11" text-anchor="middle">W/W 8%</text>
+          </g>
+          <text x="155" y="48" class="fig-mut" font-size="11" text-anchor="middle">看別人怎麼做的範例（最大宗）</text>
+          <g font-size="10.5" class="fig-mut">
+            <text x="540" y="74">How＝範例（搜尋＋交叉引用）</text>
+            <text x="540" y="94">What＝瀏覽某部分在做什麼</text>
+            <text x="540" y="114">Where＝某資訊/定義在哪</text>
+            <text x="540" y="134">Why＝為何如此行為（除錯）</text>
+            <text x="540" y="154">Who/When＝誰何時加的（blame）</text>
+          </g>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> Code Search 的五類搜尋意圖佔比：How（約 1/3，看範例）、What（約 1/4，瀏覽）、Where（16%）、Why（16%，除錯）、Who/When（8%）。最大宗是「看別人怎麼做的範例」——理解程式而非只找到它，才是生產力核心。</figcaption>
+      </figure>
+      <details class="fig-orig">
+        <summary>原書 Figure 17-1～17-4（產品 UI 截圖）說明</summary>
+        <p>原書四張圖皆為 Code Search 的產品 UI 截圖：<b>Fig 17-1</b> Code Search 主 UI（搜尋框＋結果片段＋可點擊 token）；<b>Fig 17-2</b> log viewer 整合（log 行連回產生它的程式）；<b>Fig 17-3</b> stack frame 整合（崩潰堆疊連回原始碼，可綁定 build 當時的 revision）；<b>Fig 17-4</b> 文件整合（把 head 的最新實作片段嵌入文件頁）。本筆記依 <code>CC BY-NC-ND</code> 之非改作立場，不重製原始截圖，改以上方自製 SVG 還原其運作邏輯；原圖請見原書。</p>
+      </details>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">為何</span> Why a Separate Web Tool? <span class="en2">為何不用 IDE</span></h3>
+      <ul class="tight">
+        <li><b>Scale：</b>整份程式碼庫塞不進單機；集中式索引<b>做一次、人人受惠、隨提交增量更新（線性成本）</b>，而「每人各自在 IDE 建索引」大致<b>二次方</b>。但 cross-reference 索引無法增量（任何變更可能影響整庫），故 Kythe <b>每天</b>才建一次（Chromium 約 6 小時）。</li>
+        <li><b>零設定全域視野：</b>即時瀏覽整庫 →易找可重用庫與好範例；無需專案描述/build 環境。</li>
+        <li><b>特化（不是 IDE 反而是優點）：</b>沒有編輯游標，<b>每次點擊都能有意義</b>（跳定義、看用處）；UX 純為瀏覽與理解最佳化。</li>
+        <li><b>與其他工具整合：</b>Code Search 連結＝程式的 canonical「位置」——log viewer、stack frame、編譯錯誤、codelab/文件都連回它（連未提交 workspace 程式都可）；也暴露 API、有 vim/emacs/IntelliJ 外掛。</li>
+      </ul>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="兩個索引：即時搜尋索引（增量、<10秒）與每日 cross-reference 索引（Kythe、無法增量）">
+          <defs><marker id="i17" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <rect x="30" y="40" width="200" height="44" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="130" y="60" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">每次提交</text>
+          <text x="130" y="78" class="fig-mut" font-size="10.5" text-anchor="middle">只重索引被動到的檔</text>
+          <rect x="290" y="34" width="200" height="56" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2.2"/>
+          <text x="390" y="58" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--accent)">即時搜尋索引</text>
+          <text x="390" y="78" class="fig-mut" font-size="11" text-anchor="middle">增量・線性成本・中位 &lt; 10 秒</text>
+          <path d="M230 62 L286 62" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#i17)"/>
+          <rect x="30" y="130" width="200" height="44" rx="9" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="130" y="150" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">全建置／分析</text>
+          <text x="130" y="168" class="fig-mut" font-size="10.5" text-anchor="middle">任何變更可能影響整庫</text>
+          <rect x="290" y="124" width="200" height="56" rx="10" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.2"/>
+          <text x="390" y="148" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">cross-reference 索引</text>
+          <text x="390" y="168" class="fig-mut" font-size="11" text-anchor="middle">Kythe・無法增量・每日一次</text>
+          <path d="M230 152 L286 152" stroke="var(--theme-trade)" stroke-width="2" fill="none" marker-end="url(#i17)"/>
+          <text x="600" y="90" class="fig-mut" font-size="11" text-anchor="middle">兩者落差＝</text>
+          <text x="600" y="110" class="fig-mut" font-size="11" text-anchor="middle">少數但反覆</text>
+          <text x="600" y="130" class="fig-mut" font-size="11" text-anchor="middle">的困擾來源</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 兩個索引：<b>即時搜尋索引</b>（每次提交只重索引被動到的檔、增量、線性成本、中位 &lt; 10 秒可見）vs <b>cross-reference 索引</b>（Kythe，任何變更可能影響整庫故無法增量、需近乎全建置、每日才建一次）。兩者的落差是少數但反覆出現的困擾來源。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">規模</span> Impact of Scale、Implementation <span class="en2">延遲換算工程時間、sparse n-gram</span></h3>
+      <ul class="tight">
+        <li><b>查詢延遲：</b>每天逾百萬查詢；<b>每次多 1 秒 ≈ 每天 35 個全職工程師閒置</b>，後端只需約 1/10 的人 →約每天 10 萬查詢就是損益兩平。<b>&lt;200ms 才 responsive、1 秒注意力飄、10 秒 context switch</b> →鎖定 sub-200ms。</li>
+        <li><b>索引延遲：</b>寫程式時期待即時索引；中位提交到可見 &lt; 10 秒。除錯生產事故時索引與執行中程式的落差尤其麻煩。</li>
+        <li><b>實作：</b>1.5TB、200 qps、中位搜尋 &lt; 50ms；暴力解需 30 萬核；trigram → suffix array → <b>sparse n-gram（快 500 倍、能答 regex）</b>；沾光 Google 主搜尋堆疊；索引從記憶體搬到 flash；完整歷史只增 2.5 倍。</li>
+        <li><b>排序：</b>query independent（file views、references/priority，離線算）vs query dependent（token/symbol/filename boost，須便宜）；supplemental retrieval；result diversity。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> Selected Trade-Offs <span class="en2">完整性 vs 速度/資源/信任</span></h3>
+      <ul class="tight">
+        <li><b>Repository at Head：</b>可丟二進位/產生 JS 省資源降噪；但丟檔傷<b>信任</b>（無法對沒索引的檔給「結果不完整」回饋）→<b>寧可索引太多</b>。</li>
+        <li><b>All vs Most-Relevant：</b>一般搜尋為速度犧牲完整；但重構/工具需<b>全部結果</b>。解法：按 priority 分片、需要時可取全部（約 1/3 查詢 &lt; 20 筆）。</li>
+        <li><b>Head vs History vs Workspaces：</b>索引 Piper 線性歷史 →可搜任意快照、找被刪程式、依作者搜；過時程式可直接刪除。</li>
+        <li><b>Token vs Substring vs Regex：</b>token 擴展好但對程式碼有意義字元失效；substring（trigram）索引小但召回較低；regex 最強但難建高效索引（可由 substring 近似）。</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Answering the next question about code in a single click."</span><span class="zh">用一次點擊，回答關於程式碼的下一個問題。</span><div class="note">整合 Kythe 後導引開發的原則——把焦點從「搜尋」轉向「瀏覽」。</div></blockquote>
+    <blockquote class="q"><span class="en">"For one million queries, an increase of just one second per search request corresponds to about 35 idle full-time engineers every day."</span><span class="zh">在每天一百萬次查詢的量下，每次搜尋只要多花一秒，就相當於每天有大約 35 個全職工程師在閒置。</span><div class="note">Search Query Latency——把「延遲」換算成「工程時間」，證成 sub-200ms 後端投資。</div></blockquote>
+    <blockquote class="q"><span class="en">"It will be widely used only if it is trusted, and will be trusted only if it indexes all code, gives all results, and gives the desired results first."</span><span class="zh">它要被廣泛使用，前提是被信任；而它要被信任，前提是索引所有程式、給出所有結果、且把想要的結果排在最前面。</span><div class="note">TL;DRs／Completeness 取捨——這正是為何「寧可索引太多」、且要能「取全部結果」。</div></blockquote>
+    <blockquote class="q"><span class="en">"One advantage of Code Search is that it is not an IDE."</span><span class="zh">Code Search 的一個優勢，正在於它不是一個 IDE。</span><div class="note">Specialization——沒有編輯游標，每次點擊都能被賦予意義（跳定義、看用處）。</div></blockquote>
+    <blockquote class="q"><span class="en">"Understanding code is key to developing and maintaining it, and this means that investing in understanding code will yield dividends."</span><span class="zh">理解程式碼，是開發與維護它的關鍵；這意味著，投資於「讓人理解程式碼」會帶來回報。</span><div class="note">Conclusion——全章對小團隊外讀者最重要的單一洞見。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Code Search</span><br>Google 瀏覽與搜尋程式碼的工具（前端 UI＋雲端後端）；為「大規模地讀、理解、探索」而最佳化，非 IDE。</div>
+      <div class="kw"><span class="term">Kythe</span><br>編譯器型索引服務，提供 cross-reference（某符號所有使用處），用完整 build 資訊消歧義；其整合讓 Code Search 從搜尋轉向瀏覽。</div>
+      <div class="kw"><span class="term">"用一次點擊回答下一個問題"</span><br>整合 Kythe 後的導引原則；定義/用處/何時加入/全機隊 CPU cycle 都一兩下點到。</div>
+      <div class="kw"><span class="term">五類搜尋意圖</span><br>How 約 1/3（範例）、What 約 1/4（瀏覽）、Where 16%、Why 16%（除錯）、Who/When 8%。</div>
+      <div class="kw"><span class="term">集中式索引 vs 每人 IDE 索引</span><br>集中式做一次、增量更新（線性成本）、人人受惠；每人各自在 IDE 建索引大致二次方擴展。</div>
+      <div class="kw"><span class="term">搜尋索引 vs cross-reference 索引</span><br>搜尋索引可增量、中位 &lt; 10 秒可見；cross-reference 索引（Kythe）無法增量、需近乎全建置、每日才建一次。</div>
+      <div class="kw"><span class="term">Sub-200ms / 1秒 / 10秒</span><br>&lt;200ms 才 responsive、1 秒注意力飄、10 秒 context switch；每次多 1 秒 ≈ 每天 35 個工程師閒置。</div>
+      <div class="kw"><span class="term">Sparse n-gram Index</span><br>目前索引方案，比暴力解快逾 500 倍、能高速答 regex；歷經 trigram → suffix array → sparse n-gram。</div>
+      <div class="kw"><span class="term">Query Independent vs Dependent Signals</span><br>與查詢無關（file views、references/priority，離線算）vs 與查詢相關（token/symbol/filename boost，須便宜）。</div>
+      <div class="kw"><span class="term">Supplemental Retrieval</span><br>把原查詢改寫成更特化的（如限定定義/檔名），避免關鍵結果在固定數量內被截掉。</div>
+      <div class="kw"><span class="term">Completeness Trade-offs</span><br>丟二進位/產生 JS 省資源但傷信任，故寧可索引太多；priority 分片同時服務「最相關」與「全部結果」。</div>
+      <div class="kw"><span class="term">Token vs Substring vs Regex</span><br>token 擴展好但對程式碼許多有意義字元失效；substring（trigram）索引小但召回較低；regex 最強但難建高效索引。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你團隊找程式碼靠 grep ＋各自的 IDE 索引嗎？算算「每人各自建索引」的二次方成本：隨程式碼庫與人數成長還撐得住嗎？一個<b>集中式、做一次、人人受惠</b>的索引值不值得投資？</li>
+      <li>把你最近用搜尋解決的問題分類成 <b>How/What/Where/Why/Who-When</b>：最大宗是不是「<b>看別人怎麼做的範例</b>」？這對你「該投資哪種工具/文件」有什麼啟示？對照 ch10。</li>
+      <li>你能不能把工具延遲<b>換算成工程時間</b>（「每次多 1 秒 ≈ 每天 N 個工程師閒置」）？你的搜尋/建置/開啟延遲落在 <b>200ms／1 秒／10 秒</b> 哪一檔？</li>
+      <li>你的工具有沒有成為「<b>canonical 的位置</b>」——log、stack frame、文件、bug 都連回同一處？還是各做各的 UI、彼此不知道對方存在？</li>
+      <li>套用 Code Search 的<b>完整性取捨</b>：你有沒有為省資源悄悄丟掉某些結果卻沒讓使用者知道？這對「信任」的傷害值不值得？對照 ch14「無聲的上限」。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— Code Search 與 Piper 整合（歷史、blame、diff）；monorepo 的單一程式碼庫正是「集中式索引」得以成立的前提。</span></div>
+      <div class="chip"><a href="ch19.html">ch19 Critique</a> <span class="rel">— Code Search 可跳到 Critique 的對應 review；兩者都是「以瀏覽/理解為核心」的開發者介面。</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— Code Search/Kythe 是棄用「discovery」的主力；可搜尋歷史讓過時程式可直接刪除。</span></div>
+      <div class="chip"><a href="ch10.html">ch10 Documentation</a> <span class="rel">— Google 因 Code Search 夠強而幾乎不另產獨立 reference；註解與程式並列、可直接搜尋。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— 「延遲換算成工程時間」「理解程式碼帶來難量化但真實的回報」是衡量生產力的具體案例。</span></div>
+      <div class="chip"><a href="ch18.html">ch18 Build Systems</a> <span class="rel">— Kythe 的 cross-reference 索引需近乎全建置，與建置系統緊密相關。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「索引完整歷史」「回到某時間點」體現「整合時間維度」；線性 vs 二次方擴展呼應 Scale。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch16.html">← 上一章：Version Control</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch18.html">下一章：Build Systems →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools</div>
+    <div class="ch-no">CHAPTER 17</div>
+    <h1 class="title">Code Search</h1>
+    <div class="title-zh">Investing in helping people understand code pays off</div>
+    <div class="meta-row">
+      <span class="badge">by Alexander Neubeck & Ben St. John</span>
+      <span class="badge">PDF p.379–398</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Understanding code is key to developing and maintaining it … investing in understanding code will yield dividends."</span>
+      <span class="zh">Investing in helping people understand code pays off — the real point of Code Search.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p><b>Code Search</b> is Google's tool for browsing and searching code (frontend UI + cloud backends), which <b>arose directly from the need to scale to the codebase's size</b>. Integrating <b>Kythe</b> (cross-references, jump-to-definition) shifted it from searching to browsing, guided by <b>"answering the next question about code in a single click."</b> Unlike an IDE, it's optimized for <b>reading, understanding, and exploring at scale.</b></p>
+      <p>Engineers use it for five intents: <b>How (~1/3, examples), What (~1/4, browsing), Where (16%), Why (16%, debugging), Who/When (8%).</b> <b>Why a separate web tool?</b> ① Scale: the codebase won't fit on one machine; a centralized index is <b>built once, benefits everyone, incrementally updated (linear cost)</b>, while per-IDE indexing scales <b>quadratically.</b> ② Zero-setup global view. ③ Specialization (not being an IDE is an advantage). ④ Integration (a Code Search link is code's canonical "location").</p>
+      <p>Two indexes: an <b>instant search index (incremental, median &lt; 10s)</b> and a <b>daily cross-reference index (Kythe, not incremental).</b> Key numbers: over a million queries a day, <b>one extra second ≈ 35 idle engineers daily</b> → target sub-200ms; 1.5TB index, 200 qps, median search &lt; 50ms; trigram → suffix array → <b>sparse n-gram (500× faster than brute force).</b> Trade-offs center on <b>completeness vs speed/resources/trust.</b></p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You think "code search" is just grep + IDE indexing?</b> At Google's scale the codebase <b>won't fit on one machine</b> and per-IDE indexing scales <b>quadratically.</b> "A centralized index built once, benefiting everyone" will make you rethink your search/index infrastructure.</div>
+      <div class="why-card"><b>You want to know what engineers search for.</b> The biggest of five intents is "<b>examples of how others did it (~1/3).</b>" The lesson: understanding code (not just finding it) is the productivity core worth investing in.</div>
+      <div class="why-card"><b>You're setting performance targets for an interactive tool.</b> A yardstick: <b>one extra second ≈ 35 idle engineers daily</b>, and <b>&lt;200ms is responsive, 1s drifts attention, 10s context-switches.</b> It converts latency into engineering time.</div>
+      <div class="why-card"><b>You're building a company-wide tool.</b> The playbook: be a <b>platform and canonical "location"</b> for other tools, <b>make people aware it exists (Noogler training)</b>, and an early "useful but limited" version can still be trusted — if its limits are understood.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">INTENTS</span> How Do Googlers Use Code Search? <span class="en2">five search intents</span></h3>
+      <div class="claim">Engineers use it to answer questions about code; research groups intents into five — the biggest being "<b>examples of how others did it.</b>"</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 200" role="img" aria-label="Code Search five search intents share: How 33%, What 25%, Where 16%, Why 16%, Who/When 8%">
+          <g font-size="12">
+            <rect x="40" y="60" width="231" height="40" rx="6" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="155" y="85" class="fig-txt" font-weight="700" text-anchor="middle">How 33%</text>
+            <rect x="40" y="108" width="175" height="34" rx="6" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="127" y="130" class="fig-txt" text-anchor="middle">What 25%</text>
+            <rect x="223" y="108" width="112" height="34" rx="6" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.8"/>
+            <text x="279" y="130" class="fig-txt" text-anchor="middle">Where 16%</text>
+            <rect x="343" y="108" width="112" height="34" rx="6" fill="#12151f" stroke="var(--theme-trade)" stroke-width="1.8"/>
+            <text x="399" y="130" class="fig-txt" text-anchor="middle">Why 16%</text>
+            <rect x="463" y="108" width="60" height="34" rx="6" fill="#12151f" stroke="var(--muted)" stroke-width="1.6"/>
+            <text x="493" y="130" class="fig-mut" font-size="11" text-anchor="middle">W/W 8%</text>
+          </g>
+          <text x="155" y="48" class="fig-mut" font-size="11" text-anchor="middle">examples of how others did it (biggest)</text>
+          <g font-size="10.5" class="fig-mut">
+            <text x="540" y="74">How = examples (search + xref)</text>
+            <text x="540" y="94">What = browse what a part does</text>
+            <text x="540" y="114">Where = where info/def is</text>
+            <text x="540" y="134">Why = why it behaves so (debug)</text>
+            <text x="540" y="154">Who/When = who added it, when</text>
+          </g>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — Code Search's five search intents: How (~1/3, examples), What (~1/4, browsing), Where (16%), Why (16%, debugging), Who/When (8%). The biggest is "examples of how others did it" — understanding code, not just finding it, is the productivity core.</figcaption>
+      </figure>
+      <details class="fig-orig">
+        <summary>About the original Figures 17-1–17-4 (product UI screenshots)</summary>
+        <p>The book's four figures are product UI screenshots: <b>Fig 17-1</b> the main Code Search UI (search box + result snippets + clickable tokens); <b>Fig 17-2</b> log-viewer integration (a log line links back to the producing code); <b>Fig 17-3</b> stack-frame integration (a crash frame links to source, pinned to the build's revision); <b>Fig 17-4</b> documentation integration (embedding the latest head implementation snippet into a doc page). Consistent with the source's <code>CC BY-NC-ND</code> no-derivatives stance, these notes do not reproduce the screenshots; the original SVGs above reconstruct the operating logic instead. See the book for the originals.</p>
+      </details>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">WHY</span> Why a Separate Web Tool? <span class="en2">why not an IDE</span></h3>
+      <ul class="tight">
+        <li><b>Scale:</b> the codebase won't fit on one machine; a centralized index is <b>built once, benefits everyone, incrementally updated per commit (linear cost)</b>, while per-IDE indexing scales roughly <b>quadratically.</b> But the cross-reference index can't be incremental (any change can affect the whole codebase), so Kythe builds it <b>daily</b> (~6 hours for Chromium).</li>
+        <li><b>Zero-setup global view:</b> instantly browse the whole codebase → easy to find reusable libraries and good examples; no project description/build environment needed.</li>
+        <li><b>Specialization (not being an IDE is an advantage):</b> with no editor cursor, <b>every click can be meaningful</b> (jump to definition, show usages); the UX is purely for browsing and understanding.</li>
+        <li><b>Integration:</b> a Code Search link is code's canonical "location" — log viewers, stack frames, compile errors, codelabs/docs link back (even unsubmitted workspace code); it also exposes APIs and has vim/emacs/IntelliJ plugins.</li>
+      </ul>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="Two indexes: an instant search index (incremental, <10s) and a daily cross-reference index (Kythe, not incremental)">
+          <defs><marker id="i17e" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <rect x="30" y="40" width="200" height="44" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="130" y="60" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">every commit</text>
+          <text x="130" y="78" class="fig-mut" font-size="10.5" text-anchor="middle">reindex only touched files</text>
+          <rect x="290" y="34" width="200" height="56" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2.2"/>
+          <text x="390" y="58" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--accent)">instant search index</text>
+          <text x="390" y="78" class="fig-mut" font-size="11" text-anchor="middle">incremental · linear cost · median &lt; 10s</text>
+          <path d="M230 62 L286 62" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#i17e)"/>
+          <rect x="30" y="130" width="200" height="44" rx="9" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="130" y="150" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">full build / analyze</text>
+          <text x="130" y="168" class="fig-mut" font-size="10.5" text-anchor="middle">any change can affect all</text>
+          <rect x="290" y="124" width="200" height="56" rx="10" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.2"/>
+          <text x="390" y="148" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">cross-reference index</text>
+          <text x="390" y="168" class="fig-mut" font-size="11" text-anchor="middle">Kythe · not incremental · daily</text>
+          <path d="M230 152 L286 152" stroke="var(--theme-trade)" stroke-width="2" fill="none" marker-end="url(#i17e)"/>
+          <text x="600" y="90" class="fig-mut" font-size="11" text-anchor="middle">the gap =</text>
+          <text x="600" y="110" class="fig-mut" font-size="11" text-anchor="middle">a rare but</text>
+          <text x="600" y="130" class="fig-mut" font-size="11" text-anchor="middle">recurring confusion</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — two indexes: the <b>instant search index</b> (each commit reindexes only touched files; incremental; linear cost; median &lt; 10s to appear) vs the <b>cross-reference index</b> (Kythe — any change can affect the whole codebase, so it can't be incremental, needs a near-full build, and is built once a day). The gap between them is a rare but recurring source of confusion.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">SCALE</span> Impact of Scale &amp; Implementation <span class="en2">latency → engineer-time, sparse n-gram</span></h3>
+      <ul class="tight">
+        <li><b>Query latency:</b> over a million queries a day; <b>one extra second ≈ 35 idle full-time engineers daily</b>, with the backend taking ~1/10 of those engineers → ~100,000 queries/day is break-even. <b>&lt;200ms responsive, 1s drifts, 10s context-switch</b> → target sub-200ms.</li>
+        <li><b>Index latency:</b> instant indexing is expected while writing code; median commit-to-visible &lt; 10s. The index/running-code gap is especially troublesome during incident debugging.</li>
+        <li><b>Implementation:</b> 1.5TB, 200 qps, median search &lt; 50ms; brute force needs 300,000 cores; trigram → suffix array → <b>sparse n-gram (500× faster, answers regex)</b>; rides Google's main search stack; index moved memory → flash; full history adds only 2.5×.</li>
+        <li><b>Ranking:</b> query-independent (file views, references/priority, offline) vs query-dependent (token/symbol/filename boosts, cheap); supplemental retrieval; result diversity.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFFS</span> Selected Trade-Offs <span class="en2">completeness vs speed/resources/trust</span></h3>
+      <ul class="tight">
+        <li><b>Repository at head:</b> drop binaries/generated JS to save resources and noise; but dropping files hurts <b>trust</b> (you can't signal "incomplete" for unindexed files) → <b>err toward indexing too much.</b></li>
+        <li><b>All vs most-relevant:</b> normal search trades completeness for speed; but refactoring/tooling needs <b>all results.</b> Fix: shard by priority, fetch all when requested (~1/3 of queries have &lt; 20 results).</li>
+        <li><b>Head vs history vs workspaces:</b> indexing Piper's linear history → search any snapshot, find deleted code, by author; obsolete code can simply be deleted.</li>
+        <li><b>Token vs substring vs regex:</b> token scales well but fails for code's meaningful characters; substring (trigram) is small but lower-recall; regex is most powerful but hard to index efficiently (approximated via substring).</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Answering the next question about code in a single click."</span><span class="zh">The principle (post-Kythe) that shifted focus from searching to browsing.</span><div class="note">The guiding design principle.</div></blockquote>
+    <blockquote class="q"><span class="en">"For one million queries, an increase of just one second per search request corresponds to about 35 idle full-time engineers every day."</span><span class="zh">Converts latency directly into engineering time, justifying sub-200ms backends.</span><div class="note">Search Query Latency.</div></blockquote>
+    <blockquote class="q"><span class="en">"It will be widely used only if it is trusted, and will be trusted only if it indexes all code, gives all results, and gives the desired results first."</span><span class="zh">Why "err toward indexing too much" and "fetch all results" matter — trust is the basis of adoption.</span><div class="note">TL;DRs / the completeness trade-offs.</div></blockquote>
+    <blockquote class="q"><span class="en">"One advantage of Code Search is that it is not an IDE."</span><span class="zh">No editor cursor means every click can be meaningful; the UX is purely for browsing and understanding.</span><div class="note">Specialization.</div></blockquote>
+    <blockquote class="q"><span class="en">"Understanding code is key to developing and maintaining it, and this means that investing in understanding code will yield dividends."</span><span class="zh">The single most important insight for readers beyond small teams; Kythe and finding examples serve understanding most directly.</span><div class="note">Conclusion.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Code Search</span><br>Google's tool for browsing and searching code (frontend UI + cloud backends); optimized for reading, understanding, exploring at scale, not an IDE.</div>
+      <div class="kw"><span class="term">Kythe</span><br>A compiler-based indexing service providing cross-references, using full build info to disambiguate; its integration shifted Code Search from searching to browsing.</div>
+      <div class="kw"><span class="term">"Answer the next question in a single click"</span><br>The guiding principle post-Kythe; where defined/used, when added, fleet-wide CPU cycles, all a click or two away.</div>
+      <div class="kw"><span class="term">The five search intents</span><br>How ~1/3 (examples), What ~1/4 (browsing), Where 16%, Why 16% (debugging), Who/When 8%.</div>
+      <div class="kw"><span class="term">Centralized vs per-IDE index</span><br>Centralized is built once, incrementally updated (linear cost), benefiting everyone; per-IDE indexing scales roughly quadratically.</div>
+      <div class="kw"><span class="term">Search vs cross-reference index</span><br>The search index is incremental, median &lt; 10s to appear; the cross-reference index (Kythe) can't be incremental, needs a near-full build, built daily.</div>
+      <div class="kw"><span class="term">Sub-200ms / 1s / 10s</span><br>&lt;200ms is responsive, 1s drifts attention, 10s context-switches; one extra second ≈ 35 idle engineers daily.</div>
+      <div class="kw"><span class="term">Sparse n-gram index</span><br>The current scheme, 500×+ faster than brute force and fast for regex; evolved trigram → suffix array → sparse n-gram.</div>
+      <div class="kw"><span class="term">Query-independent vs dependent signals</span><br>Query-independent (file views, references/priority — offline) vs query-dependent (token/symbol/filename boosts — must be cheap).</div>
+      <div class="kw"><span class="term">Supplemental retrieval</span><br>Rewriting the query into more specialized ones (e.g., restricted to definitions/filenames) so key results aren't cut off within a fixed count.</div>
+      <div class="kw"><span class="term">Completeness trade-offs</span><br>Dropping binaries/generated JS saves resources but hurts trust, so err toward indexing too much; priority shards serve both "most-relevant" and "all results."</div>
+      <div class="kw"><span class="term">Token vs substring vs regex</span><br>Token scales well but fails for code's meaningful characters; substring (trigram) is small but lower-recall; regex is most powerful but hard to index efficiently.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Does your team find code via grep + per-developer IDE indexing? Tally the quadratic cost of "everyone indexes their own": does it hold as the codebase and team grow? Is a <b>centralized, built-once, everyone-benefits</b> index worth investing in?</li>
+      <li>Classify your recent search-solved problems into <b>How/What/Where/Why/Who-When</b>: is the biggest "<b>examples of how others did it</b>"? What does that imply for which tools/docs to invest in? Per ch10.</li>
+      <li>Can you <b>convert your tool's latency into engineering time</b> ("one extra second ≈ N idle engineers daily")? Where does it fall — <b>200ms / 1s / 10s</b>?</li>
+      <li>Has your tooling become a <b>canonical "location"</b> — logs, stack frames, docs, bugs all linking to one place? Or does each build its own UI, unaware of the others?</li>
+      <li>Apply Code Search's <b>completeness trade-offs</b>: do you quietly drop results to save resources without telling users? Is the trust cost worth it? Per ch14's "no silent caps."</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— Code Search integrates with Piper (history, blame, diffs); the monorepo's single codebase is what makes a "centralized index" possible.</span></div>
+      <div class="chip"><a href="ch19.html">ch19 Critique</a> <span class="rel">— Code Search jumps to the corresponding Critique review; both are "browsing/understanding-centric" developer interfaces.</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— Code Search/Kythe is the workhorse for deprecation "discovery"; searchable history lets obsolete code be deleted.</span></div>
+      <div class="chip"><a href="ch10.html">ch10 Documentation</a> <span class="rel">— Google rarely generates separate reference because Code Search is strong; comments beside code, directly searchable.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— "converting latency to engineering time" and "understanding code yields hard-to-measure but real dividends."</span></div>
+      <div class="chip"><a href="ch18.html">ch18 Build Systems</a> <span class="rel">— Kythe's cross-reference index needs a near-full build, tightly tied to the build system.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "indexing full history" and "the exact state at a point in time" embody "integrated over time"; linear-vs-quadratic scaling echoes Scale.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch16.html">← Prev: Version Control</a><a class="idx" href="index.html">⌂ Index</a><a href="ch18.html">Next: Build Systems →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

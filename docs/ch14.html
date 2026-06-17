@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 14 章 Larger Testing ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes ｜ 流程</div>
+    <div class="ch-no">CHAPTER 14</div>
+    <h1 class="title">Larger Testing</h1>
+    <div class="title-zh">大型測試</div>
+    <div class="meta-row">
+      <span class="badge">作者 Joseph Graves</span>
+      <span class="badge">PDF p.309–338</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+      <span class="theme-tag t-time">Time 時間</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"A good design includes a test strategy that identifies risks and larger tests that mitigate them."</span>
+      <span class="zh">好的設計包含一份測試策略：辨識風險，並用對應的大型測試去緩解它們。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>單元測試是地基，但<b>只靠它無法確認整個系統真的能運作</b>。<b>大型測試</b>是風險緩解策略的重要一環——不受小測試限制，故可能<b>慢（預設逾時 15 分或 1 小時，有的跑數天）、非 hermetic、非確定性</b>。存在的首要理由是 <b>fidelity（保真度）</b>：測試多大程度反映 <b>SUT（被測系統）</b> 的真實行為——保真度愈高，成本與風險也愈高（production 最高保真、也最危險）。</p>
+      <p>大型測試補單元測試的五個系統性缺口：<b>不忠實的替身、設定問題（config 是 Google 重大故障頭號原因；2013 一次未測的網路設定推送造成全球當機）、負載下的問題、未預期行為（Hyrum's Law）、湧現/真空效應</b>。但大型測試違反「可靠/快/可擴展」，還有<b>擁有權</b>與<b>標準化</b>兩大挑戰。</p>
+      <p>結構四階段：<b>取得 SUT → 植入資料 → 執行動作 → 驗證</b>。SUT 由常衝突的 <b>hermeticity 與 fidelity</b> 衡量；驗證三法：<b>manual／assertions／A/B diff</b>。十種大型測試中，<b>A/B diff 回歸測試是 Google 最常見的</b>（始於 2001）。納入流程的守則：<b>做「可能的最小測試」、輪詢取代 sleep、驅除 flakiness、讓失敗可被理解、每個測試都有明確 owner</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你寫了一堆單元測試卻仍不敢說「系統能動」。</b> 本章點名單元測試的<b>五個系統性盲區</b>——尤其 <b>configuration 是 Google 重大故障頭號原因</b>。看懂才知道哪些風險非得用大型測試補。</div>
+      <div class="why-card"><b>你的金字塔長成了冰淇淋甜筒。</b> 成因：<b>從手動測試起家</b>，手動 e2e 累積成主流、又難補單元測試——「幾天內就造出 legacy code」。解方：頭幾天就往金字塔靠。</div>
+      <div class="why-card"><b>你想知道大型測試有哪幾種、緩解什麼風險。</b> 本章給十種類型的「SUT／資料／驗證」配方表——這正是 <b>Test Engineer</b> 要會的「測試策略」。</div>
+      <div class="why-card"><b>你的大型測試又慢又愛掛、沒人維護。</b> 守則：<b>輪詢取代 sleep、降內部 timeout、用 Dapper 追蹤、失敗訊息帶上下文、每個測試都有 OWNERS</b>——否則大型測試會 rot。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">為何</span> Fidelity 與單元測試的缺口 <span class="en2">大型測試存在的首要理由</span></h3>
+      <div class="claim">大型測試存在的<b>首要理由是 fidelity</b>——反映 SUT 真實行為的程度。可從環境看（單元測試 →production 是一條光譜）也從測試內容看（手刻資料窄且帶偏誤 vs 從 production 複製）。<b>保真度↑ ⇒ 成本與風險↑</b>。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="保真度與封閉性光譜：單元測試到 production，保真度上升但成本與風險上升、封閉性下降">
+          <defs><marker id="f14" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-time)"/></marker>
+          <marker id="f14b" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-scale)"/></marker></defs>
+          <g font-size="11.5" text-anchor="middle">
+            <rect x="24" y="60" width="118" height="58" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="83" y="84" class="fig-txt" font-weight="700">unit</text><text x="83" y="104" class="fig-mut">單行程</text>
+            <rect x="156" y="60" width="118" height="58" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="215" y="84" class="fig-txt" font-weight="700">single-machine</text><text x="215" y="104" class="fig-mut">多 binary 同機</text>
+            <rect x="288" y="60" width="118" height="58" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="347" y="84" class="fig-txt" font-weight="700">multimachine</text><text x="347" y="104" class="fig-mut">跨多機</text>
+            <rect x="420" y="60" width="118" height="58" rx="9" fill="#12151f" stroke="var(--theme-trade)" stroke-width="1.8"/>
+            <text x="479" y="84" class="fig-txt" font-weight="700">staging</text><text x="479" y="104" class="fig-mut">共享環境</text>
+            <rect x="552" y="60" width="144" height="58" rx="9" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+            <text x="624" y="84" class="fig-txt" font-weight="700" fill="var(--theme-trade)">production</text><text x="624" y="104" class="fig-mut">最高保真/最高風險</text>
+          </g>
+          <path d="M30 40 L690 40" stroke="var(--theme-time)" stroke-width="2.5" fill="none" marker-end="url(#f14)"/>
+          <text x="360" y="32" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-time)">fidelity 保真度↑（成本與風險也↑）</text>
+          <path d="M690 150 L30 150" stroke="var(--theme-scale)" stroke-width="2.5" fill="none" marker-end="url(#f14b)"/>
+          <text x="360" y="168" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">hermeticity 封閉性↑（抗 flakiness）—— 兩者常直接衝突</text>
+        </svg>
+        <figcaption><b>Figure 14-1／SUT 形態重繪</b> 保真度與封閉性光譜：從 unit（單行程）到 production，<b>保真度上升、但成本與風險也上升、封閉性下降</b>。兩者常直接衝突——選擇 SUT 形態就是在兩者間取捨。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>不忠實的替身：</b>mock 多由「寫測試者」定義、可能誤解真實行為、且會 stale（真實實作改了卻無訊號）。</li>
+        <li><b>設定問題：</b><b>config 是 Google 重大故障頭號原因</b>（2013 未測的網路設定推送造成全球當機）——設定也要進版本控制。</li>
+        <li><b>負載／未預期行為（Hyrum's Law）／湧現與真空效應：</b>單元測試像「真空中的理論物理」，乾淨卻錯失某些缺陷。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">代價</span> Why Not Have Larger Tests? <span class="en2">三違反＋兩挑戰</span></h3>
+      <div class="impl">大型測試常<b>違反「可靠/快/可擴展」</b>三美德（更 flaky、更慢、彼此碰撞）；還有<b>擁有權</b>（跨多 unit/owner，無 owner 就 rot）與<b>標準化缺乏</b>（各團隊用不同框架，使其在 LSC 時常被跳過、也教不了新人）兩大挑戰。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">結構</span> Structure of a Large Test <span class="en2">SUT・資料・動作・驗證</span></h3>
+      <div class="claim">大型測試的四階段工作流：</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 200" role="img" aria-label="大型測試結構：取得 SUT、植入資料、執行動作、驗證；驗證分人工/斷言/A-B diff">
+          <defs><marker id="s14" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <g font-size="12.5" text-anchor="middle">
+            <rect x="20" y="44" width="150" height="50" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="95" y="66" class="fig-txt" font-weight="700">① 取得 SUT</text><text x="95" y="84" class="fig-mut" font-size="10.5">封閉性 vs 保真度</text>
+            <rect x="200" y="44" width="150" height="50" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="275" y="66" class="fig-txt" font-weight="700">② 植入資料</text><text x="275" y="84" class="fig-mut" font-size="10.5">seed＋test traffic</text>
+            <rect x="380" y="44" width="150" height="50" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="455" y="66" class="fig-txt" font-weight="700">③ 執行動作</text><text x="455" y="84" class="fig-mut" font-size="10.5">用 SUT 互動</text>
+            <rect x="560" y="44" width="140" height="50" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="630" y="66" class="fig-txt" font-weight="700">④ 驗證</text><text x="630" y="84" class="fig-mut" font-size="10.5">行為</text>
+          </g>
+          <path d="M170 69 L196 69" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#s14)"/>
+          <path d="M350 69 L376 69" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#s14)"/>
+          <path d="M530 69 L556 69" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#s14)"/>
+          <text x="630" y="120" class="fig-mut" font-size="11" text-anchor="middle">驗證三法 ↓</text>
+          <g font-size="11" text-anchor="middle">
+            <rect x="430" y="130" width="120" height="32" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="490" y="150" class="fig-txt">manual 人工</text>
+            <rect x="560" y="130" width="60" height="32" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="590" y="150" class="fig-txt">assert</text>
+            <rect x="630" y="130" width="70" height="32" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="665" y="150" class="fig-txt">A/B diff</text>
+          </g>
+          <text x="225" y="148" class="fig-mut" font-size="11" text-anchor="middle">資料來源：handcrafted／copied／sampled</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 大型測試的結構：取得 SUT（衡量封閉性 vs 保真度）→ 植入資料（seed＋traffic；手刻/複製/抽樣）→ 執行動作 → 驗證（人工／斷言／A/B diff）。SUT 形態：single-process/single-machine/multimachine/shared/hybrid。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>縮小 SUT：</b>在 UI/API 邊界拆開（UI 測試脆又貴）；第三方依賴用 <b>record/replay</b>（Record Mode post-submit 錄流量、Replay Mode 開發/presubmit 重放；Google 因 protobuf 不用 Pact 等 contract test）；資料庫換記憶體版以縮到單機。</li>
+        <li><b>Webdriver Torso：</b>在 public YouTube 頻道測 production 轉檔被媒體解謎——<b>要預期使用者會發現 production 裡的測試資料</b>。</li>
+        <li><b>規模：</b>節點數 N 增加 →路徑乘法/指數成長；低保真替身的乘法效應（兩個 10% 替身 →出 bug 機率 99%）；用 <b>chained tests</b> 把輸出串成下一測的輸入。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">分類</span> Types of Larger Tests <span class="en2">十種大型測試</span></h3>
+      <div class="impl">把 SUT／資料／驗證組合成緩解不同風險的測試（這就是 Test Engineer 的「測試策略」）：<b>functional（1+ binary）、browser/device、performance/load/stress、deployment config（不崩潰即過）、exploratory（含 bug bash）、A/B diff 回歸（Google 最常見、始於 2001；A-A/A-B-C）、UAT（Google 做得少）、prober/canary（對 production 跑唯讀 smoke）、DiRT/chaos（行星級故障注入；Netflix chaos；Google 自製 Catzilla 每週數千次）、user evaluation（dogfooding／experimentation——AdWords 背景陰影色實驗／rater evaluation）</b>。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">流程</span> Developer Workflow <span class="en2">納入、加速、去 flaky、可理解、擁有</span></h3>
+      <ul class="tight">
+        <li><b>納入：</b>多數大型測試<b>不屬於 TAP</b>，故有獨立 post-submit 持續建置、也鼓勵 presubmit；A/B diff 的人工 bless 可納入 code review。</li>
+        <li><b>加速＋去 flaky：</b>縮小範圍或拆成可平行的小測試；<b>用輪詢/事件取代 time-based sleep</b>；調低內部 timeout、預建依賴。</li>
+        <li><b>可理解：</b>失敗訊息要<b>帶上下文</b>（「預期 10 筆卻得 1 筆」）、用 <b>Dapper</b> 追蹤跨行程呼叫鏈、提供聯絡人。</li>
+        <li><b>擁有：</b>每個大型測試都<b>必須有 owner</b>（用 OWNERS 檔或逐測試標註），否則更難修、更久解、然後 rot。</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Unit tests can give you confidence about individual functions, objects, and modules, but large tests provide more confidence that the overall system works as intended."</span><span class="zh">單元測試能給你對個別函式、物件、模組的信心；但大型測試給你的，是「整體系統如預期運作」的更高信心。</span><div class="note">開章對「為何要大型測試」的核心回答；自動化測試能以手動做不到的方式擴展。</div></blockquote>
+    <blockquote class="q"><span class="en">"At Google, configuration changes are the number one reason for our major outages."</span><span class="zh">在 Google，設定變更是我們重大故障的頭號原因。</span><div class="note">Configuration issues——2013 未測的網路設定推送造成全球當機；設定也要進版本控制、納入大型測試。</div></blockquote>
+    <blockquote class="q"><span class="en">"A unit test is like a problem in theoretical physics: ensconced in a vacuum, neatly hidden from the mess of the real world."</span><span class="zh">單元測試就像理論物理裡的問題：安置在真空中，與現實世界的混亂俐落地隔開。</span><div class="note">Emergent behaviors / vacuum effect——對速度與可靠很好，卻錯失只在真實依賴/網路/資料下現形的缺陷。</div></blockquote>
+    <blockquote class="q"><span class="en">"Often these two factors are in direct conflict."</span><span class="zh">這兩個因素（封閉性與保真度）往往直接衝突。</span><div class="note">The System Under Test——hermeticity 與 fidelity 難兼得，SUT 形態的選擇就是在兩者間取捨。</div></blockquote>
+    <blockquote class="q"><span class="en">"Manual regression testing does not scale sublinearly: the larger a system grows … the more human time is needed."</span><span class="zh">手動回歸測試無法次線性擴展：系統長得愈大、路徑愈多，需要的人力時間就愈多。</span><div class="note">Verification（manual）——故把探索式/手動找到的 bug 補成自動測試、偏好 A/B diff 等自動化驗證。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Larger Test（大型測試）</span><br>不受小測試（一執行緒/行程/機器）限制的測試，可能慢、非 hermetic、非確定性；補單元測試的系統性盲區，是風險緩解策略的一環。</div>
+      <div class="kw"><span class="term">Fidelity（保真度）</span><br>測試（環境與內容）反映 SUT 真實行為的程度；大型測試存在的首要理由。保真度↑ ⇒ 成本與風險↑。</div>
+      <div class="kw"><span class="term">SUT（System Under Test）</span><br>大型測試的核心；由 hermeticity 與 fidelity 兩個常衝突的因素衡量；形態 single-process/single-machine/multimachine/shared/hybrid。</div>
+      <div class="kw"><span class="term">Hermeticity（封閉性）</span><br>SUT 與其他元件/流量的隔離程度；高封閉性最不受並行與基礎設施 flakiness 影響，但常犧牲保真。</div>
+      <div class="kw"><span class="term">冰淇淋甜筒（Ice Cream Cone）</span><br>大量 e2e、少單元的反模式；常源於「從手動測試起家」，幾天內就造出 legacy code。解方：頭幾天往金字塔靠。</div>
+      <div class="kw"><span class="term">A/B Diff 回歸測試</span><br>跑兩版 SUT、送相同流量、比輸出；Google 最常見的大型測試（始於 2001）；變體 A-A/A-B-C。挑戰：approval/noise/coverage/setup。</div>
+      <div class="kw"><span class="term">Record/Replay</span><br>跑大型測試時錄外部服務流量（Record Mode，post-submit），開發/presubmit 時重放（Replay Mode）；Google 因 protobuf 採此。</div>
+      <div class="kw"><span class="term">Seeded Data vs Test Traffic</span><br>植入資料（SUT 起始狀態：domain data、realistic baseline）vs 測試流量（執行期送入）；產生 handcrafted/copied/sampled。</div>
+      <div class="kw"><span class="term">Prober / Canary Analysis</span><br>prober 對 production 跑唯讀確定性 smoke 斷言；canary analysis 在灰度推送時比較 canary 與 baseline 的健康指標。</div>
+      <div class="kw"><span class="term">DiRT / Chaos / Catzilla</span><br>DiRT 是年度災難演練（行星級故障注入）；chaos engineering（Netflix）持續注入背景故障；Catzilla 是 Google 自製、每週數千次。</div>
+      <div class="kw"><span class="term">Dapper</span><br>以單一 request ID 串起 RPC 呼叫鏈所有日誌的追蹤框架；讓跨行程的大型測試失敗可被追根究柢。</div>
+      <div class="kw"><span class="term">Test Engineer（測試工程師）</span><br>Google 的專門角色；核心能力之一是為產品擬定「測試策略」（辨識風險向量、選對應大型測試）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>盤點你系統的「風險向量」：哪些是<b>單元測試結構上補不到</b>的（不忠實替身？設定？負載？未預期輸入？湧現行為）？你有沒有為每個主要風險配一個對應的大型測試（一份明確的<b>測試策略</b>）？</li>
+      <li>你的設定（config/部署腳本/feature flag）有沒有進<b>版本控制</b>、有沒有被<b>測試</b>？回想 Google「設定是重大故障頭號原因」——你上次出包是程式還是設定造成的？</li>
+      <li>你的金字塔像金字塔還是<b>冰淇淋甜筒</b>？是不是「從手動測試起家、幾天內就造出 legacy code」？哪些手動 e2e 該被自動整合測試取代？對照 ch11。</li>
+      <li>挑你最大、最痛的 e2e 測試：它的 <b>SUT</b> 能不能縮小（UI/API 邊界拆開？第三方換 record/replay？資料庫換記憶體版）？在 <b>hermeticity vs fidelity</b> 上你落在哪、該往哪移？</li>
+      <li>你的大型測試壞掉時別人看得懂為什麼嗎（訊息有上下文？有 Dapper 追蹤？知道找誰）？它有<b>明確 owner</b> 嗎？presubmit/post-submit/只在發布跑——這取捨對你的團隊對嗎？</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— 本章是「測試 size/scope」與「冰淇淋甜筒反模式」的延伸；大型測試對應金字塔頂端的整合與 e2e。</span></div>
+      <div class="chip"><a href="ch13.html">ch13 Test Doubles</a> <span class="rel">— 「不忠實的替身」「fake 緩解此憂」「record/replay 與 contract test」直接承接第 13 章。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— 「大型測試缺標準化使其在 LSC 時常被跳過」是 LSC 的真實痛點。</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— TAP 的資格限制把大型測試排除，故需獨立 post-submit 持續建置；canary/prober 是 CD 的一環。</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— canary analysis、experimentation、dogfooding、灰度推送都是 CD 的核心手法。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 大型測試的擁有權用 OWNERS 檔標記；A/B diff 的人工 bless 可納入 code review。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「Hyrum's Law（有效契約＝所有可見行為）」「保真度的時間/規模效應」回扣全書三主軸。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch13.html">← 上一章：Test Doubles</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch15.html">下一章：Deprecation →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes</div>
+    <div class="ch-no">CHAPTER 14</div>
+    <h1 class="title">Larger Testing</h1>
+    <div class="title-zh">Match each risk with a larger test that mitigates it</div>
+    <div class="meta-row">
+      <span class="badge">by Joseph Graves</span>
+      <span class="badge">PDF p.309–338</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+      <span class="theme-tag t-time">Time</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"A good design includes a test strategy that identifies risks and larger tests that mitigate them."</span>
+      <span class="zh">Match each risk with a larger test that mitigates it — that's a test strategy.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>Unit tests are the foundation, but <b>they alone can't confirm the whole system works</b>. <b>Larger tests</b> are an essential part of risk mitigation — free of small-test constraints, they may be <b>slow (default timeout 15 min or 1 hr; some run days), nonhermetic, nondeterministic</b>. Their primary reason is <b>fidelity</b>: how well a test reflects the real behavior of the <b>SUT</b> — higher fidelity, higher cost and risk (production is highest-fidelity and riskiest).</p>
+      <p>They fill five gaps in unit tests: <b>unfaithful doubles, configuration issues (config is Google's #1 cause of major outages; a 2013 untested network-config push caused a global outage), issues under load, unanticipated behaviors (Hyrum's Law), emergent/vacuum effects</b>. But they violate "reliable/fast/scalable" and face two challenges: <b>ownership</b> and <b>lack of standardization</b>.</p>
+      <p>Four phases: <b>obtain a SUT → seed data → perform actions → verify</b>. A SUT is judged on the often-conflicting <b>hermeticity and fidelity</b>; verification comes in three forms: <b>manual / assertions / A/B diff</b>. Of ten kinds, the <b>A/B diff regression test is Google's most common</b> (since 2001). Workflow rules: <b>the smallest possible test, poll instead of sleep, drive out flakiness, make failures understandable, give every test a clear owner</b>.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You've written many unit tests but can't say "the system works."</b> The chapter names unit testing's <b>five blind spots</b> — especially that <b>configuration is Google's #1 cause of major outages</b>. Now you know which risks need larger tests.</div>
+      <div class="why-card"><b>Your pyramid has become an ice cream cone.</b> Cause: <b>starting with manual testing</b>, letting manual e2e dominate while units lag — "legacy code within days." Cure: move toward the pyramid early.</div>
+      <div class="why-card"><b>You want to know the kinds of larger test and what each mitigates.</b> The chapter gives a "SUT / data / verification" recipe for ten types — exactly the <b>test strategy</b> a Test Engineer designs.</div>
+      <div class="why-card"><b>Your large tests are slow, flaky, unowned.</b> Rules: <b>poll instead of sleep, lower internal timeouts, trace with Dapper, give failures context, give every test an OWNERS</b> — or they rot.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">WHY</span> Fidelity & the gaps in unit tests</h3>
+      <div class="claim">The <b>primary reason larger tests exist is fidelity</b> — how well a test reflects the SUT's real behavior. Seen by environment (unit → production is a spectrum) and by content (handcrafted data is narrow/biased vs copied from production). <b>Higher fidelity ⇒ higher cost and risk</b>.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="Fidelity and hermeticity spectrum: unit to production, fidelity rises but cost/risk rise and hermeticity falls">
+          <defs><marker id="f14e" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-time)"/></marker>
+          <marker id="f14be" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-scale)"/></marker></defs>
+          <g font-size="11.5" text-anchor="middle">
+            <rect x="24" y="60" width="118" height="58" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="83" y="84" class="fig-txt" font-weight="700">unit</text><text x="83" y="104" class="fig-mut">single process</text>
+            <rect x="156" y="60" width="118" height="58" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="215" y="84" class="fig-txt" font-weight="700">single-machine</text><text x="215" y="104" class="fig-mut">multi-binary</text>
+            <rect x="288" y="60" width="118" height="58" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="347" y="84" class="fig-txt" font-weight="700">multimachine</text><text x="347" y="104" class="fig-mut">across machines</text>
+            <rect x="420" y="60" width="118" height="58" rx="9" fill="#12151f" stroke="var(--theme-trade)" stroke-width="1.8"/>
+            <text x="479" y="84" class="fig-txt" font-weight="700">staging</text><text x="479" y="104" class="fig-mut">shared env</text>
+            <rect x="552" y="60" width="144" height="58" rx="9" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+            <text x="624" y="84" class="fig-txt" font-weight="700" fill="var(--theme-trade)">production</text><text x="624" y="104" class="fig-mut">highest fidelity/risk</text>
+          </g>
+          <path d="M30 40 L690 40" stroke="var(--theme-time)" stroke-width="2.5" fill="none" marker-end="url(#f14e)"/>
+          <text x="360" y="32" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-time)">fidelity ↑ (so do cost and risk)</text>
+          <path d="M690 150 L30 150" stroke="var(--theme-scale)" stroke-width="2.5" fill="none" marker-end="url(#f14be)"/>
+          <text x="360" y="168" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">hermeticity ↑ (anti-flakiness) — the two often conflict directly</text>
+        </svg>
+        <figcaption><b>Figure 14-1 / SUT forms redrawn</b> — the fidelity/hermeticity spectrum: from unit (single process) to production, <b>fidelity rises but so do cost and risk, while hermeticity falls</b>. They often conflict directly — choosing a SUT form is choosing between them.</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Unfaithful doubles:</b> mocks defined by the test author may misunderstand real behavior and go stale.</li>
+        <li><b>Configuration:</b> <b>config is Google's #1 cause of major outages</b> (a 2013 untested network-config push caused a global outage) — version-control config too.</li>
+        <li><b>Load / unanticipated behavior (Hyrum's Law) / emergent &amp; vacuum effects:</b> unit tests are like "theoretical physics in a vacuum" — clean, but missing some defects.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">COST</span> Why Not Have Larger Tests? <span class="en2">three violations + two challenges</span></h3>
+      <div class="impl">Larger tests often <b>violate "reliable/fast/scalable"</b> (flakier, slower, collide); plus two challenges: <b>ownership</b> (multiple units/owners; without one, the test rots) and <b>lack of standardization</b> (different frameworks per team, getting them skipped during LSCs and unteachable to newcomers).</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">STRUCTURE</span> Structure of a Large Test <span class="en2">SUT · Data · Action · Verify</span></h3>
+      <div class="claim">The four-phase workflow of a large test:</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 200" role="img" aria-label="Large test structure: obtain SUT, seed data, perform action, verify; verification = manual/assert/A-B diff">
+          <defs><marker id="s14e" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <g font-size="12.5" text-anchor="middle">
+            <rect x="20" y="44" width="150" height="50" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="95" y="66" class="fig-txt" font-weight="700">① Obtain SUT</text><text x="95" y="84" class="fig-mut" font-size="10.5">hermeticity vs fidelity</text>
+            <rect x="200" y="44" width="150" height="50" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="275" y="66" class="fig-txt" font-weight="700">② Seed data</text><text x="275" y="84" class="fig-mut" font-size="10.5">seed + test traffic</text>
+            <rect x="380" y="44" width="150" height="50" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="455" y="66" class="fig-txt" font-weight="700">③ Perform action</text><text x="455" y="84" class="fig-mut" font-size="10.5">interact with SUT</text>
+            <rect x="560" y="44" width="140" height="50" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="630" y="66" class="fig-txt" font-weight="700">④ Verify</text><text x="630" y="84" class="fig-mut" font-size="10.5">behaviors</text>
+          </g>
+          <path d="M170 69 L196 69" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#s14e)"/>
+          <path d="M350 69 L376 69" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#s14e)"/>
+          <path d="M530 69 L556 69" stroke="var(--accent)" stroke-width="2" fill="none" marker-end="url(#s14e)"/>
+          <text x="630" y="120" class="fig-mut" font-size="11" text-anchor="middle">three forms ↓</text>
+          <g font-size="11" text-anchor="middle">
+            <rect x="438" y="130" width="112" height="32" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="494" y="150" class="fig-txt">manual</text>
+            <rect x="560" y="130" width="62" height="32" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="591" y="150" class="fig-txt">assert</text>
+            <rect x="632" y="130" width="68" height="32" rx="8" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.4"/><text x="666" y="150" class="fig-txt">A/B diff</text>
+          </g>
+          <text x="225" y="148" class="fig-mut" font-size="11" text-anchor="middle">data: handcrafted / copied / sampled</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — large-test structure: obtain a SUT (weighing hermeticity vs fidelity) → seed data (seed + traffic; handcrafted/copied/sampled) → perform actions → verify (manual / assertions / A/B diff). SUT forms: single-process/single-machine/multimachine/shared/hybrid.</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Shrink the SUT:</b> split at the UI/API boundary (UI tests are brittle and costly); use <b>record/replay</b> for third parties (Record Mode records traffic post-submit, Replay Mode replays in dev/presubmit; Google's protobuf use means no Pact-style contract tests); in-memory databases to fit on one machine.</li>
+        <li><b>Webdriver Torso:</b> testing production rendering on a public YouTube channel got a media mystery — <b>expect users to discover test data in production</b>.</li>
+        <li><b>Scale:</b> N nodes → multiplicative/exponential paths; low-fidelity doubles' multiplicative effect (two 10% doubles → 99% bug chance); use <b>chained tests</b> to thread one test's output into the next's input.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">TYPES</span> Types of Larger Tests <span class="en2">ten kinds</span></h3>
+      <div class="impl">Combine SUT/data/verification into tests mitigating different risks (the Test Engineer's "test strategy"): <b>functional (1+ binaries), browser/device, performance/load/stress, deployment config (passes if it doesn't crash), exploratory (incl. bug bash), A/B diff regression (Google's most common, since 2001; A-A/A-B-C), UAT (Google does little), prober/canary (read-only smoke against production), DiRT/chaos (planetary-scale fault injection; Netflix chaos; Google's homegrown Catzilla thousands/week), user evaluation (dogfooding / experimentation — the AdWords ad-shading experiment / rater evaluation)</b>.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">WORKFLOW</span> Developer Workflow <span class="en2">integrate, speed up, de-flake, understand, own</span></h3>
+      <ul class="tight">
+        <li><b>Integrate:</b> most don't belong in <b>TAP</b>, so they get a separate post-submit build, with presubmit encouraged; A/B diff's manual blessing folds into code review.</li>
+        <li><b>Speed up + de-flake:</b> reduce scope or split into parallel smaller tests; <b>poll/use events instead of time-based sleeps</b>; lower internal timeouts, prebuild dependencies.</li>
+        <li><b>Understandable:</b> failures need <b>context</b> ("expected 10 but got 1"), cross-process tracing via <b>Dapper</b>, and a contact.</li>
+        <li><b>Own:</b> every large test <b>must have an owner</b> (OWNERS file or per-test annotation), or it gets harder to fix, slower to resolve, and rots.</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Unit tests can give you confidence about individual functions, objects, and modules, but large tests provide more confidence that the overall system works as intended."</span><span class="zh">Unit tests verify parts; large tests verify the whole — and automation scales where manual can't.</span><div class="note">The opening case for larger tests.</div></blockquote>
+    <blockquote class="q"><span class="en">"At Google, configuration changes are the number one reason for our major outages."</span><span class="zh">Config (not code) often breaks production — version-control and test config too.</span><div class="note">Configuration issues — a 2013 untested network-config push caused a global outage.</div></blockquote>
+    <blockquote class="q"><span class="en">"A unit test is like a problem in theoretical physics: ensconced in a vacuum, neatly hidden from the mess of the real world."</span><span class="zh">Great for speed and reliability, but it misses defects that only appear with real dependencies, network, and data.</span><div class="note">Emergent behaviors / vacuum effect.</div></blockquote>
+    <blockquote class="q"><span class="en">"Often these two factors are in direct conflict."</span><span class="zh">Hermeticity and fidelity trade off — choosing a SUT form is choosing between them.</span><div class="note">The System Under Test.</div></blockquote>
+    <blockquote class="q"><span class="en">"Manual regression testing does not scale sublinearly: the larger a system grows … the more human time is needed."</span><span class="zh">Why exploratory/manual finds should become automated tests, and automatable verification (A/B diff) is preferred.</span><div class="note">Verification (manual).</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Larger test</span><br>A test free of small-test constraints; may be slow, nonhermetic, nondeterministic; fills unit tests' systematic gaps as part of risk mitigation.</div>
+      <div class="kw"><span class="term">Fidelity</span><br>How well a test reflects the SUT's real behavior; the primary reason larger tests exist. More fidelity ⇒ more cost and risk.</div>
+      <div class="kw"><span class="term">SUT (system under test)</span><br>The core of a large test; judged on hermeticity and fidelity (often conflicting); forms: single-process/single-machine/multimachine/shared/hybrid.</div>
+      <div class="kw"><span class="term">Hermeticity</span><br>The SUT's isolation from other components/traffic; high hermeticity minimizes concurrency and infrastructure flakiness, often at the cost of fidelity.</div>
+      <div class="kw"><span class="term">Ice cream cone</span><br>The many-e2e, few-unit antipattern; often from "starting with manual testing," creating legacy code within days. Cure: move toward the pyramid early.</div>
+      <div class="kw"><span class="term">A/B diff regression test</span><br>Run two SUT versions, send the same traffic, compare outputs; Google's most common large test (since 2001); variants A-A/A-B-C. Challenges: approval/noise/coverage/setup.</div>
+      <div class="kw"><span class="term">Record/replay</span><br>Record traffic to external services during a large test (Record Mode, post-submit), replay in dev/presubmit (Replay Mode); Google's choice over contract tests.</div>
+      <div class="kw"><span class="term">Seeded data vs test traffic</span><br>The SUT's starting state (domain data, realistic baseline) vs data sent during execution; generated handcrafted/copied/sampled.</div>
+      <div class="kw"><span class="term">Prober / canary analysis</span><br>A prober runs read-only deterministic smoke assertions against production; canary analysis compares canary vs baseline health metrics during a staged rollout.</div>
+      <div class="kw"><span class="term">DiRT / chaos / Catzilla</span><br>DiRT is Google's annual disaster drill (planetary-scale fault injection); chaos engineering (Netflix) continuously injects faults; Catzilla is homegrown, thousands a week.</div>
+      <div class="kw"><span class="term">Dapper</span><br>Google's tracing framework correlating all logs in an RPC chain by one request ID; lets cross-process large-test failures be traced to a root cause.</div>
+      <div class="kw"><span class="term">Test Engineer</span><br>Google's specialized role; a core skill is designing a product's "test strategy" (risk vectors, matching larger tests).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Inventory your "risk vectors": which are <b>structurally beyond unit tests</b> (unfaithful doubles? configuration? load? unanticipated inputs? emergent behavior)? Do you have a <b>test strategy</b> matching each major risk to a larger test?</li>
+      <li>Is your configuration under <b>version control</b> and <b>tested</b>? Recall "config is the #1 cause of major outages" — was your last incident code or config?</li>
+      <li>Does your pyramid look like a pyramid or an <b>ice cream cone</b>? Did you "start with manual testing and create legacy code within days"? Which manual e2e should become automated integration tests? Per ch11.</li>
+      <li>Take your biggest, most painful e2e test: can its <b>SUT</b> shrink (split at the UI/API boundary? record/replay for third parties? in-memory databases)? On <b>hermeticity vs fidelity</b>, where are you and where should you move?</li>
+      <li>When your large tests fail, can others understand why (context? Dapper tracing? a contact)? Does each have a <b>clear owner</b>? Presubmit/post-submit/release-only — is that trade-off right?</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— this extends "test size/scope" and the "ice cream cone antipattern"; larger tests are the integration/e2e top of the pyramid.</span></div>
+      <div class="chip"><a href="ch13.html">ch13 Test Doubles</a> <span class="rel">— "unfaithful doubles," "fakes alleviate this," and "record/replay vs contract tests" follow directly from Ch.13.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— "lack of standardization gets large tests skipped during LSCs" is a real LSC pain.</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— TAP's eligibility limits exclude large tests, so they need a separate post-submit build; canary/prober are part of CD.</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— canary analysis, experimentation, dogfooding, and staged rollout are core CD techniques.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— large-test ownership uses OWNERS files; A/B diff's manual blessing folds into code review.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "Hyrum's Law (effective contract = all visible behaviors)" and "fidelity's time/scale effects" tie back to the three themes.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch13.html">← Prev: Test Doubles</a><a class="idx" href="index.html">⌂ Index</a><a href="ch15.html">Next: Deprecation →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 22 章 Large-Scale Changes ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具</div>
+    <div class="ch-no">CHAPTER 22</div>
+    <h1 class="title">Large-Scale Changes</h1>
+    <div class="title-zh">大規模變更</div>
+    <div class="meta-row">
+      <span class="badge">作者 Hyrum Wright</span>
+      <span class="badge">PDF p.487–506</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Making LSCs means making a habit of making LSCs."</span>
+      <span class="zh">要會做大規模變更，靠的是養成「常做大規模變更」的習慣。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p><b>Large-Scale Change（LSC，大規模變更）</b>＝任何<b>邏輯相關、但實務上無法當成單一原子提交一次送出</b>的變更集合（檔案太多、改動必有 merge conflict、或 repo 拓樸讓跨 repo 原子變更不可能）。本章最反直覺的觀察：<b>隨程式碼庫與工程師人數成長，「可能的最大原子變更」反而縮小</b>。</p>
+      <p>既然原子變更撐不住，Google 改以<b>分而治之</b>：自動工具產生一份巨大全域變更，再用 <b>Rosie</b> 依專案邊界與 OWNERS 切成可獨立提交的<b>碎片（shard）</b>，各自跑 test→mail→submit。測試靠 <b>TAP train（測試列車）</b>併車攤平成本。文化上把 commit 當「<b>牛（cattle）而非寵物（pets）</b>」——無名、可隨時回退、丟幾頭不心疼。</p>
+      <p>誰來做？<b>基礎設施團隊</b>（有領域知識、攤平成本、避免「無預算強制令」）。流程四階段：<b>授權 → 變更產生 → 碎片管理 → 清理</b>。案例：<b>scoped_ptr→std::unique_ptr</b>（>50 萬處引用、高峰每天 >700 變更觸及 >15,000 檔）、填坑（單字元檔名修正）、<b>Operation RoseHub</b>（>50 名 Googler 手發 >2,600 patch 修補 Mad Gadget 漏洞）。關鍵原則：變更產生工具的人力必須<b>次線性</b>於 repo 大小。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你的「最大可原子提交」其實比你想的小，而且會越來越小。</b> repo 與團隊越大，原子變更上限越低。本章給你「放棄原子性、改用分片」的完整心法與工具觀，讓程式碼庫對基礎設施變更<b>保持靈活</b>。</div>
+      <div class="why-card"><b>你被一個沒人敢碰的老系統卡住（鬧鬼墓園）。</b> 把 SRE 的「No Haunted Graveyards」搬到程式碼層次；唯一解藥是<b>扎實的測試</b>——有測試，再老再複雜的系統都能放心改。</div>
+      <div class="why-card"><b>你想推更好的新系統，卻指望「使用者自己遷移」。</b> 為何<b>有機遷移幾乎不會完成</b>（照抄舊範例、好處分散），以及為何該由<b>擁有舊系統的基礎設施團隊</b>負責——把無預算強制令的外部性內部化。</div>
+      <div class="why-card"><b>你把每個 commit 都當寶貝。</b> 「cattle vs pets」改變你對自動化變更的心態：機器大量產生時，個別 commit 該是可丟棄的牛、不是寵物；<b>被回退別往心裡去</b>。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">反直覺</span> 原子上限縮小 → 分而治之 <span class="en2">Atomic ceiling shrinks</span></h3>
+      <div class="claim">repo 與人數越大，<b>可能的最大原子變更反而縮小</b>；解法不是「更努力地做大原子提交」，而是把全域變更<b>切成可獨立提交的碎片</b>。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="左：repo 越大，原子變更上限越低；右：用 Rosie 把全域變更切成可獨立提交的碎片">
+          <text x="170" y="26" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">原子變更上限隨規模下降</text>
+          <line x1="48" y1="40" x2="48" y2="170" stroke="var(--border)" stroke-width="1.4"/>
+          <line x1="48" y1="170" x2="300" y2="170" stroke="var(--border)" stroke-width="1.4"/>
+          <text x="40" y="48" class="fig-mut" font-size="9.5" text-anchor="end">大</text>
+          <text x="40" y="168" class="fig-mut" font-size="9.5" text-anchor="end">小</text>
+          <text x="56" y="186" class="fig-mut" font-size="9.5">小 repo</text>
+          <text x="300" y="186" class="fig-mut" font-size="9.5" text-anchor="end">大 repo＋多人</text>
+          <path d="M58 56 C140 70 220 150 292 162" stroke="var(--theme-time)" stroke-width="2.6" fill="none"/>
+          <text x="200" y="205" class="fig-mut" font-size="10.5" text-anchor="middle">presubmit／測試／保持最新 → 越難一次兜齊</text>
+          <line x1="350" y1="40" x2="350" y2="210" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+          <text x="540" y="26" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">Rosie：切成獨立碎片</text>
+          <rect x="430" y="42" width="220" height="34" rx="8" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="540" y="64" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle">全域變更（工具產生）</text>
+          <path d="M470 76 L440 100" stroke="var(--muted)" stroke-width="1.4" fill="none"/>
+          <path d="M540 76 L540 100" stroke="var(--muted)" stroke-width="1.4" fill="none"/>
+          <path d="M610 76 L640 100" stroke="var(--muted)" stroke-width="1.4" fill="none"/>
+          <g font-size="10">
+            <rect x="396" y="102" width="86" height="30" rx="7" fill="#16241f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="439" y="121" class="fig-txt" text-anchor="middle">shard 1</text>
+            <rect x="497" y="102" width="86" height="30" rx="7" fill="#16241f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="540" y="121" class="fig-txt" text-anchor="middle">shard 2</text>
+            <rect x="598" y="102" width="86" height="30" rx="7" fill="#16241f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="641" y="121" class="fig-txt" text-anchor="middle">shard N</text>
+          </g>
+          <text x="540" y="152" class="fig-mut" font-size="10" text-anchor="middle">每片各自：test → mail → submit（可獨立回退）</text>
+          <text x="540" y="172" class="fig-mut" font-size="10" text-anchor="middle">依專案邊界／OWNERS 切分</text>
+          <text x="540" y="198" class="fig-mut" font-size="10" text-anchor="middle" fill="var(--theme-trade)">每片＝可丟棄的「牛」，非「寵物」</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 左：repo 與工程師人數越大，<b>可能的最大原子變更反而縮小</b>（presubmit、測試、保持每檔最新越來越難一次兜齊）。右：解法是用 <b>Rosie</b> 把工具產生的全域變更，依專案邊界與 OWNERS 切成<b>可獨立測試/審查/提交/回退的碎片</b>——每片是可丟棄的「牛」，不是親手打磨的「寵物」。</figcaption>
+      </figure>
+      <div class="impl"><b>原子變更的障礙：</b>VCS 操作隨變更大小<b>線性</b>擴展、大提交卡住其他人；merge conflict 機率被人數放大；<b>鬧鬼墓園</b>（老到沒人敢碰、解藥是測試）；<b>異質性</b>（多種 VCS/CI/格式讓自動掃改難）；測試（Google 跑直接＋傳遞依賴，刻意接受小碎片重跑測試的成本）。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">流程</span> TAP train 與四階段流程 <span class="en2">Authorization → Creation → Shard → Cleanup</span></h3>
+      <div class="claim">LSC 鮮少互動、多數測試對多數 LSC 都通過——故能<b>併車同測、攤平成本</b>。整體流程四階段、由 Rosie 與委員會支撐。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 220" role="img" aria-label="TAP train 五步：抽樣 1000 測試、併成列車、跑聯集、定位元兇、產出報告">
+          <text x="360" y="24" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">TAP train（每三小時一班）</text>
+          <defs><marker id="t22" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <g font-size="10.5">
+            <circle cx="70" cy="78" r="22" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="70" y="74" class="fig-txt" font-weight="700" text-anchor="middle">1</text>
+            <text x="70" y="116" class="fig-mut" text-anchor="middle">抽樣</text>
+            <text x="70" y="130" class="fig-mut" text-anchor="middle">1,000 測試</text>
+            <circle cx="215" cy="78" r="22" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="215" y="74" class="fig-txt" font-weight="700" text-anchor="middle">2</text>
+            <text x="215" y="116" class="fig-mut" text-anchor="middle">通過者併成</text>
+            <text x="215" y="130" class="fig-mut" text-anchor="middle">「列車」</text>
+            <circle cx="360" cy="78" r="22" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="360" y="74" class="fig-txt" font-weight="700" text-anchor="middle">3</text>
+            <text x="360" y="116" class="fig-mut" text-anchor="middle">跑受影響測試聯集</text>
+            <text x="360" y="130" class="fig-mut" text-anchor="middle">（可達全庫，>6h）</text>
+            <circle cx="505" cy="78" r="22" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.8"/>
+            <text x="505" y="74" class="fig-txt" font-weight="700" text-anchor="middle">4</text>
+            <text x="505" y="116" class="fig-mut" text-anchor="middle">失敗測試逐一</text>
+            <text x="505" y="130" class="fig-mut" text-anchor="middle">重跑定位元兇</text>
+            <circle cx="650" cy="78" r="22" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.2"/>
+            <text x="650" y="74" class="fig-txt" font-weight="700" text-anchor="middle">5</text>
+            <text x="650" y="116" class="fig-mut" text-anchor="middle">產出報告＝</text>
+            <text x="650" y="130" class="fig-mut" text-anchor="middle">可安全提交證據</text>
+          </g>
+          <path d="M94 78 L191 78" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#t22)"/>
+          <path d="M239 78 L336 78" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#t22)"/>
+          <path d="M384 78 L481 78" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#t22)"/>
+          <path d="M529 78 L626 78" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#t22)"/>
+          <text x="360" y="172" class="fig-mut" font-size="10.5" text-anchor="middle">核心洞見：LSC 鮮少互動、多數測試多數通過 → 多個變更同測、減少總測試次數</text>
+          <text x="360" y="196" class="fig-mut" font-size="10.5" text-anchor="middle" fill="var(--theme-trade)">取捨：寧可重跑測試，也別讓工程師花更貴的時間追查（近期 flaky 測試提交時忽略）</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> TAP train 五步（每三小時一班）：①對每個變更抽樣跑 1,000 測試 → ②把通過者併成一列「列車」→ ③跑這群變更受影響測試的聯集（夠底層可跑遍全庫、耗時 >6 小時）→ ④對失敗的非 flaky 測試逐一對每個變更重跑以定位元兇 → ⑤產出報告當作「可安全提交」的證據。核心洞見：LSC 鮮少互動、多數測試會通過，故可併車攤平成本。</figcaption>
+      </figure>
+      <div class="impl"><b>四階段：</b><b>授權</b>（填文件＋FAQ、領域審查、委員會把多數審查導向單一「<b>全域核准者</b>」）→ <b>變更產生</b>（盡量自動化、像人寫的）→ <b>碎片管理</b>（Rosie 切片、限流、OWNERS 偵測挑審查者、全域核准者用模式工具自動核准）→ <b>清理</b>（用 <b>Tricorder</b> 在審查時擋住舊符號再被引入，防倒退）。<b>scoped_ptr→unique_ptr</b> 靠「先變型別別名→文字替換→移除舊別名」完成。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"An LSC is any set of changes that are logically related but cannot practically be submitted as a single atomic unit."</span><span class="zh">LSC 是任何在邏輯上相關、但實務上無法當成單一原子單元提交的變更集合。</span><div class="note">全章定義句。判準不是「改了幾行」，而是「能不能一次原子提交」。</div></blockquote>
+    <blockquote class="q"><span class="en">"As a codebase and the number of engineers working in it grows, the largest atomic change possible counterintuitively decreases."</span><span class="zh">隨著程式碼庫與在其中工作的工程師人數成長，可能的最大原子變更反而會縮小。</span><div class="note">本章最反直覺的核心觀察，也是「為何需要 LSC」的根本理由。</div></blockquote>
+    <blockquote class="q"><span class="en">"A haunted graveyard ... is a system that is so ancient, obtuse, or complex that no one dares enter it. ... we've found the counter to this to be good, ol'-fashioned testing."</span><span class="zh">鬧鬼墓園……是一個老到、晦澀到、複雜到沒人敢踏進去的系統。……我們發現對付它的解藥，是老派而扎實的測試。</span><div class="note">Barriers to Atomic Changes——唯一解藥是測試。</div></blockquote>
+    <blockquote class="q"><span class="en">"It's useful to treat specific changes as cattle: nameless and faceless commits that might be rolled back or otherwise rejected at any given time with little cost."</span><span class="zh">把個別變更當成「牛」來看待是有用的：那是無名無臉、隨時可能被回退或拒絕、代價極低的提交。</span><div class="note">Cattle vs Pets——LSC 的心理門檻；被回退別往心裡去。</div></blockquote>
+    <blockquote class="q"><span class="en">"Making LSCs means making a habit of making LSCs."</span><span class="zh">要會做大規模變更，靠的是養成「常做大規模變更」的習慣。</span><div class="note">TL;DR 收尾——LSC 是需要持續練習與投資的肌肉。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Large-Scale Change（LSC，大規模變更）</span><br>邏輯相關但無法當單一原子單元提交的變更集合；幾乎都由自動工具產生（清理反模式、替換棄用特性、基礎設施升級、遷移使用者）。</div>
+      <div class="kw"><span class="term">Atomic Change（原子變更）</span><br>能一次測試/審查/提交的單一不可分割變更；隨 repo 與人數成長，可能的最大原子變更反而縮小。</div>
+      <div class="kw"><span class="term">Haunted Graveyard（鬧鬼墓園）</span><br>SRE 箴言「No Haunted Graveyards」；老到沒人敢碰的關鍵系統，阻擋遷移與升級；解藥是扎實測試。</div>
+      <div class="kw"><span class="term">Unfunded Mandate（無預算強制令）</span><br>外部強加要求卻不給補償；解釋為何該由基礎設施團隊（而非各消費團隊）負責 LSC、把外部性內部化。</div>
+      <div class="kw"><span class="term">TAP Train（測試列車）</span><br>把多個 LSC 併車共享測試以攤平成本；五步、每三小時一班，產出「可安全提交」的證據。</div>
+      <div class="kw"><span class="term">Rosie</span><br>把 master change 切成可原子提交碎片、並管理各片 test-mail-submit 的平台；LSC 規模化的核心。</div>
+      <div class="kw"><span class="term">Shard（碎片）</span><br>由 Rosie 依專案邊界/OWNERS 切出的可獨立提交小變更；必須能獨立提交、各自過 presubmit。</div>
+      <div class="kw"><span class="term">Cattle vs Pets（牛 vs 寵物）</span><br>對待變更的心態對比；LSC 的個別 commit 是可丟棄的牛，不是親手打磨的寵物。</div>
+      <div class="kw"><span class="term">Global Approver（全域核准者）</span><br>有全庫核准權、用基於模式的工具自動核准 LSC 碎片的專家，取代逐一找本地擁有者。</div>
+      <div class="kw"><span class="term">Kythe / ClangMR / Refaster</span><br>語意索引與 AST 層的分析/轉換工具，提供 LSC 工具所需的程式碼庫洞察。</div>
+      <div class="kw"><span class="term">Type Alias / Forwarding Function</span><br>讓舊用戶持續運作、同時非原子遷移的語言特性（scoped_ptr→unique_ptr 即靠型別別名過渡）。</div>
+      <div class="kw"><span class="term">Tricorder</span><br>在審查時標記「引入已棄用物件新用法」的框架，防止 LSC 清理後的倒退。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>回到開篇：<b>你能可靠地在單一原子提交裡更新幾個檔案？</b>限制是什麼（VCS 算力？merge conflict？presubmit？）？緊急時做得到嗎？若這數字遠小於你的程式碼庫，你的「分而治之」工具（誰是你的 Rosie？）準備好了嗎？</li>
+      <li>你的程式碼庫裡有沒有<b>鬧鬼墓園</b>——老到沒人敢碰、卻在關鍵路徑上的系統？擋住你升級或移除舊系統的是不是它？你願不願意先補測試把它解放出來？對照 ch11、ch14。</li>
+      <li>你最近推新系統，是指望使用者<b>有機遷移</b>，還是由你（系統擁有者）負責 LSC？回想「無預算強制令」與「照抄舊範例」——有機遷移在你的組織真的會完成嗎？對照 ch15。</li>
+      <li>你對 LSC 的個別 commit 抱「牛」還是「寵物」心態？若你的自動化還做不到「廉價重生變更」，你卡在哪——工具（產生）、測試（TAP train 等價物），還是文化（本地擁有者的否決權與信任）？</li>
+      <li>你的變更產生工具，人力成本是否<b>次線性</b>於 repo 大小？repo 長大十倍，產生「全部所需變更」的人時會跟著暴增嗎？那條「>500 處編輯就該學工具」的經驗法則，在你的團隊該設在哪？對照 ch17、ch20。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— LSC 是「遷移使用者、移除舊系統」的執行引擎；棄用「先遷移再移除」全靠 LSC，Tricorder 防倒退兩章共用。</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— 「No Haunted Graveyards」唯一解藥是測試；TAP train 與「碎片跑傳遞閉包測試」是測試文化的規模化。</span></div>
+      <div class="chip"><a href="ch14.html">ch14 Larger Testing</a> <span class="rel">— LSC 的廣覆蓋測試（直接＋傳遞依賴）與 flaky 測試對吞吐的傷害，是大型測試議題的延伸。</span></div>
+      <div class="chip"><a href="ch21.html">ch21 Dependency Management</a> <span class="rel">— Abseil「破壞性 API 變更必附自動重構工具」、Live at Head 的「破壞時就地升級」都仰賴本章的 LSC 能力。</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— 「寧可面對版本控制問題」與 monorepo＋trunk-based 是 LSC 可行的前提；聯邦 repo 讓原子變更不可能。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— LSC 同樣需審查；全域核准者、OWNERS 偵測、基於模式的自動核准都是審查流程的規模化變體。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— Hyrum's Law 是 scoped_ptr 長尾與 LSC 必須廣測的根源；「整合時間維度」正是 LSC 對抗的對象。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch21.html">← 上一章：Dependency Management</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch23.html">下一章：Continuous Integration →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools</div>
+    <div class="ch-no">CHAPTER 22</div>
+    <h1 class="title">Large-Scale Changes</h1>
+    <div class="title-zh">Give up atomicity; shard, test, and submit instead</div>
+    <div class="meta-row">
+      <span class="badge">by Hyrum Wright</span>
+      <span class="badge">PDF p.487–506</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Making LSCs means making a habit of making LSCs."</span>
+      <span class="zh">The capability is a muscle you build by exercising it — not a one-off heroic feat.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>A <b>Large-Scale Change (LSC)</b> is any set of changes <b>logically related but not practically submittable as one atomic commit</b> (too many files, always merge-conflicts, or a repo topology that makes cross-repo atomic changes impossible). The chapter's most counterintuitive observation: <b>as a codebase and its engineer count grow, the largest possible atomic change shrinks.</b></p>
+      <p>Since atomic changes don't scale, Google does <b>divide and conquer</b>: tooling generates one giant global change, then <b>Rosie</b> shards it — by project boundaries and OWNERS — into independently-submittable <b>shards</b>, each running test→mail→submit. Testing rides the <b>TAP train</b> to amortize cost. Culturally, commits are <b>cattle, not pets</b> — nameless, rollback-able anytime, cheap to lose.</p>
+      <p>Who does it? <b>Infrastructure teams</b> (domain knowledge, amortized cost, avoiding the unfunded mandate). Four phases: <b>Authorization → Change creation → Shard management → Cleanup.</b> Cases: <b>scoped_ptr→std::unique_ptr</b> (>500,000 references; >700 changes touching >15,000 files per day at peak), filling potholes (a single-character filename fix), and <b>Operation RoseHub</b> (>50 Googlers sending >2,600 patches to fix the Mad Gadget vulnerability). Key principle: the tooling's human cost must be <b>sublinear</b> in repo size.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>Your "largest atomic commit" is smaller than you think — and shrinking.</b> The bigger the repo and team, the lower the atomic ceiling. The chapter hands you the mindset and tooling view of "give up atomicity, shard instead," keeping your codebase <b>flexible to infrastructure change</b>.</div>
+      <div class="why-card"><b>You're stuck behind an old system no one dares touch (a haunted graveyard).</b> It lifts the SRE mantra "No Haunted Graveyards" to the code level; the one antidote is <b>solid testing</b> — with tests, you can change a system of any age confidently.</div>
+      <div class="why-card"><b>You push a better new system but expect users to migrate themselves.</b> Why <b>organic migrations almost never finish</b> (copying old examples, diffuse benefits) and why the <b>infra team that owns the old system</b> should own the migration — internalizing the unfunded mandate's externality.</div>
+      <div class="why-card"><b>You treat every commit as precious.</b> "Cattle vs pets" reframes automated change: when machine-generated en masse, an individual commit is disposable cattle, not a pet; <b>don't take rollbacks personally</b>.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">COUNTERINTUITIVE</span> Atomic ceiling shrinks → divide and conquer</h3>
+      <div class="claim">The bigger the repo and team, the <b>lower the atomic-change ceiling</b>; the fix isn't "try harder at big atomic commits" but to <b>shard the global change into independently-submittable pieces</b>.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="Left: the bigger the repo, the lower the atomic ceiling; right: Rosie shards the global change into independently submittable pieces">
+          <text x="170" y="26" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">Atomic ceiling falls with scale</text>
+          <line x1="48" y1="40" x2="48" y2="170" stroke="var(--border)" stroke-width="1.4"/>
+          <line x1="48" y1="170" x2="300" y2="170" stroke="var(--border)" stroke-width="1.4"/>
+          <text x="40" y="48" class="fig-mut" font-size="9.5" text-anchor="end">big</text>
+          <text x="40" y="168" class="fig-mut" font-size="9.5" text-anchor="end">small</text>
+          <text x="56" y="186" class="fig-mut" font-size="9.5">small repo</text>
+          <text x="300" y="186" class="fig-mut" font-size="9.5" text-anchor="end">big repo + many devs</text>
+          <path d="M58 56 C140 70 220 150 292 162" stroke="var(--theme-time)" stroke-width="2.6" fill="none"/>
+          <text x="200" y="205" class="fig-mut" font-size="10.5" text-anchor="middle">presubmit / tests / staying current → harder to land at once</text>
+          <line x1="350" y1="40" x2="350" y2="210" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+          <text x="540" y="26" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">Rosie: shard into pieces</text>
+          <rect x="430" y="42" width="220" height="34" rx="8" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="540" y="64" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle">global change (tool-generated)</text>
+          <path d="M470 76 L440 100" stroke="var(--muted)" stroke-width="1.4" fill="none"/>
+          <path d="M540 76 L540 100" stroke="var(--muted)" stroke-width="1.4" fill="none"/>
+          <path d="M610 76 L640 100" stroke="var(--muted)" stroke-width="1.4" fill="none"/>
+          <g font-size="10">
+            <rect x="396" y="102" width="86" height="30" rx="7" fill="#16241f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="439" y="121" class="fig-txt" text-anchor="middle">shard 1</text>
+            <rect x="497" y="102" width="86" height="30" rx="7" fill="#16241f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="540" y="121" class="fig-txt" text-anchor="middle">shard 2</text>
+            <rect x="598" y="102" width="86" height="30" rx="7" fill="#16241f" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <text x="641" y="121" class="fig-txt" text-anchor="middle">shard N</text>
+          </g>
+          <text x="540" y="152" class="fig-mut" font-size="10" text-anchor="middle">each: test → mail → submit (rollback-able independently)</text>
+          <text x="540" y="172" class="fig-mut" font-size="10" text-anchor="middle">sharded by project boundary / OWNERS</text>
+          <text x="540" y="198" class="fig-mut" font-size="10" text-anchor="middle" fill="var(--theme-trade)">each shard = disposable "cattle", not a "pet"</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — Left: as repo and engineer count grow, the <b>largest possible atomic change shrinks</b> (presubmits, tests, and keeping every file current get harder to land at once). Right: the fix is <b>Rosie</b> sharding the tool-generated global change, by project boundaries and OWNERS, into pieces that can be <b>independently tested/reviewed/submitted/rolled back</b> — each a disposable head of cattle, not a hand-raised pet.</figcaption>
+      </figure>
+      <div class="impl"><b>Barriers to atomic changes:</b> VCS operations scale <b>linearly</b> with change size, and big commits block others; merge-conflict probability is compounded by engineer count; <b>haunted graveyards</b> (too old to touch — antidote is testing); <b>heterogeneity</b> (many VCS/CI/format styles make auto-sweeps hard); testing (Google runs direct + transitive deps, deliberately accepting that small shards rerun tests).</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">PROCESS</span> The TAP train &amp; the four-phase process</h3>
+      <div class="claim">LSCs rarely interact and most tests pass for most LSCs — so you can <b>share a train and amortize cost</b>. The overall process has four phases, supported by Rosie and a committee.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 220" role="img" aria-label="TAP train five steps: sample 1000 tests, batch into a train, run the union, isolate culprit, generate report">
+          <text x="360" y="24" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">The TAP train (started every 3 hours)</text>
+          <defs><marker id="t22e" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <g font-size="10.5">
+            <circle cx="70" cy="78" r="22" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="70" y="74" class="fig-txt" font-weight="700" text-anchor="middle">1</text>
+            <text x="70" y="116" class="fig-mut" text-anchor="middle">sample</text>
+            <text x="70" y="130" class="fig-mut" text-anchor="middle">1,000 tests</text>
+            <circle cx="215" cy="78" r="22" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="215" y="74" class="fig-txt" font-weight="700" text-anchor="middle">2</text>
+            <text x="215" y="116" class="fig-mut" text-anchor="middle">batch passers</text>
+            <text x="215" y="130" class="fig-mut" text-anchor="middle">into "the train"</text>
+            <circle cx="360" cy="78" r="22" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="360" y="74" class="fig-txt" font-weight="700" text-anchor="middle">3</text>
+            <text x="360" y="116" class="fig-mut" text-anchor="middle">run union of affected</text>
+            <text x="360" y="130" class="fig-mut" text-anchor="middle">(can be whole repo, >6h)</text>
+            <circle cx="505" cy="78" r="22" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.8"/>
+            <text x="505" y="74" class="fig-txt" font-weight="700" text-anchor="middle">4</text>
+            <text x="505" y="116" class="fig-mut" text-anchor="middle">rerun failures per</text>
+            <text x="505" y="130" class="fig-mut" text-anchor="middle">change to isolate culprit</text>
+            <circle cx="650" cy="78" r="22" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.2"/>
+            <text x="650" y="74" class="fig-txt" font-weight="700" text-anchor="middle">5</text>
+            <text x="650" y="116" class="fig-mut" text-anchor="middle">report =</text>
+            <text x="650" y="130" class="fig-mut" text-anchor="middle">safe-to-submit evidence</text>
+          </g>
+          <path d="M94 78 L191 78" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#t22e)"/>
+          <path d="M239 78 L336 78" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#t22e)"/>
+          <path d="M384 78 L481 78" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#t22e)"/>
+          <path d="M529 78 L626 78" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#t22e)"/>
+          <text x="360" y="172" class="fig-mut" font-size="10.5" text-anchor="middle">Core insight: LSCs rarely interact &amp; most tests pass → test many changes together, fewer total runs</text>
+          <text x="360" y="196" class="fig-mut" font-size="10.5" text-anchor="middle" fill="var(--theme-trade)">Trade-off: rerun tests rather than spend pricier engineer time (recently-flaky tests ignored on submit)</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the TAP train's five steps (every 3 hours): ① sample 1,000 tests per change → ② batch the passers into one "train" → ③ run the union of tests affected by the group (low-level enough = the whole repo, >6h) → ④ rerun each non-flaky failure against each change to isolate the culprit → ⑤ generate a report as "safe to submit" evidence. Core insight: LSCs rarely interact and most tests pass, so batching amortizes cost.</figcaption>
+      </figure>
+      <div class="impl"><b>Four phases:</b> <b>Authorization</b> (a doc + FAQ, domain review, committee often routes reviews to a single <b>global approver</b>) → <b>Change creation</b> (as automated and human-looking as possible) → <b>Shard management</b> (Rosie shards, throttles, uses OWNERS detection to pick reviewers, global approver auto-approves with pattern tooling) → <b>Cleanup</b> (use <b>Tricorder</b> at review time to block reintroduction and prevent backsliding). <b>scoped_ptr→unique_ptr</b> finished via "make it a type alias → textual substitution → remove the old alias."</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"An LSC is any set of changes that are logically related but cannot practically be submitted as a single atomic unit."</span><span class="zh">The definition. The criterion is not "how many lines" but "can it be committed atomically in one shot."</span><div class="note">The defining sentence.</div></blockquote>
+    <blockquote class="q"><span class="en">"As a codebase and the number of engineers working in it grows, the largest atomic change possible counterintuitively decreases."</span><span class="zh">The book's most counterintuitive observation — and the root reason you need LSCs.</span><div class="note">The opening thesis.</div></blockquote>
+    <blockquote class="q"><span class="en">"A haunted graveyard ... is a system that is so ancient, obtuse, or complex that no one dares enter it. ... we've found the counter to this to be good, ol'-fashioned testing."</span><span class="zh">Haunted graveyards block all meaningful progress; the one antidote is testing.</span><div class="note">Barriers to Atomic Changes.</div></blockquote>
+    <blockquote class="q"><span class="en">"It's useful to treat specific changes as cattle: nameless and faceless commits that might be rolled back or otherwise rejected at any given time with little cost."</span><span class="zh">The psychological threshold — an individual commit is disposable cattle, not a pet; don't take rollbacks personally.</span><div class="note">Cattle Versus Pets.</div></blockquote>
+    <blockquote class="q"><span class="en">"Making LSCs means making a habit of making LSCs."</span><span class="zh">A closing TL;DR — the LSC capability is a muscle built through practice and investment.</span><div class="note">The TL;DRs.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Large-Scale Change (LSC)</span><br>A set of changes logically related but not submittable as one atomic unit; almost always tool-generated (clean antipatterns, replace deprecated features, upgrade infra, migrate users).</div>
+      <div class="kw"><span class="term">Atomic change</span><br>A single indivisible change you can test/review/commit at once; the largest possible one shrinks as repo and engineer count grow.</div>
+      <div class="kw"><span class="term">Haunted graveyard</span><br>From "No Haunted Graveyards"; a critical system so old no one dares touch it, blocking migrations and upgrades; the antidote is solid testing.</div>
+      <div class="kw"><span class="term">Unfunded mandate</span><br>Externally imposed requirements without compensating resources; why infra teams (not consuming teams) should own LSCs, internalizing the externality.</div>
+      <div class="kw"><span class="term">TAP train</span><br>Batching multiple LSCs onto one train to share test results; five steps, every 3 hours, producing "safe to submit" evidence.</div>
+      <div class="kw"><span class="term">Rosie</span><br>The platform that shards a master change into atomically-submittable pieces and manages each one's test-mail-submit; the core of LSC scaling.</div>
+      <div class="kw"><span class="term">Shard</span><br>An independently-submittable small change carved by Rosie along project/OWNERS boundaries; must be independently committable and pass its own presubmits.</div>
+      <div class="kw"><span class="term">Cattle vs pets</span><br>A mindset contrast; an LSC's individual commit is disposable cattle, not a hand-raised pet.</div>
+      <div class="kw"><span class="term">Global approver</span><br>An expert with repo-wide approval rights who auto-approves LSC shards with pattern-based tooling, replacing per-shard local-owner review.</div>
+      <div class="kw"><span class="term">Kythe / ClangMR / Refaster</span><br>Semantic-index and AST-level analysis/transform tools providing the codebase insight LSC tooling needs.</div>
+      <div class="kw"><span class="term">Type alias / forwarding function</span><br>Language features that let old users keep working while migrating non-atomically (scoped_ptr→unique_ptr transitioned via a type alias).</div>
+      <div class="kw"><span class="term">Tricorder</span><br>A framework that flags new uses of deprecated objects at review time, preventing backsliding after an LSC cleanup.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Back to the opening: <b>how many files can you reliably update in one atomic commit?</b> What constrains it (VCS capacity? merge conflicts? presubmits?)? Could you in an emergency? If that's far smaller than your codebase, is your "divide and conquer" tooling (who's your Rosie?) ready?</li>
+      <li>Does your codebase have a <b>haunted graveyard</b> — a system on a critical path too old to touch? Is it what blocks upgrading or removing old systems? Would you invest in tests first to free it? Per ch11, ch14.</li>
+      <li>When you recently pushed a new system, did you expect <b>organic migration</b> or own the LSC yourself? Recall "unfunded mandate" and "copying old examples" — will organic migration actually finish in your org? Per ch15.</li>
+      <li>Do you hold a "cattle" or "pet" mindset toward individual LSC commits? If your automation can't yet cheaply regenerate changes, where are you stuck — tooling (generation), testing (a TAP-train equivalent), or culture (owners' veto and trust)?</li>
+      <li>Is your change-generation tooling's <b>human cost sublinear</b> in repo size? If the repo grows tenfold, does the person-time balloon? Where should the ">500 edits → learn the tools" rule sit for your team? Per ch17, ch20.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— LSCs are the execution engine for "migrate users, remove old systems"; deprecation's "migrate then remove" relies on LSCs, and both share Tricorder for anti-backsliding.</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— the one antidote to "No Haunted Graveyards" is testing; the TAP train and "shards run the transitive closure" are testing culture scaled up.</span></div>
+      <div class="chip"><a href="ch14.html">ch14 Larger Testing</a> <span class="rel">— LSCs' broad coverage (direct + transitive) and the throughput damage of flaky tests extend the larger-testing discussion.</span></div>
+      <div class="chip"><a href="ch21.html">ch21 Dependency Management</a> <span class="rel">— Abseil's "breaking API change requires an automated refactoring tool" and Live at Head's "upgrade in place on a break" rely on this chapter's LSC capability.</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— "prefer source-control problems" and monorepo + trunk-based are preconditions for LSCs; federated repos make atomic changes impossible.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— LSCs still need review; global approvers, OWNERS detection, and pattern-based auto-approval are scaled variants of the review process.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— Hyrum's Law is the root of the scoped_ptr long tail and why LSCs must test broadly; "integrated over time" is exactly what LSCs fight.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch21.html">← Prev: Dependency Management</a><a class="idx" href="index.html">⌂ Index</a><a href="ch23.html">Next: Continuous Integration →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

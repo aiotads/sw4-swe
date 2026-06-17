@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 21 章 Dependency Management ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具</div>
+    <div class="ch-no">CHAPTER 21</div>
+    <h1 class="title">Dependency Management</h1>
+    <div class="title-zh">依賴管理</div>
+    <div class="meta-row">
+      <span class="badge">作者 Titus Winters</span>
+      <span class="badge">PDF p.457–486</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Prefer source control problems to dependency management problems."</span>
+      <span class="zh">能用版本控制問題就別用依賴管理問題。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p><b>依賴管理</b>——管理「我們不控制的函式庫/套件/依賴網路」——是軟體工程<b>最不被理解、最具挑戰</b>的問題之一。它與版本控制的分野是：「<b>這子專案是否由我們組織控制？</b>」由此導出最強建議：<b>寧可面對版本控制問題，也不要面對依賴管理問題</b>（把「組織」定義得更廣通常划算）。</p>
+      <p>核心難題是以「<b>網路</b>」而非「單一依賴」思考。經典症狀是 <b>diamond dependency（鑽石依賴）</b>：libbase 被 liba/libb 用、兩者又被 libuser 用；libbase 不相容變更 → 沒有通用辦法兜起來（Java 可 shading、C++ 因 ODR 幾乎零容忍，但型別跨依賴傳遞時全失效）。<b>匯入依賴</b>在程式設計幾乎免費、在軟體工程有隱藏成本；提供者該講清相容性承諾（C++ stdlib／Go／Abseil／Boost）。</p>
+      <p>四種模型：<b>①Nothing Changes（靜態，新組織的起點）②SemVer（事實標準、SAT-solver、dependency hell）③Bundled Distribution（如 Linux distro）④Live at Head（不釘版本、靠 CI＋自動重構工具，trunk-based 的延伸）</b>。深入剖析 <b>SemVer 的侷限</b>（估計非證明、會 overconstrain 也 overpromise、誘因不對；<b>MVS</b> 提升保真度），並以「無限資源」思想實驗主張<b>以跑下游測試的實證取代估計</b>。最後談匯出依賴（gflags、AppEngine）：<b>外部使用者維護成本遠高於內部</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你被鑽石依賴、版本衝突、dependency hell 反覆折磨。</b> 本章把它拉高到「<b>依賴網路</b>」層次；語言技倆（shading）只能救函式救不了型別。看懂後你會更敢把問題<b>收進組織內變成版本控制問題</b>。</div>
+      <div class="why-card"><b>你不知道該不該、如何引入外部依賴。</b> Google 的判準清單＋Alice/Bob 的 third_party 故事點破：<b>匯入依賴不是免費的，是一份需長期維護的契約</b>（Hyrum's Law）。</div>
+      <div class="why-card"><b>你把 SemVer 當絕對真理。</b> 它只是「<b>人對風險的有損估計</b>」：會 overconstrain（能動卻被擋）也 overpromise（patch 照樣弄壞別人）。認識 <b>MVS</b> 與「以測試取代估計」的方向。</div>
+      <div class="why-card"><b>你在考慮把程式碼對外發布。</b> gflags 與 AppEngine 的教訓：<b>「丟過牆就忘」損聲譽、無計畫發布變成工程效率的稅</b>；別發布沒有長期支援計畫的東西。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-trade">難題</span> 鑽石依賴與衝突需求 <span class="en2">Diamond Dependency</span></h3>
+      <div class="claim">核心難題是以「網路」而非「單一依賴」思考；衝突需求的經典症狀是<b>鑽石依賴</b>（需至少三層）。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 220" role="img" aria-label="鑽石依賴：libuser 經 liba、libb 都依賴 libbase，但 liba 要新版、libb 要舊版而衝突">
+          <defs><marker id="d21" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"/></marker></defs>
+          <rect x="296" y="30" width="128" height="40" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="360" y="55" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">libuser（你的程式）</text>
+          <rect x="150" y="100" width="120" height="40" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+          <text x="210" y="118" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">liba</text>
+          <text x="210" y="133" class="fig-mut" font-size="10">要 libbase v2（新）</text>
+          <rect x="450" y="100" width="120" height="40" rx="9" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.8"/>
+          <text x="510" y="118" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">libb</text>
+          <text x="510" y="133" class="fig-mut" font-size="10">要 libbase v1（舊）</text>
+          <rect x="296" y="168" width="128" height="40" rx="9" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+          <text x="360" y="186" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">libbase</text>
+          <text x="360" y="201" class="fig-mut" font-size="10">v1 ⚡ v2 不相容</text>
+          <path d="M330 70 L240 98" stroke="var(--muted)" stroke-width="1.6" fill="none" marker-end="url(#d21)"/>
+          <path d="M390 70 L480 98" stroke="var(--muted)" stroke-width="1.6" fill="none" marker-end="url(#d21)"/>
+          <path d="M225 140 L335 166" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d21)"/>
+          <path d="M495 140 L385 166" stroke="var(--theme-time)" stroke-width="1.6" fill="none" marker-end="url(#d21)"/>
+          <text x="100" y="160" class="fig-mut" font-size="11" text-anchor="middle" transform="rotate(-90 100 160)">兩條路徑要求不同版本</text>
+        </svg>
+        <figcaption><b>Figure 21-1 重繪</b> 鑽石依賴：libbase 被 liba 與 libb 用，兩者又被 libuser（你的程式）用。若 libbase 有不相容變更、liba 升 v2 而 libb 還在 v1，libuser 就<b>沒有通用辦法把一切兜在一起</b>。Java 可 shading 改名隔離、C++ 因 One Definition Rule 幾乎零容忍——但只要型別會跨依賴傳遞，所有技倆都失效。</figcaption>
+      </figure>
+      <div class="impl"><b>匯入依賴：</b>重用勝過重造，但考慮時間就有維護成本。相容性承諾：C++ stdlib（近無限期＋ABI）、Go（原始碼相容無二進位）、<b>Abseil（破壞性 API 變更必附自動重構工具）</b>、Boost（不保證）。Google `third_party` 的 Alice/Bob 故事：「<b>我讓它能動 ≠ 這是被支援地運作</b>」。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">模型</span> 四種依賴管理模型 <span class="en2">Nothing Changes / SemVer / Bundled / Live at Head</span></h3>
+      <div class="claim">好方案須對<b>時間與規模</b>都有彈性、避免衝突需求。四種常見模型，差別在「版本選擇」怎麼做：</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="四種依賴管理模型：Nothing Changes、SemVer、Bundled Distribution、Live at Head">
+          <g font-size="12">
+            <rect x="24" y="40" width="320" height="68" rx="11" fill="#12151f" stroke="var(--muted)" stroke-width="1.6"/>
+            <text x="42" y="64" class="fig-txt" font-weight="700">① Nothing Changes（靜態）</text>
+            <text x="42" y="84" class="fig-mut" font-size="11">永不改；新組織的起點，夠久就失效</text>
+            <text x="42" y="100" class="fig-mut" font-size="10.5">版本選擇：無</text>
+            <rect x="376" y="40" width="320" height="68" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="394" y="64" class="fig-txt" font-weight="700" fill="var(--accent)">② SemVer（事實標準）</text>
+            <text x="394" y="84" class="fig-mut" font-size="11">major/minor/patch＋SAT-solver</text>
+            <text x="394" y="100" class="fig-mut" font-size="10.5">版本選擇：解約束（解不出＝dependency hell）</text>
+            <rect x="24" y="120" width="320" height="68" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="42" y="144" class="fig-txt" font-weight="700" fill="var(--theme-scale)">③ Bundled Distribution</text>
+            <text x="42" y="164" class="fig-mut" font-size="11">distributor 找出相容集合（Linux distro）</text>
+            <text x="42" y="180" class="fig-mut" font-size="10.5">版本選擇：由 distributor</text>
+            <rect x="376" y="120" width="320" height="68" rx="11" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+            <text x="394" y="144" class="fig-txt" font-weight="700" fill="var(--theme-trade)">④ Live at Head</text>
+            <text x="394" y="164" class="fig-mut" font-size="11">不釘版本、靠 CI＋自動重構工具</text>
+            <text x="394" y="180" class="fig-mut" font-size="10.5">版本選擇：所有東西的最新穩定版</text>
+          </g>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 四種依賴管理模型：①Nothing Changes（永不改，新組織起點但夠久失效）②SemVer（事實標準、SAT-solver，解不出＝dependency hell）③Bundled Distribution（distributor 找相容集合，如 Linux distro）④Live at Head（不釘版本、靠 CI＋自動重構工具，是 trunk-based 的依賴延伸）。差別在「版本選擇」由誰/如何做。</figcaption>
+      </figure>
+      <div class="impl"><b>SemVer 的侷限：</b>它是估計非證明——會 <b>overconstrain</b>（liba/libb 只用 Foo，libbase 改 Bar 卻被擋）也會 <b>overpromise</b>（patch「安全」變更照樣因 Hyrum's Law 弄壞別人）；誘因不對（維護者只承擔一小部分成本）。<b>MVS（最小版本選擇）</b>：要求 ≥1.7 就用 1.7、走最小的一步、貼近作者測過的版本。SemVer 只在小規模、提供者準確、依賴細粒度、用法在預期內時行得通。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">匯出</span> 無限資源、匯出依賴 <span class="en2">以測試取代估計、gflags/AppEngine</span></h3>
+      <ul class="tight">
+        <li><b>無限資源思想實驗：</b>若有無限運算，就以「<b>跑下游依賴的測試</b>」這個實證取代 SemVer 的估計——這實際上就是 <b>Live at Head</b>。需要：所有依賴有單元測試、網路（含反向邊）可查、CI 資源、不釘版本、納入歷史/聲譽。</li>
+        <li><b>匯出依賴的兩種損失：</b>①<b>聲譽</b>（做不好/不維護就拖累——「community over code」）②<b>工程效率的稅</b>（不同步、夠久所有 fork 都變貴）。</li>
+        <li><b>gflags：</b>2006 開源旗標庫，因無法重構、法律問題注定「丟過牆」，內外版本分歧、最終被外部 fork；後來內部改了「可觀察但沒文件」的實作，依賴等價性的少數專案爆掉（Hyrum's Law）。</li>
+        <li><b>AppEngine：</b>Python 32→64-bit＋C++ 升級綁在一起，但<b>付費客戶不肯升級</b>，逼得傳遞閉包裡每段 C++ 都得相容舊版近三年。</li>
+      </ul>
+      <div class="impl"><b>結論：</b>對外發布 API 會暴露於外部競爭優先序與 Hyrum's Law 慣性；<b>外部使用者維護成本遠高於內部</b>。別發布一個你沒有長期支援計畫（與授權）的東西。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"All else being equal, prefer source control problems over dependency-management problems."</span><span class="zh">在其他條件相同下，寧可面對版本控制問題，也不要面對依賴管理問題。</span><div class="note">全章最強的單一建議。把「組織」定義得更廣通常划算——版本控制遠比依賴管理容易、便宜。</div></blockquote>
+    <blockquote class="q"><span class="en">"Modern software is built on towering pillars of dependencies; but just because we can build those pillars doesn't mean we've yet figured out how to keep them standing and stable over time."</span><span class="zh">現代軟體建立在高聳的依賴支柱之上；但我們能蓋起這些支柱，不代表我們已想通如何讓它們隨時間屹立不搖。</span><div class="note">點出依賴管理為何正成為軟體工程政策最重要的問題。</div></blockquote>
+    <blockquote class="q"><span class="en">"SemVer is a lossy-compression shorthand estimate for 'How risky does a human think this change is?'"</span><span class="zh">SemVer 是一個有損壓縮的速記估計，回答的是「一個人覺得這個變更有多大風險？」</span><div class="note">SemVer 的侷限——估計而非證明；把它當絕對會 overconstrain 也 overpromise。</div></blockquote>
+    <blockquote class="q"><span class="en">"There is no absolute truth in the notion of 'This is a breaking change'; a change can be seen to be breaking for only a (known or unknown) set of existing users and use cases."</span><span class="zh">「這是破壞性變更」這個說法沒有絕對真理；一個變更只能對某一組（已知或未知的）既有使用者與用例而言是破壞性的。</span><div class="note">SemVer overpromise——是否 breaking 只能在「如何被使用」的脈絡下評估。</div></blockquote>
+    <blockquote class="q"><span class="en">"External users of an API cost a lot more to maintain than internal ones."</span><span class="zh">一個 API 的外部使用者，維護成本遠高於內部使用者。</span><div class="note">Exporting Dependencies／AppEngine——對外發布暴露於外部競爭優先序與 Hyrum's Law 慣性。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Dependency Management（依賴管理）</span><br>管理我們不控制的函式庫/套件/依賴網路；軟體工程最不被理解、最具挑戰的問題之一。</div>
+      <div class="kw"><span class="term">Source Control vs Dependency Management</span><br>分野是「這子專案是否由我們組織控制」；寧可面對版本控制問題（更易、更便宜）。</div>
+      <div class="kw"><span class="term">Diamond Dependency（鑽石依賴）</span><br>libbase 被 liba/libb 用、兩者又被 libuser 用；libbase 不相容變更使兩條路徑要求不同版本而無法兜起。</div>
+      <div class="kw"><span class="term">Shading / One Definition Rule</span><br>Java 可改名隔離多版本；C++ 因 ODR 幾乎零容忍；但型別跨依賴傳遞時所有技倆失效。</div>
+      <div class="kw"><span class="term">Compatibility Promise（相容性承諾）</span><br>C++ stdlib（近無限期＋ABI＋SD-8）、Go（原始碼相容無二進位）、Abseil（破壞性 API 變更必附自動重構工具）、Boost（不保證）。</div>
+      <div class="kw"><span class="term">third_party／「能動 ≠ 被支援地運作」</span><br>Google 放外部依賴的目錄；匯入依賴是需長期維護的契約（Hyrum's Law）。</div>
+      <div class="kw"><span class="term">Nothing Changes（靜態模型）</span><br>永不改；多數新組織的正確起點，但夠久就失效。</div>
+      <div class="kw"><span class="term">SemVer（語意化版本）</span><br>major/minor/patch＋「≥」＋SAT-solver；解不出＝dependency hell；約束套在網路上是 NP-complete。</div>
+      <div class="kw"><span class="term">Bundled Distribution / Live at Head</span><br>distributor 找相容集合當單一單元發行；Live at Head 不釘版本、靠 CI＋自動重構工具（trunk-based 延伸）。</div>
+      <div class="kw"><span class="term">MVS（最小版本選擇）</span><br>要求 ≥1.7 就用 1.7（非 1.8）；高保真、貼近作者測過的版本；走最小的一步。</div>
+      <div class="kw"><span class="term">Overconstrain / Overpromise</span><br>SemVer 兩種失真：明明能動卻被擋（dependency hell）／patch 照樣因 Hyrum's Law 弄壞別人。</div>
+      <div class="kw"><span class="term">Exporting Dependencies（匯出依賴）</span><br>對外發布的兩種損失：聲譽、工程效率的稅；外部使用者維護成本遠高於內部（gflags、AppEngine）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你最近一次依賴衝突/dependency hell，是不是 <b>diamond dependency</b>？能不能把它從「依賴管理問題」<b>收進組織內變成版本控制問題</b>（把「組織」定義得更廣、或 vendor 進來）？對照 ch16、ch18。</li>
+      <li>用 Google 的清單檢視你引入的一個外部依賴：有測試嗎？相容承諾？依賴多久、誰升級、多難？它有沒有像 Alice/Bob 一樣<b>悄悄從無害變成關鍵</b>卻沒人維護？</li>
+      <li>你把 SemVer 當「承諾」還是「估計」？回想一次 overpromise（說相容卻爆）或 overconstrain（能動卻被擋）——你的策略有為這兩種失真做準備嗎？<b>MVS</b> 適用嗎？</li>
+      <li>四種模型裡你在哪、該在哪？你的專案壽命久到「Nothing Changes 會失效」了嗎？你有測試與 CI 支撐 Live at Head 嗎？對照 ch23。</li>
+      <li>你在考慮把程式碼<b>對外發布</b>嗎？回想 gflags「丟過牆就忘」與 AppEngine「付費客戶拖三年」——你有<b>長期支援的計畫與授權</b>嗎？準備好承擔外部使用者透過 Hyrum's Law 依賴你沒承諾的行為嗎？</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— 「版本控制 vs 依賴管理」的分野、One-Version Rule、Live at Head 是 trunk-based 的延伸。</span></div>
+      <div class="chip"><a href="ch18.html">ch18 Build Systems</a> <span class="rel">— 「管理依賴是建置系統最根本的工作」、One-Version Rule、鑽石依賴、手動釘版本都在第 18 章先行。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— Hyrum's Law 是 SemVer overpromise 與匯出依賴風險的根源；「整合時間維度」是依賴管理之難的核心。</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— Live at Head 與「無限資源」模型都假設 CI＋下游測試提供實際相容證據取代估計。</span></div>
+      <div class="chip"><a href="ch12.html">ch12 Unit Testing</a> <span class="rel">— 「無限資源」模型需要所有依賴有單元測試；四種變更映射到測試強度。</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— Abseil「破壞性 API 變更必附自動重構工具」是棄用＋遷移工具的具體承諾。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— Abseil 的自動重構工具、Live at Head 的「破壞時就地升級」都仰賴 LSC 能力。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch20.html">← 上一章：Static Analysis</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch22.html">下一章：Large-Scale Changes →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools</div>
+    <div class="ch-no">CHAPTER 21</div>
+    <h1 class="title">Dependency Management</h1>
+    <div class="title-zh">If you can make it a source-control problem, do — it's far cheaper</div>
+    <div class="meta-row">
+      <span class="badge">by Titus Winters</span>
+      <span class="badge">PDF p.457–486</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Prefer source control problems to dependency management problems."</span>
+      <span class="zh">If you can pull a problem inside your organization and make it a source-control problem, do.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p><b>Dependency management</b> — managing the network of libraries/packages/dependencies you don't control — is one of software engineering's <b>least understood, most challenging</b> problems. The line from version control: "<b>Does our org control this subproject?</b>" Hence the strongest advice: <b>prefer source control problems over dependency-management problems</b> (broadening "organization" is often a good trade-off).</p>
+      <p>The core difficulty is thinking in <b>networks</b>, not single dependencies. The canonical symptom is the <b>diamond dependency</b>: libbase used by liba/libb, both by libuser; an incompatible libbase change → no general way to reconcile (Java can shade, C++ has near-zero tolerance via the ODR, but all tricks fail once types pass between dependencies). <b>Importing</b> is nearly free in programming but has hidden costs in engineering; providers should be clear about their compatibility promise (C++ stdlib / Go / Abseil / Boost).</p>
+      <p>Four models: <b>① Nothing Changes (static, a new org's starting point) ② SemVer (the de facto standard, a SAT-solver, dependency hell) ③ Bundled Distribution (like a Linux distro) ④ Live at Head (unpin, rely on CI + automated refactoring tools — the trunk-based extension)</b>. It dissects <b>SemVer's limits</b> (an estimate not a proof; overconstrains and overpromises; wrong incentives; <b>MVS</b> raises fidelity) and an "infinite resources" experiment arguing for <b>evidence from downstream tests over estimates</b>. Finally, exporting dependencies (gflags, AppEngine): <b>external users cost far more than internal ones</b>.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You're repeatedly tormented by diamond dependencies and dependency hell.</b> The chapter lifts it to a "<b>dependency network</b>" view; language tricks (shading) save functions but not types. You'll be readier to <b>pull problems inside the org as source-control problems</b>.</div>
+      <div class="why-card"><b>You don't know whether or how to import a dependency.</b> Google's checklist + the Alice/Bob third_party story: <b>importing isn't free — it's a long-term maintenance contract</b> (Hyrum's Law).</div>
+      <div class="why-card"><b>You treat SemVer as absolute truth.</b> It's "a <b>human's lossy estimate of risk</b>": it overconstrains (works, but blocked) and overpromises (a patch still breaks someone). Meet <b>MVS</b> and "evidence over estimates."</div>
+      <div class="why-card"><b>You're considering releasing your code externally.</b> The gflags and AppEngine lessons: <b>"throw it over the wall and forget" costs reputation; an unplanned release is a tax on efficiency</b>; don't release without a long-term support plan.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-trade">DIFFICULTY</span> Diamond dependencies &amp; conflicting requirements</h3>
+      <div class="claim">The core difficulty is thinking in networks, not single dependencies; the canonical symptom of conflicting requirements is the <b>diamond dependency</b> (needs three layers).</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 220" role="img" aria-label="Diamond dependency: libuser depends on libbase through both liba and libb, but liba wants the new version and libb the old">
+          <defs><marker id="d21e" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"/></marker></defs>
+          <rect x="296" y="30" width="128" height="40" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="360" y="55" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">libuser (your code)</text>
+          <rect x="150" y="100" width="120" height="40" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+          <text x="210" y="118" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">liba</text>
+          <text x="210" y="133" class="fig-mut" font-size="10">needs libbase v2 (new)</text>
+          <rect x="450" y="100" width="120" height="40" rx="9" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.8"/>
+          <text x="510" y="118" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle">libb</text>
+          <text x="510" y="133" class="fig-mut" font-size="10">needs libbase v1 (old)</text>
+          <rect x="296" y="168" width="128" height="40" rx="9" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+          <text x="360" y="186" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">libbase</text>
+          <text x="360" y="201" class="fig-mut" font-size="10">v1 ⚡ v2 incompatible</text>
+          <path d="M330 70 L240 98" stroke="var(--muted)" stroke-width="1.6" fill="none" marker-end="url(#d21e)"/>
+          <path d="M390 70 L480 98" stroke="var(--muted)" stroke-width="1.6" fill="none" marker-end="url(#d21e)"/>
+          <path d="M225 140 L335 166" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d21e)"/>
+          <path d="M495 140 L385 166" stroke="var(--theme-time)" stroke-width="1.6" fill="none" marker-end="url(#d21e)"/>
+          <text x="100" y="160" class="fig-mut" font-size="11" text-anchor="middle" transform="rotate(-90 100 160)">two paths demand different versions</text>
+        </svg>
+        <figcaption><b>Figure 21-1 redrawn</b> — diamond dependency: libbase is used by liba and libb, both used by libuser (your code). If libbase makes an incompatible change and liba moves to v2 while libb stays on v1, libuser has <b>no general way to reconcile</b>. Java can shade (rename to isolate), C++ has near-zero tolerance via the One Definition Rule — but once types pass between dependencies, all tricks fail.</figcaption>
+      </figure>
+      <div class="impl"><b>Importing:</b> reuse beats reimplementing, but time brings maintenance cost. Compatibility promises: C++ stdlib (near-indefinite + ABI), Go (source, no binary), <b>Abseil (no breaking API change without an automated refactoring tool)</b>, Boost (no promise). Google's `third_party` Alice/Bob story: "<b>I got it to work ≠ this works in a supported fashion.</b>"</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">MODELS</span> Four dependency-management models</h3>
+      <div class="claim">A good solution must be flexible with <b>time and scale</b> and avoid conflicting requirements. Four common models, differing in how "version selection" works:</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="Four models: Nothing Changes, SemVer, Bundled Distribution, Live at Head">
+          <g font-size="12">
+            <rect x="24" y="40" width="320" height="68" rx="11" fill="#12151f" stroke="var(--muted)" stroke-width="1.6"/>
+            <text x="42" y="64" class="fig-txt" font-weight="700">① Nothing Changes (static)</text>
+            <text x="42" y="84" class="fig-mut" font-size="11">never change; a starting point, false over time</text>
+            <text x="42" y="100" class="fig-mut" font-size="10.5">version selection: none</text>
+            <rect x="376" y="40" width="320" height="68" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="394" y="64" class="fig-txt" font-weight="700" fill="var(--accent)">② SemVer (de facto standard)</text>
+            <text x="394" y="84" class="fig-mut" font-size="11">major/minor/patch + a SAT-solver</text>
+            <text x="394" y="100" class="fig-mut" font-size="10.5">selection: solve constraints (unsolvable = dependency hell)</text>
+            <rect x="24" y="120" width="320" height="68" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="42" y="144" class="fig-txt" font-weight="700" fill="var(--theme-scale)">③ Bundled Distribution</text>
+            <text x="42" y="164" class="fig-mut" font-size="11">a distributor finds a compatible set (a Linux distro)</text>
+            <text x="42" y="180" class="fig-mut" font-size="10.5">selection: by the distributor</text>
+            <rect x="376" y="120" width="320" height="68" rx="11" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.4"/>
+            <text x="394" y="144" class="fig-txt" font-weight="700" fill="var(--theme-trade)">④ Live at Head</text>
+            <text x="394" y="164" class="fig-mut" font-size="11">unpin, rely on CI + automated refactoring tools</text>
+            <text x="394" y="180" class="fig-mut" font-size="10.5">selection: the latest stable of everything</text>
+          </g>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the four models: ① Nothing Changes (never change; a starting point, false over time) ② SemVer (de facto standard, a SAT-solver, unsolvable = dependency hell) ③ Bundled Distribution (a distributor finds a compatible set, like a Linux distro) ④ Live at Head (unpin, rely on CI + automated refactoring tools — the dependency extension of trunk-based development). They differ in who/how does version selection.</figcaption>
+      </figure>
+      <div class="impl"><b>SemVer's limits:</b> it's an estimate, not a proof — it <b>overconstrains</b> (liba/libb use only Foo, but a Bar change is blocked) and <b>overpromises</b> ("safe" patch changes still break someone via Hyrum's Law); the incentives are wrong (maintainers bear only a fraction of the cost). <b>MVS (Minimum Version Selection):</b> require ≥1.7 → use 1.7, the smallest step, closest to what the author tested. SemVer works only at small scale, with accurate providers, fine-grained dependencies, and expected usage.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">EXPORTING</span> Infinite resources &amp; exporting dependencies <span class="en2">evidence over estimates; gflags/AppEngine</span></h3>
+      <ul class="tight">
+        <li><b>The infinite-resources experiment:</b> with infinite compute, replace SemVer estimates with the evidence of "<b>running downstream tests</b>" — effectively <b>Live at Head</b>. Needs: all dependencies have unit tests, a queryable network (incl. reverse edges), CI compute, unpinned dependencies, and history/reputation factored in.</li>
+        <li><b>The two losses of exporting:</b> ① <b>reputation</b> (poorly done/unmaintained drags you down — "community over code") ② <b>a tax on engineering efficiency</b> (out of sync; all forks get expensive over time).</li>
+        <li><b>gflags:</b> a 2006 flags-library open-sourcing was doomed to "throw over the wall" (no refactoring, legal issues); versions diverged and it was forked externally; later internal changes to "observable-but-undocumented" details broke the few projects relying on fork equivalence (Hyrum's Law).</li>
+        <li><b>AppEngine:</b> tying a Python 32→64-bit upgrade to a C++ upgrade, but <b>paying customers wouldn't update</b>, forcing every C++ in the transitive closure to stay compatible with old versions for nearly three years.</li>
+      </ul>
+      <div class="impl"><b>Conclusion:</b> releasing an API exposes you to outsiders' competing priorities and Hyrum's Law inertia; <b>external users cost far more to maintain than internal ones</b>. Don't release something you don't have a plan (and mandate) to support long-term.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"All else being equal, prefer source control problems over dependency-management problems."</span><span class="zh">Broaden "organization" if you can — source control is far cheaper to reason about and handle.</span><div class="note">The chapter's strongest single piece of advice.</div></blockquote>
+    <blockquote class="q"><span class="en">"Modern software is built on towering pillars of dependencies; but just because we can build those pillars doesn't mean we've yet figured out how to keep them standing and stable over time."</span><span class="zh">Why dependency management is becoming the most important software-engineering policy problem.</span><div class="note">The opening.</div></blockquote>
+    <blockquote class="q"><span class="en">"SemVer is a lossy-compression shorthand estimate for 'How risky does a human think this change is?'"</span><span class="zh">An estimate, not a proof; treating it as absolute leads to overconstraint and overpromise.</span><div class="note">The Limitations of SemVer.</div></blockquote>
+    <blockquote class="q"><span class="en">"There is no absolute truth in the notion of 'This is a breaking change'; a change can be seen to be breaking for only a (known or unknown) set of existing users and use cases."</span><span class="zh">Whether a change breaks can only be judged in the context of how it's used.</span><div class="note">SemVer overpromise.</div></blockquote>
+    <blockquote class="q"><span class="en">"External users of an API cost a lot more to maintain than internal ones."</span><span class="zh">Releasing exposes you to outsiders' competing priorities and Hyrum's Law inertia.</span><div class="note">Exporting Dependencies / the AppEngine case.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Dependency management</span><br>Managing the network of libraries/packages/dependencies you don't control; one of the least understood, most challenging problems.</div>
+      <div class="kw"><span class="term">Source control vs dependency management</span><br>The line is "does our org control this subproject"; prefer source-control problems (easier, cheaper).</div>
+      <div class="kw"><span class="term">Diamond dependency</span><br>libbase used by liba/libb, both by libuser; an incompatible change makes two paths require different versions, irreconcilable.</div>
+      <div class="kw"><span class="term">Shading / One Definition Rule</span><br>Java can rename to isolate versions; C++ has near-zero tolerance (ODR); all tricks fail once types pass between dependencies.</div>
+      <div class="kw"><span class="term">Compatibility promise</span><br>C++ stdlib (near-indefinite + ABI + SD-8), Go (source, no binary), Abseil (breaking API change requires an automated refactoring tool), Boost (no promise).</div>
+      <div class="kw"><span class="term">third_party / "works ≠ supported"</span><br>Google's directory for external dependencies; importing is a long-term maintenance contract (Hyrum's Law).</div>
+      <div class="kw"><span class="term">Nothing Changes (static model)</span><br>Never change; the right starting point for most new orgs, false over a long enough time.</div>
+      <div class="kw"><span class="term">SemVer</span><br>major/minor/patch + "≥" + a SAT-solver; unsolvable = dependency hell; constraints on a network are NP-complete.</div>
+      <div class="kw"><span class="term">Bundled distribution / Live at Head</span><br>A distributor finds a compatible set; Live at Head unpins and relies on CI + automated refactoring tools (the trunk-based extension).</div>
+      <div class="kw"><span class="term">MVS (Minimum Version Selection)</span><br>Require ≥1.7 → use 1.7 (not 1.8); high-fidelity, close to what the author tested; take the smallest step.</div>
+      <div class="kw"><span class="term">Overconstrain / overpromise</span><br>SemVer's two fidelity losses: works but blocked (dependency hell) / a patch still breaks someone via Hyrum's Law.</div>
+      <div class="kw"><span class="term">Exporting dependencies</span><br>The two losses of releasing externally: reputation and a tax on engineering efficiency; external users cost far more (gflags, AppEngine).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Was your last conflict / dependency hell a <b>diamond dependency</b>? Could you pull it from a "dependency-management problem" into a "source-control problem" (broaden "organization," or vendor it in)? Per ch16, ch18.</li>
+      <li>Apply Google's checklist to a dependency you imported: tests? compatibility promise? how long, who upgrades, how hard? Has it, like Alice/Bob's, <b>quietly gone from innocuous to critical</b> with no maintainer?</li>
+      <li>Do you treat SemVer as a "promise" or an "estimate"? Recall an overpromise (said compatible but broke) or overconstrain (works but blocked) — is your strategy prepared for both? Does <b>MVS</b> apply?</li>
+      <li>Of the four models, where are you and where should you be? Is your project long-lived enough that "Nothing Changes becomes false"? Do you have the tests/CI for a Live at Head direction? Per ch23.</li>
+      <li>Considering <b>releasing</b> externally? Recall gflags "throw over the wall" and AppEngine "paying customers wouldn't upgrade for three years" — do you have a <b>long-term support plan and mandate</b>? Ready to bear external Hyrum's Law dependence?</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— the "source control vs dependency management" line, the One-Version Rule, and Live at Head as the trunk-based extension.</span></div>
+      <div class="chip"><a href="ch18.html">ch18 Build Systems</a> <span class="rel">— "managing dependencies is a build system's most fundamental job," the One-Version Rule, diamond dependencies, and manual pinning appear first in Ch.18.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— Hyrum's Law is the root of SemVer overpromise and export risk; "integrated over time" is the core of the difficulty.</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— Live at Head and the "infinite resources" model both assume CI + downstream tests give actual compatibility evidence.</span></div>
+      <div class="chip"><a href="ch12.html">ch12 Unit Testing</a> <span class="rel">— the "infinite resources" model needs all dependencies to have unit tests; the four kinds of change map to testing intensity.</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— Abseil's "breaking API change requires an automated refactoring tool" is a concrete deprecation-plus-migration promise.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— Abseil's automated refactoring tools and Live at Head's "upgrade in place on a break" both rely on LSC capability.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch20.html">← Prev: Static Analysis</a><a class="idx" href="index.html">⌂ Index</a><a href="ch22.html">Next: Large-Scale Changes →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

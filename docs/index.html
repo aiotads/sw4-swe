@@ -36,7 +36,7 @@
   .epigraph .zh{margin-top:4px}
   .progress-wrap{max-width:520px; margin:26px auto 0}
   .progress-bar{height:10px; background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden}
-  .progress-fill{height:100%; width:32%; background:linear-gradient(90deg,var(--theme-scale),var(--accent))}
+  .progress-fill{height:100%; width:100%; background:linear-gradient(90deg,var(--theme-scale),var(--accent))}
   .progress-text{color:var(--muted); font-size:.85rem; margin-top:8px}
   .themes{display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:30px}
   .theme-card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 18px; max-width:300px; text-align:left}
@@ -62,6 +62,24 @@
   .status{position:absolute; top:14px; right:14px; font-size:.68rem; padding:2px 9px; border-radius:999px}
   .st-done{background:rgba(59,184,196,.16); color:var(--theme-scale); border:1px solid rgba(59,184,196,.4)}
   .st-todo{background:var(--card2); color:var(--muted); border:1px solid var(--border)}
+  .afterword{background:linear-gradient(135deg,#141826,#10131c); border:1px solid var(--border); border-radius:14px; padding:26px 28px; margin-top:18px}
+  .afterword h3{margin:.2em 0 .5em; font-size:1.18rem}
+  .afterword p{color:var(--muted); margin:.7em 0}
+  .afterword p.lead{color:var(--fg); font-size:1.04rem}
+  .afterword b{color:var(--fg)}
+  .aw-quote{font-family:"SF Mono",Consolas,monospace; color:var(--accent); font-size:.94rem; border-left:3px solid var(--accent); padding:8px 16px; margin:16px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .aw-themes{display:grid; grid-template-columns:repeat(auto-fit,minmax(258px,1fr)); gap:14px; margin:18px 0 4px}
+  .aw-theme{border-radius:10px; padding:14px 16px; border:1px solid var(--border); background:var(--card)}
+  .aw-theme.t-time{border-left:3px solid var(--theme-time)} .aw-theme.t-scale{border-left:3px solid var(--theme-scale)} .aw-theme.t-trade{border-left:3px solid var(--theme-trade)}
+  .aw-theme b{font-size:.98rem}
+  .aw-theme.t-time b{color:var(--theme-time)} .aw-theme.t-scale b{color:var(--theme-scale)} .aw-theme.t-trade b{color:var(--theme-trade)}
+  .aw-theme p{font-size:.85rem; margin:8px 0 0}
+  .aw-theme .chs{font-size:.72rem; color:var(--muted); margin-top:9px; font-family:"SF Mono",Consolas,monospace}
+  .aw-arc{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin:16px 0 4px}
+  .aw-step{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px}
+  .aw-step .s-no{color:var(--accent); font-weight:700; font-size:.72rem; letter-spacing:.08em}
+  .aw-step .s-t{font-weight:700; margin-top:3px; font-size:.95rem}
+  .aw-step p{font-size:.8rem; margin:6px 0 0}
   footer{margin-top:60px; padding-top:24px; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; text-align:center; line-height:1.7}
   footer a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
   footer a:hover{color:var(--accent)}
@@ -86,7 +104,7 @@
     </div>
     <div class="progress-wrap">
       <div class="progress-bar"><div class="progress-fill"></div></div>
-      <div class="progress-text">完成進度：8 / 25 章</div>
+      <div class="progress-text">完成進度：25 / 25 章 ✓ 全書完成</div>
     </div>
     <div class="themes">
       <div class="theme-card"><b><span class="dot d-time"></span>Time 時間</b><p>軟體工程是「整合了時間維度的程式設計」；程式碼有預期壽命，必須能因應變化。</p></div>
@@ -117,34 +135,53 @@
     <div class="part-head"><span class="pno">PART III</span><h2>Processes</h2><span class="pzh">流程</span></div>
     <div class="grid">
       <a class="ch-card" href="ch08.html"><span class="status st-done">✓ 完成</span><div class="num">CH 08</div><div class="ten">Style Guides and Rules</div><div class="tzh">風格規範與規則</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
-      <a class="ch-card todo" href="ch09.html"><span class="status st-todo">待產出</span><div class="num">CH 09</div><div class="ten">Code Review</div><div class="tzh">程式碼審查</div></a>
-      <a class="ch-card todo" href="ch10.html"><span class="status st-todo">待產出</span><div class="num">CH 10</div><div class="ten">Documentation</div><div class="tzh">文件</div></a>
-      <a class="ch-card todo" href="ch11.html"><span class="status st-todo">待產出</span><div class="num">CH 11</div><div class="ten">Testing Overview</div><div class="tzh">測試總覽</div></a>
-      <a class="ch-card todo" href="ch12.html"><span class="status st-todo">待產出</span><div class="num">CH 12</div><div class="ten">Unit Testing</div><div class="tzh">單元測試</div></a>
-      <a class="ch-card todo" href="ch13.html"><span class="status st-todo">待產出</span><div class="num">CH 13</div><div class="ten">Test Doubles</div><div class="tzh">測試替身</div></a>
-      <a class="ch-card todo" href="ch14.html"><span class="status st-todo">待產出</span><div class="num">CH 14</div><div class="ten">Larger Testing</div><div class="tzh">大型測試</div></a>
-      <a class="ch-card todo" href="ch15.html"><span class="status st-todo">待產出</span><div class="num">CH 15</div><div class="ten">Deprecation</div><div class="tzh">棄用</div></a>
+      <a class="ch-card" href="ch09.html"><span class="status st-done">✓ 完成</span><div class="num">CH 09</div><div class="ten">Code Review</div><div class="tzh">程式碼審查</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch10.html"><span class="status st-done">✓ 完成</span><div class="num">CH 10</div><div class="ten">Documentation</div><div class="tzh">文件</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch11.html"><span class="status st-done">✓ 完成</span><div class="num">CH 11</div><div class="ten">Testing Overview</div><div class="tzh">測試總覽</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch12.html"><span class="status st-done">✓ 完成</span><div class="num">CH 12</div><div class="ten">Unit Testing</div><div class="tzh">單元測試</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch13.html"><span class="status st-done">✓ 完成</span><div class="num">CH 13</div><div class="ten">Test Doubles</div><div class="tzh">測試替身</div><div class="tags"><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span></div></a>
+      <a class="ch-card" href="ch14.html"><span class="status st-done">✓ 完成</span><div class="num">CH 14</div><div class="ten">Larger Testing</div><div class="tzh">大型測試</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span></div></a>
+      <a class="ch-card" href="ch15.html"><span class="status st-done">✓ 完成</span><div class="num">CH 15</div><div class="ten">Deprecation</div><div class="tzh">棄用</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-scale">Scale</span></div></a>
     </div>
   </div>
   <div class="part">
     <div class="part-head"><span class="pno">PART IV</span><h2>Tools</h2><span class="pzh">工具</span></div>
     <div class="grid">
-      <a class="ch-card todo" href="ch16.html"><span class="status st-todo">待產出</span><div class="num">CH 16</div><div class="ten">Version Control and Branch Management</div><div class="tzh">版本控制與分支管理</div></a>
-      <a class="ch-card todo" href="ch17.html"><span class="status st-todo">待產出</span><div class="num">CH 17</div><div class="ten">Code Search</div><div class="tzh">程式碼搜尋</div></a>
-      <a class="ch-card todo" href="ch18.html"><span class="status st-todo">待產出</span><div class="num">CH 18</div><div class="ten">Build Systems and Build Philosophy</div><div class="tzh">建置系統與建置哲學</div></a>
-      <a class="ch-card todo" href="ch19.html"><span class="status st-todo">待產出</span><div class="num">CH 19</div><div class="ten">Critique: Google's Code Review Tool</div><div class="tzh">Critique：Google 的審查工具</div></a>
-      <a class="ch-card todo" href="ch20.html"><span class="status st-todo">待產出</span><div class="num">CH 20</div><div class="ten">Static Analysis</div><div class="tzh">靜態分析</div></a>
-      <a class="ch-card todo" href="ch21.html"><span class="status st-todo">待產出</span><div class="num">CH 21</div><div class="ten">Dependency Management</div><div class="tzh">依賴管理</div></a>
-      <a class="ch-card todo" href="ch22.html"><span class="status st-todo">待產出</span><div class="num">CH 22</div><div class="ten">Large-Scale Changes</div><div class="tzh">大規模變更</div></a>
-      <a class="ch-card todo" href="ch23.html"><span class="status st-todo">待產出</span><div class="num">CH 23</div><div class="ten">Continuous Integration</div><div class="tzh">持續整合</div></a>
-      <a class="ch-card todo" href="ch24.html"><span class="status st-todo">待產出</span><div class="num">CH 24</div><div class="ten">Continuous Delivery</div><div class="tzh">持續交付</div></a>
-      <a class="ch-card todo" href="ch25.html"><span class="status st-todo">待產出</span><div class="num">CH 25</div><div class="ten">Compute as a Service</div><div class="tzh">運算即服務</div></a>
+      <a class="ch-card" href="ch16.html"><span class="status st-done">✓ 完成</span><div class="num">CH 16</div><div class="ten">Version Control and Branch Management</div><div class="tzh">版本控制與分支管理</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch17.html"><span class="status st-done">✓ 完成</span><div class="num">CH 17</div><div class="ten">Code Search</div><div class="tzh">程式碼搜尋</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch18.html"><span class="status st-done">✓ 完成</span><div class="num">CH 18</div><div class="ten">Build Systems and Build Philosophy</div><div class="tzh">建置系統與建置哲學</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch19.html"><span class="status st-done">✓ 完成</span><div class="num">CH 19</div><div class="ten">Critique: Google's Code Review Tool</div><div class="tzh">Critique：Google 的審查工具</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span></div></a>
+      <a class="ch-card" href="ch20.html"><span class="status st-done">✓ 完成</span><div class="num">CH 20</div><div class="ten">Static Analysis</div><div class="tzh">靜態分析</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span></div></a>
+      <a class="ch-card" href="ch21.html"><span class="status st-done">✓ 完成</span><div class="num">CH 21</div><div class="ten">Dependency Management</div><div class="tzh">依賴管理</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch22.html"><span class="status st-done">✓ 完成</span><div class="num">CH 22</div><div class="ten">Large-Scale Changes</div><div class="tzh">大規模變更</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch23.html"><span class="status st-done">✓ 完成</span><div class="num">CH 23</div><div class="ten">Continuous Integration</div><div class="tzh">持續整合</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch24.html"><span class="status st-done">✓ 完成</span><div class="num">CH 24</div><div class="ten">Continuous Delivery</div><div class="tzh">持續交付</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch25.html"><span class="status st-done">✓ 完成</span><div class="num">CH 25</div><div class="ten">Compute as a Service</div><div class="tzh">運算即服務</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
     </div>
   </div>
   <div class="part">
-    <div class="part-head"><span class="pno">PART V</span><h2>Conclusion</h2><span class="pzh">結論</span></div>
-    <div class="grid">
-      <a class="ch-card todo" style="pointer-events:none"><span class="status st-todo">後記</span><div class="num">AFTERWORD</div><div class="ten">Afterword</div><div class="tzh">後記（併入全書回顧）</div></a>
+    <div class="part-head"><span class="pno">PART V</span><h2>Conclusion</h2><span class="pzh">結論 ｜ 後記與全書回顧</span></div>
+    <div class="afterword">
+      <h3>讀完 25 章，回到那一句話</h3>
+      <p class="lead">整本書其實只在反覆論證一個命題，並把它拆給你看：<b>當程式碼要活很久、團隊要長很大、而資源與資訊永遠不足時，工程決策該怎麼做。</b>這正是「軟體工程」與「程式設計」的分野——前者是後者<b>乘上時間、再乘上規模</b>。</p>
+      <div class="aw-quote">"Software engineering is programming integrated over time."</div>
+      <p>三條主軸從第 1 章貫穿到第 25 章，從不單獨出現，而是彼此咬合成每一次取捨：</p>
+      <div class="aw-themes">
+        <div class="aw-theme t-time"><b>● Time 時間</b><p>程式碼有預期壽命，唯一確定的是它會變。能因應變化的能力，比一時的正確更值錢——測試是為了「敢改」，棄用是為了「能退場」，CI/CD 是把「改變的成本左移」。</p><div class="chs">ch01 · 10 · 11 · 15 · 21 · 23 · 24 · 25</div></div>
+        <div class="aw-theme t-scale"><b>● Scale 規模</b><p>組織與程式碼長大時，每件重複做的事都必須<b>次線性</b>擴展，否則組織會在自身重量下垮掉。政策、工具、自動化的存在，都是為了把線性成本壓成次線性。</p><div class="chs">ch03 · 06 · 08 · 16 · 17 · 18 · 22 · 25</div></div>
+        <div class="aw-theme t-trade"><b>● Trade-offs 取捨</b><p>沒有最佳解，只有在不完美資訊下、有理由的權衡。工程師的成熟，在於能說清「為什麼這樣選」，而不是「因為我說了算」（Why over Whom）。</p><div class="chs">ch01 · 05 · 07 · 09 · 13 · 14 · 19 · 21</div></div>
+      </div>
+      <h3 style="margin-top:24px">五大部分，其實是一個論證的五段</h3>
+      <div class="aw-arc">
+        <div class="aw-step"><div class="s-no">PART I</div><div class="s-t">立論</div><p>定義何謂軟體工程：時間 × 規模 × 取捨。Hyrum's Law 登場。</p></div>
+        <div class="aw-step"><div class="s-no">PART II</div><div class="s-t">文化</div><p>軟體由人協作而成；信任（HRT）、知識流動、心理安全感是地基。</p></div>
+        <div class="aw-step"><div class="s-no">PART III</div><div class="s-t">流程</div><p>把判斷制度化：規範、審查、文件、測試、棄用，讓品質可重複。</p></div>
+        <div class="aw-step"><div class="s-no">PART IV</div><div class="s-t">工具</div><p>讓判斷次線性擴展：版控、搜尋、建置、分析、依賴、LSC、CI/CD、CaaS。</p></div>
+        <div class="aw-step"><div class="s-no">PART V</div><div class="s-t">結論</div><p>回到時間維度——這一切都是為了讓程式碼「能持續演化」。</p></div>
+      </div>
+      <p style="margin-top:20px"><b>一條暗線：Hyrum's Law。</b>「使用者夠多，你系統的每個可觀察行為都會被某人依賴。」它在依賴管理（SemVer 的失真）、大規模變更（scoped_ptr 的長尾）、運算即服務（PID 32,000 修了八年）反覆現身——這正是「時間維度」最殘酷的體現：你沒承諾的，照樣會變成你的契約。</p>
+      <p>原書沒有獨立的結語章；這份後記把它併入全書回顧。若你是 L4~L6 工程師，讀完後最該帶走的不是某個 Google 制度的名字，而是一種<b>習慣</b>：每做一個技術決策，先問它在「時間 × 規模」下會如何演化，再為你的取捨寫下理由。</p>
+      <div class="aw-quote">"Making LSCs means making a habit of making LSCs." — 能力，是練出來的習慣。</div>
     </div>
   </div>
   <footer>
@@ -169,7 +206,7 @@
     </div>
     <div class="progress-wrap">
       <div class="progress-bar"><div class="progress-fill"></div></div>
-      <div class="progress-text">Progress: 8 / 25 chapters</div>
+      <div class="progress-text">Progress: 25 / 25 chapters ✓ complete</div>
     </div>
     <div class="themes">
       <div class="theme-card"><b><span class="dot d-time"></span>Time</b><p>Software engineering is "programming integrated over time"; code has an expected life span and must react to change.</p></div>
@@ -200,34 +237,53 @@
     <div class="part-head"><span class="pno">PART III</span><h2>Processes</h2></div>
     <div class="grid">
       <a class="ch-card" href="ch08.html"><span class="status st-done">✓ done</span><div class="num">CH 08</div><div class="ten">Style Guides and Rules</div><div class="tzh">Rules are laws; consistency; automate enforcement</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
-      <a class="ch-card todo" href="ch09.html"><span class="status st-todo">soon</span><div class="num">CH 09</div><div class="ten">Code Review</div></a>
-      <a class="ch-card todo" href="ch10.html"><span class="status st-todo">soon</span><div class="num">CH 10</div><div class="ten">Documentation</div></a>
-      <a class="ch-card todo" href="ch11.html"><span class="status st-todo">soon</span><div class="num">CH 11</div><div class="ten">Testing Overview</div></a>
-      <a class="ch-card todo" href="ch12.html"><span class="status st-todo">soon</span><div class="num">CH 12</div><div class="ten">Unit Testing</div></a>
-      <a class="ch-card todo" href="ch13.html"><span class="status st-todo">soon</span><div class="num">CH 13</div><div class="ten">Test Doubles</div></a>
-      <a class="ch-card todo" href="ch14.html"><span class="status st-todo">soon</span><div class="num">CH 14</div><div class="ten">Larger Testing</div></a>
-      <a class="ch-card todo" href="ch15.html"><span class="status st-todo">soon</span><div class="num">CH 15</div><div class="ten">Deprecation</div></a>
+      <a class="ch-card" href="ch09.html"><span class="status st-done">✓ done</span><div class="num">CH 09</div><div class="ten">Code Review</div><div class="tzh">Three approval bits; small changes; code is a liability</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch10.html"><span class="status st-done">✓ done</span><div class="num">CH 10</div><div class="ten">Documentation</div><div class="tzh">Treat docs like code; write for your audience</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch11.html"><span class="status st-done">✓ done</span><div class="num">CH 11</div><div class="ten">Testing Overview</div><div class="tzh">Tests enable change; size vs scope; the pyramid</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch12.html"><span class="status st-done">✓ done</span><div class="num">CH 12</div><div class="ten">Unit Testing</div><div class="tzh">Unchanging tests; behaviors not methods; DAMP not DRY</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch13.html"><span class="status st-done">✓ done</span><div class="num">CH 13</div><div class="ten">Test Doubles</div><div class="tzh">Prefer real > fake > stub/interaction; @DoNotMock</div><div class="tags"><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span></div></a>
+      <a class="ch-card" href="ch14.html"><span class="status st-done">✓ done</span><div class="num">CH 14</div><div class="ten">Larger Testing</div><div class="tzh">Fidelity vs hermeticity; the SUT; A/B diff; ten types</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span></div></a>
+      <a class="ch-card" href="ch15.html"><span class="status st-done">✓ done</span><div class="num">CH 15</div><div class="ten">Deprecation</div><div class="tzh">Advisory vs compulsory; hope is not a strategy</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-scale">Scale</span></div></a>
     </div>
   </div>
   <div class="part">
     <div class="part-head"><span class="pno">PART IV</span><h2>Tools</h2></div>
     <div class="grid">
-      <a class="ch-card todo" href="ch16.html"><span class="status st-todo">soon</span><div class="num">CH 16</div><div class="ten">Version Control and Branch Management</div></a>
-      <a class="ch-card todo" href="ch17.html"><span class="status st-todo">soon</span><div class="num">CH 17</div><div class="ten">Code Search</div></a>
-      <a class="ch-card todo" href="ch18.html"><span class="status st-todo">soon</span><div class="num">CH 18</div><div class="ten">Build Systems and Build Philosophy</div></a>
-      <a class="ch-card todo" href="ch19.html"><span class="status st-todo">soon</span><div class="num">CH 19</div><div class="ten">Critique: Google's Code Review Tool</div></a>
-      <a class="ch-card todo" href="ch20.html"><span class="status st-todo">soon</span><div class="num">CH 20</div><div class="ten">Static Analysis</div></a>
-      <a class="ch-card todo" href="ch21.html"><span class="status st-todo">soon</span><div class="num">CH 21</div><div class="ten">Dependency Management</div></a>
-      <a class="ch-card todo" href="ch22.html"><span class="status st-todo">soon</span><div class="num">CH 22</div><div class="ten">Large-Scale Changes</div></a>
-      <a class="ch-card todo" href="ch23.html"><span class="status st-todo">soon</span><div class="num">CH 23</div><div class="ten">Continuous Integration</div></a>
-      <a class="ch-card todo" href="ch24.html"><span class="status st-todo">soon</span><div class="num">CH 24</div><div class="ten">Continuous Delivery</div></a>
-      <a class="ch-card todo" href="ch25.html"><span class="status st-todo">soon</span><div class="num">CH 25</div><div class="ten">Compute as a Service</div></a>
+      <a class="ch-card" href="ch16.html"><span class="status st-done">✓ done</span><div class="num">CH 16</div><div class="ten">Version Control and Branch Management</div><div class="tzh">Trunk-based dev; the One-Version Rule; monorepo</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch17.html"><span class="status st-done">✓ done</span><div class="num">CH 17</div><div class="ten">Code Search</div><div class="tzh">Browse at scale; centralized index; latency = engineer-time</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch18.html"><span class="status st-done">✓ done</span><div class="num">CH 18</div><div class="ten">Build Systems and Build Philosophy</div><div class="tzh">Artifact- over task-based; distributed builds; One-Version</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch19.html"><span class="status st-done">✓ done</span><div class="num">CH 19</div><div class="ten">Critique: Google's Code Review Tool</div><div class="tzh">Simplicity & trust; attention set; LGTM+Approval scoring</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span></div></a>
+      <a class="ch-card" href="ch20.html"><span class="status st-done">✓ done</span><div class="num">CH 20</div><div class="ten">Static Analysis</div><div class="tzh">Developer happiness; effective false positives; Tricorder</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span></div></a>
+      <a class="ch-card" href="ch21.html"><span class="status st-done">✓ done</span><div class="num">CH 21</div><div class="ten">Dependency Management</div><div class="tzh">Diamond deps; SemVer's limits; Live at Head</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch22.html"><span class="status st-done">✓ done</span><div class="num">CH 22</div><div class="ten">Large-Scale Changes</div><div class="tzh">Atomic ceiling shrinks; shard with Rosie; TAP train</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch23.html"><span class="status st-done">✓ done</span><div class="num">CH 23</div><div class="ten">Continuous Integration</div><div class="tzh">Shift left; presubmit vs post-submit; TAP; CI is alerting</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch24.html"><span class="status st-done">✓ done</span><div class="num">CH 24</div><div class="ten">Continuous Delivery</div><div class="tzh">Faster is safer; flag-guarding; release train</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch25.html"><span class="status st-done">✓ done</span><div class="num">CH 25</div><div class="ten">Compute as a Service</div><div class="tzh">Cattle not pets; containers; Borg; serverless</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
     </div>
   </div>
   <div class="part">
-    <div class="part-head"><span class="pno">PART V</span><h2>Conclusion</h2></div>
-    <div class="grid">
-      <a class="ch-card todo" style="pointer-events:none"><span class="status st-todo">afterword</span><div class="num">AFTERWORD</div><div class="ten">Afterword</div></a>
+    <div class="part-head"><span class="pno">PART V</span><h2>Conclusion</h2><span class="pzh">Afterword &amp; book-wide review</span></div>
+    <div class="afterword">
+      <h3>25 chapters later, back to one sentence</h3>
+      <p class="lead">The whole book argues a single claim, then takes it apart for you: <b>how to make engineering decisions when code must live a long time, teams must grow large, and resources and information are always short.</b> That is the line between "software engineering" and "programming" — the former is the latter <b>multiplied by time, then by scale.</b></p>
+      <div class="aw-quote">"Software engineering is programming integrated over time."</div>
+      <p>Three themes run from Chapter 1 to Chapter 25 — never alone, but interlocking into every trade-off:</p>
+      <div class="aw-themes">
+        <div class="aw-theme t-time"><b>● Time</b><p>Code has an expected lifespan; the only certainty is that it will change. The ability to react beats momentary correctness — tests exist to <b>dare to change</b>, deprecation to <b>retire gracefully</b>, CI/CD to <b>shift the cost of change left.</b></p><div class="chs">ch01 · 10 · 11 · 15 · 21 · 23 · 24 · 25</div></div>
+        <div class="aw-theme t-scale"><b>● Scale</b><p>As org and codebase grow, everything done repeatedly must scale <b>sub-linearly</b>, or the org collapses under its own weight. Policies, tools, and automation all exist to bend linear cost into sub-linear.</p><div class="chs">ch03 · 06 · 08 · 16 · 17 · 18 · 22 · 25</div></div>
+        <div class="aw-theme t-trade"><b>● Trade-offs</b><p>There's no optimum, only a reasoned weighing under imperfect information. Engineering maturity is being able to say <b>why</b> you chose this — never "because I said so" (Why over Whom).</p><div class="chs">ch01 · 05 · 07 · 09 · 13 · 14 · 19 · 21</div></div>
+      </div>
+      <h3 style="margin-top:24px">The five parts are five movements of one argument</h3>
+      <div class="aw-arc">
+        <div class="aw-step"><div class="s-no">PART I</div><div class="s-t">Thesis</div><p>Define software engineering: time × scale × trade-offs. Hyrum's Law enters.</p></div>
+        <div class="aw-step"><div class="s-no">PART II</div><div class="s-t">Culture</div><p>Software is built by people; trust (HRT), knowledge flow, and psychological safety are the foundation.</p></div>
+        <div class="aw-step"><div class="s-no">PART III</div><div class="s-t">Processes</div><p>Institutionalize judgment: style, review, docs, testing, deprecation — make quality repeatable.</p></div>
+        <div class="aw-step"><div class="s-no">PART IV</div><div class="s-t">Tools</div><p>Scale judgment sub-linearly: version control, search, build, analysis, deps, LSC, CI/CD, CaaS.</p></div>
+        <div class="aw-step"><div class="s-no">PART V</div><div class="s-t">Conclusion</div><p>Back to the time dimension — all of it is to let code keep evolving.</p></div>
+      </div>
+      <p style="margin-top:20px"><b>A hidden thread: Hyrum's Law.</b> "With enough users, every observable behavior of your system will be depended on by somebody." It recurs in dependency management (SemVer's lossiness), large-scale changes (the scoped_ptr long tail), and compute as a service (PID 32,000, fixed over eight years) — the cruelest face of the time dimension: what you never promised becomes your contract anyway.</p>
+      <p>The book has no standalone closing chapter; this afterword folds it into a book-wide review. If you're an L4–L6 engineer, what to take away isn't the name of a Google system but a <b>habit</b>: before any technical decision, ask how it evolves under "time × scale," then write down the reason for your trade-off.</p>
+      <div class="aw-quote">"Making LSCs means making a habit of making LSCs." — capability is a habit you practice into being.</div>
     </div>
   </div>
   <footer>

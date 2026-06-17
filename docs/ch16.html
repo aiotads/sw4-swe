@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 16 章 Version Control ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具（開場）</div>
+    <div class="ch-no">CHAPTER 16</div>
+    <h1 class="title">Version Control and Branch Management</h1>
+    <div class="title-zh">版本控制與分支管理</div>
+    <div class="meta-row">
+      <span class="badge">作者 Titus Winters</span>
+      <span class="badge">PDF p.355–378</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Developers must not have a choice where to commit, or which version of an existing component to depend upon."</span>
+      <span class="zh">工程師不該有「要把程式提交到哪」或「要依賴某元件的哪個版本」的選擇。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>「工具」篇開場。版本控制（VCS）大概是軟體工程界<b>最普遍採用</b>的工具。它把全書主軸具象化——<b>軟體工程＝整合了時間維度的程式設計</b>，而 VCS 正是管理「原始碼 × 時間」的主要工具，可想成擴充檔案系統：<span class="mono">VCS(filename, time, branch) =&gt; 內容</span>。它真正的價值是<b>讓團隊與組織能擴展</b>。</p>
+      <p>兩大架構：<b>centralized（集中式，Subversion/Perforce/Piper）</b> 與 <b>distributed（DVCS，Git/Mercurial）</b>。Git 是主流。但核心功能相同、差別在 UX；<b>真正重要的是你放什麼進去、怎麼用</b>——而「怎麼用」幾乎全是<b>政策與慣例</b>。最關鍵的是 <b>Source of Truth（單一事實來源）</b>：集中式內建、DVCS 需靠政策明訂。</p>
+      <p>核心立場：<b>trunk-based development（主幹開發：一個 repo、沒有開發分支）</b>特別能擴展。長壽 <b>dev branch</b> 是「以為換來穩定、實為生產力拖累」的安全錯覺；正解是<b>重度依賴測試與 CI、保持 build 綠燈、用 runtime flag 關閉未完成功能</b>。<b>release branch</b> 相對良性。Google 在 Piper monorepo 上奉行 <b>One-Version Rule</b>：<b>加依賴時絕不能有「選哪個版本」的選擇</b>，否則 fork 造成鑽石依賴。monorepo 讓 One Version 想違反都難，但<b>不是唯一正解</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你還在開「這週合併策略怎麼喬」的會、有「合併協調員」。</b> 那是<b>長壽 dev branch 的純開銷</b>——分支不換穩定，只把症狀放大。正解：<b>trunk-based＋CI＋feature flag</b>，「branches are a drag on productivity」。</div>
+      <div class="why-card"><b>你的團隊為「該用哪個版本」吵過、或被鑽石依賴坑過。</b> 終結它的政策：<b>One-Version Rule——加依賴時不該有選擇</b>。看懂 fork 為何危險（shading 騙得了函式騙不了型別）。</div>
+      <div class="why-card"><b>你在猶豫 monorepo 還是 manyrepo、Git 還是別的。</b> 本章把這降為次要：<b>真正重要的是堅守 One-Version 與 Source of Truth</b>。並介紹兩全其美的 <b>VMR（虛擬 monorepo）</b>。</div>
+      <div class="why-card"><b>你的新人覺得「回退舊版本」是高成本奢侈品。</b> 那是把「程式設計」誤當「軟體工程」。「VCS＝管理原始碼 × 時間的主要工具」一句話幫你說清為何它不可或缺。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">本質</span> What Is Version Control? <span class="en2">原始碼 × 時間</span></h3>
+      <div class="claim">VCS 追蹤檔案隨時間的版本；早期靠鎖檔、進階靠<b>原子提交（atomicity）</b>。可想成 <span class="mono">VCS(filename, time, branch) =&gt; 內容</span>——把<b>時間</b>變成明確的一部分（程式設計裡多餘，軟體工程裡關鍵）。</div>
+      <div class="impl"><b>抗拒它，幾乎來自混淆「程式設計」與「軟體工程」</b>——新人把「整個專案的 undo」看成多餘奢侈品；但 VCS 真正價值是<b>橋接單人與多人流程、讓組織擴展</b>，並順帶滿足稽核、觸發提交前的反思（跑 static analysis、測試）。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">架構</span> Centralized vs Distributed、Source of Truth <span class="en2">集中 vs 分散、事實來源</span></h3>
+      <ul class="tight">
+        <li><b>核心功能相同、差別在 UX：</b>集中式（Subversion/Perforce/Piper）有單一中央 repo；DVCS（Git/Mercurial）任一 clone 都是可提交的 repo。<b>Git 是主流，沒把握就用它</b>。</li>
+        <li><b>Source of Truth：</b>集中式內建（trunk 最新提交＝當前版本）；DVCS 沒有內建，需<b>明訂「某 repo 的某 branch」為事實來源</b>，否則退回「Presentation v5 - final - redlines - Josh's version v2」的混亂。沒有它，總會有人去維護一份清單——<b>那就是在重造一個集中式事實來源</b>。</li>
+        <li><b>Google 為何用集中式：</b>DVCS 要傳整個歷史與 metadata，在 5 萬工程師/數千萬提交的規模幾乎全是浪費；<b>集中＋雲端儲存對擴展至關重要</b>。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">分支</span> Trunk-based vs Dev Branch <span class="en2">分支管理的核心</span></h3>
+      <div class="claim"><b>WIP ≈ 一個分支</b>。長壽 dev branch 被認為「以為換來穩定、實為生產力拖累」；正解是 trunk-based。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="dev branch 開發（長壽分支、痛苦合併）對比 trunk-based 開發（小提交直接進 trunk、CI、feature flag）">
+          <defs><marker id="b16" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--theme-trade)"/></marker>
+          <marker id="b16g" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--theme-scale)"/></marker></defs>
+          <!-- dev branch (antipattern) top -->
+          <text x="30" y="34" class="fig-txt" font-size="13" font-weight="700" fill="var(--theme-trade)">✗ 長壽 dev branch</text>
+          <line x1="40" y1="64" x2="680" y2="64" stroke="var(--muted)" stroke-width="2"/>
+          <text x="36" y="58" class="fig-mut" font-size="10">trunk</text>
+          <path d="M150 64 C 220 100, 420 100, 470 64" stroke="var(--theme-trade)" stroke-width="2.4" fill="none" marker-end="url(#b16)"/>
+          <path d="M250 64 C 320 120, 560 120, 620 64" stroke="var(--theme-trade)" stroke-width="2.4" fill="none" marker-end="url(#b16)"/>
+          <circle cx="150" cy="64" r="4" fill="var(--theme-trade)"/><circle cx="250" cy="64" r="4" fill="var(--theme-trade)"/>
+          <text x="360" y="112" class="fig-mut" font-size="10.5" text-anchor="middle">長壽分支 →大而痛的合併、難隔離回歸、合併協調員/每週會議</text>
+          <!-- trunk-based bottom -->
+          <text x="30" y="160" class="fig-txt" font-size="13" font-weight="700" fill="var(--theme-scale)">✓ trunk-based development</text>
+          <line x1="40" y1="190" x2="680" y2="190" stroke="var(--theme-scale)" stroke-width="2.4"/>
+          <text x="36" y="184" class="fig-mut" font-size="10">trunk</text>
+          <g fill="var(--theme-scale)">
+            <circle cx="120" cy="190" r="4"/><circle cx="200" cy="190" r="4"/><circle cx="280" cy="190" r="4"/><circle cx="360" cy="190" r="4"/><circle cx="440" cy="190" r="4"/><circle cx="520" cy="190" r="4"/><circle cx="600" cy="190" r="4"/>
+          </g>
+          <text x="360" y="222" class="fig-mut" font-size="10.5" text-anchor="middle">小增量直接提交 trunk ＋ CI 保 build 綠燈 ＋ runtime flag 關閉未完成功能</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 上：長壽 dev branch（反模式）導致大而痛的合併、難隔離回歸、催生「合併協調員」與每週合併會議——純開銷。下：trunk-based development——小增量直接進 trunk、重度依賴 CI 保 build 綠燈、用 feature flag 關閉未完成功能。DORA 證實 trunk-based 與高效組織強正相關。（release branch 相對良性、預期被拋棄。）</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規則</span> One-Version Rule、Fork 的危險 <span class="en2">加依賴時不該有選擇</span></h3>
+      <div class="claim">在 Single Source of Truth 之上：<b>「每個依賴只能有一個版本可選」</b>。根本規則：<b>工程師加新依賴時，絕不該有「該依賴哪個版本」的選擇</b>。對個人像任意阻礙，對組織卻是高效擴展的關鍵。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="One-Version Rule：fork 不改名造成鑽石依賴、build 失敗">
+          <defs><marker id="o16" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"/></marker></defs>
+          <text x="180" y="30" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">✗ fork 不改名（多版本）</text>
+          <rect x="135" y="44" width="90" height="32" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.6"/><text x="180" y="64" class="fig-txt" font-size="11" text-anchor="middle">App</text>
+          <rect x="60" y="120" width="100" height="32" rx="7" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.6"/><text x="110" y="140" class="fig-txt" font-size="10.5" text-anchor="middle">Abseil 原版</text>
+          <rect x="200" y="120" width="100" height="32" rx="7" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.6"/><text x="250" y="140" class="fig-txt" font-size="10.5" text-anchor="middle">Abseil fork</text>
+          <path d="M165 76 L120 118" stroke="var(--muted)" stroke-width="1.4" fill="none" marker-end="url(#o16)"/>
+          <path d="M195 76 L240 118" stroke="var(--muted)" stroke-width="1.4" fill="none" marker-end="url(#o16)"/>
+          <text x="180" y="180" class="fig-txt" font-size="11.5" text-anchor="middle" fill="var(--theme-trade)">→ 鑽石依賴：build 失敗或執行期 bug</text>
+          <text x="540" y="30" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">✓ One Version</text>
+          <rect x="495" y="44" width="90" height="32" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.6"/><text x="540" y="64" class="fig-txt" font-size="11" text-anchor="middle">App</text>
+          <rect x="470" y="120" width="140" height="32" rx="7" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/><text x="540" y="140" class="fig-txt" font-size="10.5" text-anchor="middle">Abseil（唯一版本）</text>
+          <path d="M540 76 L540 118" stroke="var(--theme-scale)" stroke-width="1.8" fill="none" marker-end="url(#o16)"/>
+          <text x="540" y="180" class="fig-txt" font-size="11.5" text-anchor="middle" fill="var(--theme-scale)">→ 無選擇 = 無鑽石依賴</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> One-Version Rule：左＝某團隊 fork Abseil 卻不改名，App 同時依賴原版與 fork →鑽石依賴、build 失敗或難解的執行期 bug（shading 救得了函式、救不了型別）。右＝唯一版本，加依賴時無選擇＝無鑽石依賴。monorepo 讓這「想違反都難」，但 manyrepo/VMR 堅守 One Version 也行。</figcaption>
+      </figure>
+      <div class="impl"><b>(幾乎)沒有長壽分支：</b>新 Widget 該提交到 trunk、runtime 關閉、用 visibility 隱藏，而非活在平行分支讓「選擇」偷溜回來。Google 約 1000 個團隊中只有不到 10 個有長壽 dev branch；build horizon 每 6 個月封頂版本偏移。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">未來</span> Monorepo 與未來 <span class="en2">VMR・版本號是時間戳</span></h3>
+      <div class="impl">monorepo 讓 One Version 想違反都難，但<b>不是唯一正解</b>（開源用 manyrepo 也好）；重點不在 monorepo 而在<b>盡可能堅守 One-Version</b>。工具正提供「混合細粒度 repo 與 monorepo」的 <b>VMR（虛擬 monorepo）</b>（Git submodules/Bazel/CMake）。一句收束：<b>版本號其實是時間戳；允許版本偏移＝加進「時間」這個維度複雜度，而 One-Version 能砍掉它</b>。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Version control is the engineer's primary tool for managing the interplay between raw source and time."</span><span class="zh">版本控制，是工程師用來管理「原始碼」與「時間」之間相互作用的主要工具。</span><div class="note">What Is Version Control？——把「軟體工程＝整合時間維度」具象化；VCS 把時間變成操作裡明確的一部分。</div></blockquote>
+    <blockquote class="q"><span class="en">"Developers must never have a choice of 'What version of this component should I depend upon?'"</span><span class="zh">工程師絕不該面臨「我該依賴這個元件的哪一個版本？」這種選擇。</span><div class="note">One-Version Rule 的根本陳述。對個人像任意阻礙，對組織卻是高效擴展的關鍵——選擇會帶來成本。</div></blockquote>
+    <blockquote class="q"><span class="en">"Branches are a drag on productivity."</span><span class="zh">分支，是生產力的拖累。</span><div class="note">Branch Management——複雜分支與合併策略多半是「想保 trunk 穩定」的安全錯覺；DORA 證實 trunk-based 與高效組織強正相關。</div></blockquote>
+    <blockquote class="q"><span class="en">"Without a central Source of Truth, someone is going to keep a list of which features are potentially ready … Eventually that bookkeeping is reproducing the model of having a centralized Source of Truth."</span><span class="zh">沒有中央事實來源，總會有人去維護一份「哪些功能可能準備好了」的清單……最終那份記帳，就是在重造一個集中式的事實來源。</span><div class="note">Source of Truth——為何即使在 DVCS 世界，中心性與單一事實來源仍會「爬回來」。</div></blockquote>
+    <blockquote class="q"><span class="en">"A (virtual) monorepo approach with a One-Version Rule cuts down the complexity of software development by a whole (difficult) dimension: time."</span><span class="zh">採用「單一版本規則」的（虛擬）monorepo，把軟體開發的複雜度砍掉了一整個（困難的）維度：時間。</span><div class="note">Future of Version Control——版本號其實是時間戳；允許版本偏移＝加進「時間」的維度複雜度。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Version Control System（VCS）</span><br>追蹤檔案隨時間的版本；可視為 VCS(filename, time, branch) =&gt; 內容 的擴充檔案系統。管理「原始碼 × 時間」的主要工具。</div>
+      <div class="kw"><span class="term">Centralized vs Distributed</span><br>集中式（Subversion/Perforce/Piper）有單一中央 repo；DVCS（Git/Mercurial）任一 clone 都是可提交的 repo。核心功能相同，差別在 UX。</div>
+      <div class="kw"><span class="term">Source of Truth（單一事實來源）</span><br>哪個 repo 的哪條 branch 是權威版本；集中式內建、DVCS 需靠政策明訂；有相對性。</div>
+      <div class="kw"><span class="term">Trunk-based Development（主幹開發）</span><br>一個 repo、沒有（長壽）開發分支；小增量直接提交 trunk＋CI＋feature flag。DORA 證實與高效組織強正相關。</div>
+      <div class="kw"><span class="term">Dev Branch / Release Branch</span><br>dev branch 長壽功能分支（誤導，實為拖累）；release branch 代表發布 build 的確切程式，相對良性、預期被拋棄。</div>
+      <div class="kw"><span class="term">One-Version Rule（單一版本規則）</span><br>加依賴時不該有「選哪個版本」的選擇；每個依賴只能有一個版本可選。對組織高效擴展至關重要。</div>
+      <div class="kw"><span class="term">Fork without renaming</span><br>違反 One Version 的典型；造成鑽石依賴、build 失敗或執行期 bug（見 ch21）。</div>
+      <div class="kw"><span class="term">Shading（遮蔽）</span><br>Java 把內部依賴改名以隱藏；對函式可行，對跨套件傳遞的型別失敗——只是 patch「需要多版本」的底層問題。</div>
+      <div class="kw"><span class="term">Monorepo / VMR</span><br>monorepo 讓 One Version 想違反都難但非唯一正解；VMR 用 Git submodules/Bazel/CMake 縫合細粒度 repo，逼近 monorepo 功能。</div>
+      <div class="kw"><span class="term">Piper</span><br>Google 自製集中式 VCS，作為分散式微服務、80TB+、約 5 萬工程師、每工作日 6–7 萬次提交。</div>
+      <div class="kw"><span class="term">Build Horizon（建置地平線）</span><br>每個 production job 最多每 6 個月重建重部署；封頂了潛在的版本偏移。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你的團隊是不是在開「合併策略會」、有「合併協調員」、或維護長壽 dev branch？把這些開銷攤出來——改成 <b>trunk-based＋CI＋feature flag</b> 哪些會消失？你怕的「trunk 不穩」能不能用測試而非分支來解？對照 ch23。</li>
+      <li>你的程式碼庫裡，工程師加依賴時<b>有沒有「選哪個版本」的選擇</b>？有沒有 fork 不改名、鑽石依賴的痛？哪些套件其實是顆未爆彈？對照 ch21。</li>
+      <li>你們有明確的 <b>Source of Truth</b> 嗎？還是「pull 完同事的 repo 也不確定有沒有拿到所有變更」？新人從哪拿「已知良好」的程式？這機制隨團隊長大還能<b>次線性</b>運作嗎？</li>
+      <li>你在選 monorepo 還是 manyrepo——本章說這是<b>次要問題</b>。焦點移回「能否堅守 One-Version 與 Source of Truth」：你的 repo 結構幫你還是害你？<b>VMR</b> 是不是兩全其美？</li>
+      <li>你的團隊把版本控制當「整個專案的 undo 鍵」奢侈品，還是「管理原始碼 × 時間的主要工具」？有沒有人把「軟體開發」誤當「軟體工程」？回扣 ch01。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「軟體工程＝整合時間維度的程式設計」是 VCS 為何重要的根本；Hyrum's Law 也卡住了 Google 遷往 Git。</span></div>
+      <div class="chip"><a href="ch21.html">ch21 Dependency Management</a> <span class="rel">— One-Version Rule、fork 的鑽石依賴、shading 的限制都在第 21 章深入；版本控制與依賴管理「概念高度相似」。</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— trunk-based development 的前提是「重度依賴測試與 CI、保持 build 綠燈」。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— 「broad/shallow 全庫變更」在 trunk-based＋monorepo 上才可行；長壽分支會是 LSC 的沉重負擔。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 階層式 OWNERS 由 Piper 在提交時強制；版本控制的提交時刻是 review 與 static analysis 的觸發點。</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— CD（一天從 trunk 發布多次）讓 release branch 幾乎變得多餘。</span></div>
+      <div class="chip"><a href="ch18.html">ch18 Build Systems</a> <span class="rel">— 「分散式可重現的 build 比傳整份程式碼庫更能擴展」「VMR 靠 Bazel 外部依賴縫合」直接連到建置系統。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch15.html">← 上一章：Deprecation</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch17.html">下一章：Code Search →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools (opening)</div>
+    <div class="ch-no">CHAPTER 16</div>
+    <h1 class="title">Version Control and Branch Management</h1>
+    <div class="title-zh">No choice of where to commit or which version to depend on</div>
+    <div class="meta-row">
+      <span class="badge">by Titus Winters</span>
+      <span class="badge">PDF p.355–378</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Developers must not have a choice where to commit, or which version of an existing component to depend upon."</span>
+      <span class="zh">Give developers no choice of where to commit or which version to depend on.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>The "Tools" part opens. Version control (VCS) is perhaps the <b>most universally adopted</b> tool in software engineering. It makes the book's thesis concrete — <b>software engineering is programming integrated over time</b> — and VCS is the primary tool for managing "source × time," an extended filesystem: <span class="mono">VCS(filename, time, branch) =&gt; contents</span>. Its real value is <b>letting teams and orgs scale</b>.</p>
+      <p>Two architectures: <b>centralized</b> (Subversion/Perforce/Piper) and <b>distributed (DVCS)</b> (Git/Mercurial). Git dominates. But the core function is the same, differing in UX; <b>what matters is what you put in and how you use it</b> — and "how" is almost entirely <b>policy and convention.</b> The key is the <b>Source of Truth</b>: baked in for centralized, policy-defined for DVCS.</p>
+      <p>Central stance: <b>trunk-based development (one repo, no dev branches)</b> is particularly scalable. Long-lived <b>dev branches</b> are a "perceived safety crutch that's actually a productivity drag"; the fix is <b>heavy tests and CI, keep the build green, disable incomplete features at runtime.</b> <b>Release branches</b> are relatively benign. On the Piper monorepo, Google enforces the <b>One-Version Rule</b>: <b>a developer adding a dependency must never have a choice of "which version"</b>, or a fork causes diamond dependencies. A monorepo makes One Version hard to violate, but it's <b>not the one true way.</b></p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You still hold "what's this week's merge strategy" meetings with a "merge coordinator."</b> That's <b>pure overhead from long-lived dev branches</b> — branches don't buy stability, they amplify the symptom. The fix: <b>trunk-based + CI + feature flags</b>, "branches are a drag on productivity."</div>
+      <div class="why-card"><b>Your team has argued over "which version" or been burned by diamond dependencies.</b> The policy that ends it: <b>the One-Version Rule — no choice when adding a dependency.</b> See why forks are dangerous (shading fools functions, not types).</div>
+      <div class="why-card"><b>You're torn between monorepo and manyrepo, Git or other.</b> The chapter demotes this to secondary: <b>what matters is adhering to One Version and a Source of Truth.</b> It introduces the best-of-both-worlds <b>VMR (virtual monorepo).</b></div>
+      <div class="why-card"><b>Your newcomers see "rolling back" as a high-overhead luxury.</b> That's mistaking "programming" for "software engineering." "VCS = the primary tool for managing source × time" helps you explain why it isn't optional.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">NATURE</span> What Is Version Control? <span class="en2">source × time</span></h3>
+      <div class="claim">A VCS tracks revisions over time; early systems used locking, advanced ones <b>atomicity</b>. Think <span class="mono">VCS(filename, time, branch) =&gt; contents</span> — making <b>time</b> explicit (unnecessary in programming, critical in software engineering).</div>
+      <div class="impl"><b>Resistance comes from conflating "programming" with "software engineering"</b> — newcomers see a "project-wide undo" as a luxury; but VCS's real value is <b>bridging single- and multi-developer processes, letting orgs scale</b>, plus audit needs and a commit-time moment of reflection (run static analysis, tests).</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">ARCHITECTURE</span> Centralized vs Distributed, Source of Truth</h3>
+      <ul class="tight">
+        <li><b>Same core function, different UX:</b> centralized (Subversion/Perforce/Piper) has one central repo; DVCS (Git/Mercurial) makes any clone committable. <b>Git dominates; when in doubt, use it.</b></li>
+        <li><b>Source of Truth:</b> baked in for centralized (latest at trunk = current); DVCS has none inherently, so <b>declare "one branch in one repo"</b> or regress to "Presentation v5 - final - redlines - Josh's version v2." Without it, someone keeps a list — <b>reproducing a centralized source of truth.</b></li>
+        <li><b>Why Google is centralized:</b> DVCS transmits full history/metadata — almost all waste at 50,000 engineers / tens of millions of commits; <b>centrality and in-cloud storage are critical to scaling.</b></li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">BRANCHES</span> Trunk-based vs Dev Branch</h3>
+      <div class="claim"><b>WIP ≈ a branch.</b> Long-lived dev branches are "presumed stability but actually a productivity drag"; the fix is trunk-based.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="dev-branch development (long-lived branches, painful merges) vs trunk-based development (small commits straight to trunk, CI, feature flags)">
+          <defs><marker id="b16e" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--theme-trade)"/></marker></defs>
+          <text x="30" y="34" class="fig-txt" font-size="13" font-weight="700" fill="var(--theme-trade)">✗ long-lived dev branches</text>
+          <line x1="40" y1="64" x2="680" y2="64" stroke="var(--muted)" stroke-width="2"/>
+          <text x="36" y="58" class="fig-mut" font-size="10">trunk</text>
+          <path d="M150 64 C 220 100, 420 100, 470 64" stroke="var(--theme-trade)" stroke-width="2.4" fill="none" marker-end="url(#b16e)"/>
+          <path d="M250 64 C 320 120, 560 120, 620 64" stroke="var(--theme-trade)" stroke-width="2.4" fill="none" marker-end="url(#b16e)"/>
+          <circle cx="150" cy="64" r="4" fill="var(--theme-trade)"/><circle cx="250" cy="64" r="4" fill="var(--theme-trade)"/>
+          <text x="360" y="112" class="fig-mut" font-size="10.5" text-anchor="middle">long branches → big painful merges, hard-to-isolate regressions, merge coordinator/weekly meetings</text>
+          <text x="30" y="160" class="fig-txt" font-size="13" font-weight="700" fill="var(--theme-scale)">✓ trunk-based development</text>
+          <line x1="40" y1="190" x2="680" y2="190" stroke="var(--theme-scale)" stroke-width="2.4"/>
+          <text x="36" y="184" class="fig-mut" font-size="10">trunk</text>
+          <g fill="var(--theme-scale)">
+            <circle cx="120" cy="190" r="4"/><circle cx="200" cy="190" r="4"/><circle cx="280" cy="190" r="4"/><circle cx="360" cy="190" r="4"/><circle cx="440" cy="190" r="4"/><circle cx="520" cy="190" r="4"/><circle cx="600" cy="190" r="4"/>
+          </g>
+          <text x="360" y="222" class="fig-mut" font-size="10.5" text-anchor="middle">small increments straight to trunk + CI keeps build green + feature flags disable incomplete work</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — Top: long-lived dev branches (antipattern) cause big painful merges, hard-to-isolate regressions, and a "merge coordinator" with weekly meetings — pure overhead. Bottom: trunk-based development — small increments straight to trunk, heavy CI to keep the build green, feature flags to disable incomplete work. DORA confirms trunk-based correlates with high-performing orgs. (Release branches are relatively benign, eventually abandoned.)</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">RULE</span> One-Version Rule, the danger of forks <span class="en2">no choice when adding a dependency</span></h3>
+      <div class="claim">On top of Single Source of Truth: <b>"only one version of each dependency to choose."</b> The core rule: <b>a developer adding a dependency must never have a choice of "which version."</b> An arbitrary impediment to one developer, but critical for efficient organizational scaling.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="One-Version Rule: an un-renamed fork causes a diamond dependency and build failure">
+          <defs><marker id="o16e" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"/></marker></defs>
+          <text x="180" y="30" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">✗ fork without renaming</text>
+          <rect x="135" y="44" width="90" height="32" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.6"/><text x="180" y="64" class="fig-txt" font-size="11" text-anchor="middle">App</text>
+          <rect x="60" y="120" width="100" height="32" rx="7" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.6"/><text x="110" y="140" class="fig-txt" font-size="10.5" text-anchor="middle">Abseil orig.</text>
+          <rect x="200" y="120" width="100" height="32" rx="7" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="1.6"/><text x="250" y="140" class="fig-txt" font-size="10.5" text-anchor="middle">Abseil fork</text>
+          <path d="M165 76 L120 118" stroke="var(--muted)" stroke-width="1.4" fill="none" marker-end="url(#o16e)"/>
+          <path d="M195 76 L240 118" stroke="var(--muted)" stroke-width="1.4" fill="none" marker-end="url(#o16e)"/>
+          <text x="180" y="180" class="fig-txt" font-size="11.5" text-anchor="middle" fill="var(--theme-trade)">→ diamond dependency: build fails or runtime bug</text>
+          <text x="540" y="30" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">✓ One Version</text>
+          <rect x="495" y="44" width="90" height="32" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.6"/><text x="540" y="64" class="fig-txt" font-size="11" text-anchor="middle">App</text>
+          <rect x="470" y="120" width="140" height="32" rx="7" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/><text x="540" y="140" class="fig-txt" font-size="10.5" text-anchor="middle">Abseil (one version)</text>
+          <path d="M540 76 L540 118" stroke="var(--theme-scale)" stroke-width="1.8" fill="none" marker-end="url(#o16e)"/>
+          <text x="540" y="180" class="fig-txt" font-size="11.5" text-anchor="middle" fill="var(--theme-scale)">→ no choice = no diamond</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — One-Version Rule: left, a team forks Abseil without renaming, and an App depends on both original and fork → a diamond dependency, build failure or a hard runtime bug (shading saves functions, not types). Right, one version means no choice when adding a dependency = no diamond. A monorepo makes this "hard to violate," but manyrepo/VMR adhering to One Version works too.</figcaption>
+      </figure>
+      <div class="impl"><b>(Nearly) no long-lived branches:</b> a new Widget should be committed to trunk, disabled at runtime, hidden by visibility — not in a parallel branch where "choice" sneaks back. Of ~1,000 teams, fewer than 10 have a long-lived dev branch; a 6-month build horizon caps version skew.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">FUTURE</span> Monorepo &amp; the future <span class="en2">VMR · version numbers are timestamps</span></h3>
+      <div class="impl">A monorepo makes One Version hard to violate, but <b>isn't the one true way</b> (open source thrives on manyrepo); what matters is <b>adhering to One Version.</b> Tools offer a <b>VMR (virtual monorepo)</b> blending fine-grained repos with monorepo behavior (Git submodules/Bazel/CMake). The closer: <b>version numbers are really timestamps; allowing version skew adds the dimensional complexity of time, which One Version cuts down.</b></div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Version control is the engineer's primary tool for managing the interplay between raw source and time."</span><span class="zh">VCS makes "software engineering = programming integrated over time" concrete — time becomes an explicit part of the operation.</span><div class="note">What Is Version Control?</div></blockquote>
+    <blockquote class="q"><span class="en">"Developers must never have a choice of 'What version of this component should I depend upon?'"</span><span class="zh">The One-Version Rule — an arbitrary impediment to one, but critical for scaling; choice carries cost.</span><div class="note">The "One-Version" Rule.</div></blockquote>
+    <blockquote class="q"><span class="en">"Branches are a drag on productivity."</span><span class="zh">Complex branch/merge strategies are usually a perceived safety crutch; DORA confirms trunk-based correlates with high performance.</span><div class="note">Branch Management.</div></blockquote>
+    <blockquote class="q"><span class="en">"Without a central Source of Truth, someone is going to keep a list of which features are potentially ready … Eventually that bookkeeping is reproducing the model of having a centralized Source of Truth."</span><span class="zh">Why centrality and a single source of truth "creep back" even in a DVCS world.</span><div class="note">Source of Truth.</div></blockquote>
+    <blockquote class="q"><span class="en">"A (virtual) monorepo approach with a One-Version Rule cuts down the complexity of software development by a whole (difficult) dimension: time."</span><span class="zh">Version numbers are timestamps; allowing version skew adds the time dimension's complexity, which One Version avoids.</span><div class="note">Future of Version Control.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Version control system (VCS)</span><br>Tracks revisions over time; an extended filesystem mapping VCS(filename, time, branch) =&gt; contents. The primary tool for managing source × time.</div>
+      <div class="kw"><span class="term">Centralized vs distributed</span><br>Centralized (Subversion/Perforce/Piper) has one central repo; DVCS (Git/Mercurial) makes any clone committable. Same core function, different UX.</div>
+      <div class="kw"><span class="term">Source of Truth</span><br>Which branch in which repo is authoritative; baked in for centralized, policy-defined for DVCS; relative.</div>
+      <div class="kw"><span class="term">Trunk-based development</span><br>One repo, no (long-lived) dev branches; small increments straight to trunk + CI + feature flags. DORA-correlated with high performance.</div>
+      <div class="kw"><span class="term">Dev branch / release branch</span><br>A dev branch is a long-lived feature branch (misguided, a drag); a release branch represents the release build's exact code, relatively benign, eventually abandoned.</div>
+      <div class="kw"><span class="term">One-Version Rule</span><br>No choice of "which version" when adding a dependency; only one version of each to choose. Critical for efficient organizational scaling.</div>
+      <div class="kw"><span class="term">Fork without renaming</span><br>The classic One-Version violation; causes diamond dependencies, build failures, or runtime bugs (see ch21).</div>
+      <div class="kw"><span class="term">Shading</span><br>Java renaming internal dependencies to hide them; works for functions but fails for cross-package types — a patch over "multiple versions needed."</div>
+      <div class="kw"><span class="term">Monorepo / VMR</span><br>A monorepo makes One Version hard to violate but isn't the only answer; a VMR stitches fine-grained repos (Git submodules/Bazel/CMake) to approximate it.</div>
+      <div class="kw"><span class="term">Piper</span><br>Google's custom centralized VCS, a distributed microservice, 80TB+, ~50,000 engineers, 60,000–70,000 commits per workday.</div>
+      <div class="kw"><span class="term">Build horizon</span><br>Every production job is rebuilt and redeployed at most every 6 months; caps potential version skew.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Does your team hold "merge strategy" meetings, have a "merge coordinator," or maintain long-lived dev branches? Tally the overhead — what disappears under <b>trunk-based + CI + feature flags</b>? Can you solve "trunk instability" with tests rather than branches? Per ch23.</li>
+      <li>In your codebase, does adding a dependency <b>offer a choice of "which version"</b>? Burned by an un-renamed fork or diamond dependency? Which packages are secretly a time bomb? Per ch21.</li>
+      <li>Do you have a clear <b>Source of Truth</b>? Or "after pulling a teammate's repo, I'm unsure I have all changes"? Where does a newcomer get a "known-good" copy? Does it scale <b>sublinearly</b>?</li>
+      <li>Choosing monorepo vs manyrepo — the chapter says that's <b>secondary.</b> Refocus on "can I adhere to One Version and a Source of Truth?": does your repo structure help or hurt? Is a <b>VMR</b> your best of both worlds?</li>
+      <li>Does your team treat version control as a luxury "project-wide undo," or "the primary tool for managing source × time"? Is anyone mistaking "software development" for "software engineering"? Ties to ch01.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "software engineering = programming integrated over time" is why VCS matters; Hyrum's Law also stymied Google's move to Git.</span></div>
+      <div class="chip"><a href="ch21.html">ch21 Dependency Management</a> <span class="rel">— the One-Version Rule, forks' diamond dependencies, and shading's limits are developed in Ch.21.</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— trunk-based development presupposes "heavy tests and CI, keep the build green."</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— "broad/shallow codebase-wide changes" are feasible on trunk-based + monorepo; long-lived branches would be a heavy tax.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— hierarchical OWNERS is enforced by Piper at commit time; the commit moment triggers review and static analysis.</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— CD (releasing from trunk many times a day) makes release branches nearly redundant.</span></div>
+      <div class="chip"><a href="ch18.html">ch18 Build Systems</a> <span class="rel">— "distributed, reproducible builds scale better than transmitting the whole codebase" and "VMRs stitched via Bazel external deps."</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch15.html">← Prev: Deprecation</a><a class="idx" href="index.html">⌂ Index</a><a href="ch17.html">Next: Code Search →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

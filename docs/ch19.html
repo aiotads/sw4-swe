@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 19 章 Critique ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  details.fig-orig{margin:14px 0; background:#12151f; border:1px solid var(--border); border-radius:10px; padding:6px 16px}
+  details.fig-orig summary{cursor:pointer; color:var(--accent); font-size:.9rem; font-weight:600; padding:8px 0}
+  details.fig-orig p{color:var(--muted); font-size:.88rem; margin:8px 0}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具</div>
+    <div class="ch-no">CHAPTER 19</div>
+    <h1 class="title">Critique: Google's Code Review Tool</h1>
+    <div class="title-zh">Critique：Google 的程式碼審查工具</div>
+    <div class="meta-row">
+      <span class="badge">作者 Caitlin Sadowski 等</span>
+      <span class="badge">PDF p.427–444</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+      <span class="theme-tag t-time">Time 時間</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Trust and communication are core to the code review process. A tool can enhance the experience, but it can't replace them."</span>
+      <span class="zh">信任與溝通是程式碼審查流程的核心。工具能增強這份體驗，卻無法取代它們。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>ch09 談 code review 的<b>流程</b>，本章談支撐它的<b>工具</b>——Google 自家、最受歡迎的 <b>Critique</b>。四條指導原則：<b>Simplicity（簡單，影響最大）、Foundation of trust（信任的地基）、Generic communication（通用的溝通）、Workflow integration（與工作流整合）</b>。Simplicity 與 integration 有張力——Google 曾考慮做「Code Central」三合一但<b>刻意放棄</b>，讓 code review 保持為主要焦點。</p>
+      <p>支撐<b>提交前審查</b>的六階段：建立變更（上傳快照→觸發分析器）→請求審查→留言（unresolved 預設）→修改回覆→核准（LGTM、標綠）→提交。其餘：強大 diffing（LCS＋Kythe 交叉引用＋intraline＋move detection＋並排）、分析 chip（紅/黃/灰、附 fix suggestion）、緊密工具整合（偏好連結而非嵌入）、<b>GwsQ</b> 自動指派、<b>attention set</b>、Changelist Search dashboard。</p>
+      <p>評分簡化成三件事：<b>LGTM＋Approval＋unresolved comments</b>——每變更至少一個 LGTM（兩雙眼睛），LGTM/Approval 永遠正面（不能無理由 thumbs-down）。結論：<b>信任與溝通是核心、工具能增強卻無法取代、緊密整合是成功關鍵</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你在挑/做審查工具，糾結加多少功能。</b> 頭號原則是 <b>Simplicity</b>（沒有不必要的選擇），甚至刻意放棄「Code Central」三合一。看懂「少即是多」，你更敢拒絕增複雜度的功能。</div>
+      <div class="why-card"><b>你的審查常卡在「現在輪到誰？」</b> <b>attention set</b> 是個小到不行卻效果驚人的功能——粗體標出「卡在誰身上」，實作後大家無法想像沒有它的日子。</div>
+      <div class="why-card"><b>你的評分機制很複雜。</b> Critique 簡化成 <b>LGTM＋Approval＋unresolved comments</b>，並讓 <b>LGTM/Approval 永遠正面</b>（負面回饋必須綁定具體 unresolved comment）——還正面影響了審查文化。</div>
+      <div class="why-card"><b>你想把審查工具接進整個生態。</b> 成功關鍵之一是<b>緊密工具整合</b>（跳 Code Search、在 Cider 編輯、看 Tricorder）——但用<b>連結而非嵌入</b>，以免犧牲核心審查體驗。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">原則</span> Code Review Tooling Principles <span class="en2">四條指導原則</span></h3>
+      <ul class="tight">
+        <li><b>Simplicity（簡單）：</b>UI 快、導航易、清楚的視覺狀態；「沒有不必要的選擇」。<b>影響最大</b>——為一小撮使用者讓模型變複雜的功能都被放棄。</li>
+        <li><b>Foundation of trust（信任的地基）：</b>審查是<b>賦能</b>而非拖慢；信任作者會處理小意見、不必再加一輪複查。</li>
+        <li><b>Generic communication（通用的溝通）：</b><b>溝通問題鮮少靠工具解決</b>；優先用一般留言而非複雜協定。</li>
+        <li><b>Workflow integration：</b>與其他核心工具多個整合點。<b>張力：</b>曾考慮「Code Central」三合一但刻意放棄、功能用連結而非嵌入。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">流程</span> Code Review Flow <span class="en2">提交前審查的六階段</span></h3>
+      <div class="claim">Critique 支撐<b>提交前審查（precommit review）</b>，典型六步：</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 170" role="img" aria-label="Critique 六階段審查流程：建立、請求審查、留言↔修改循環、核准、提交">
+          <defs><marker id="f19" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <g font-size="11.5" text-anchor="middle">
+            <rect x="14" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="68" y="60" class="fig-txt" font-weight="700">① 建立變更</text><text x="68" y="78" class="fig-mut" font-size="10">上傳快照→分析器</text>
+            <rect x="142" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="196" y="60" class="fig-txt" font-weight="700">② 請求審查</text><text x="196" y="78" class="fig-mut" font-size="10">mail 給審查者</text>
+            <rect x="270" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--theme-trade)" stroke-width="1.8"/>
+            <text x="324" y="60" class="fig-txt" font-weight="700">③ 留言</text><text x="324" y="78" class="fig-mut" font-size="10">unresolved 預設</text>
+            <rect x="270" y="108" width="108" height="44" rx="9" fill="#12151f" stroke="var(--theme-trade)" stroke-width="1.8"/>
+            <text x="324" y="128" class="fig-txt" font-weight="700">④ 修改回覆</text><text x="324" y="144" class="fig-mut" font-size="10">上傳新快照</text>
+            <rect x="398" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="452" y="60" class="fig-txt" font-weight="700">⑤ 核准</text><text x="452" y="78" class="fig-mut" font-size="10">LGTM・標綠</text>
+            <rect x="526" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="580" y="60" class="fig-txt" font-weight="700">⑥ 提交</text><text x="580" y="78" class="fig-mut" font-size="10">presubmits 通過</text>
+          </g>
+          <path d="M122 65 L138 65" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#f19)"/>
+          <path d="M250 65 L266 65" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#f19)"/>
+          <path d="M378 65 L394 65" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#f19)"/>
+          <path d="M506 65 L522 65" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#f19)"/>
+          <path d="M314 90 L314 106" stroke="var(--theme-trade)" stroke-width="1.8" fill="none" marker-end="url(#f19)"/>
+          <path d="M334 106 L334 92" stroke="var(--theme-trade)" stroke-width="1.8" fill="none" marker-end="url(#f19)"/>
+          <text x="324" y="103" class="fig-mut" font-size="9.5" text-anchor="middle" fill="var(--theme-trade)">③④可重複</text>
+        </svg>
+        <figcaption><b>Figure 19-1 重繪</b> Critique 的六階段審查流程：建立變更（上傳快照→觸發分析器）→請求審查→③留言↔④修改回覆循環（unresolved 留言原子式 publish）→核准（LGTM、UI 標綠）→提交（presubmits 通過）。緊急時可強制提交、事後再審。</figcaption>
+      </figure>
+      <details class="fig-orig">
+        <summary>原書 Figure 19-1～19-8（多為產品 UI 截圖）說明</summary>
+        <p>原書八張圖多為 Critique 產品 UI 截圖：<b>19-1</b> 審查流程；<b>19-2</b> intraline diff（字元級差異）；<b>19-3</b> 變更摘要與 diff 視圖；<b>19-4</b> 分析結果（analyzer chips）；<b>19-5</b> 請求審查者；<b>19-6</b> 在 diff 上留言；<b>19-7</b> 草擬待送出的留言；<b>19-8</b> dashboard 視圖。本筆記依 <code>CC BY-NC-ND</code> 非改作立場，不重製原始截圖，改以自製 SVG（上方流程圖、下方評分模型）還原其運作邏輯；原圖請見原書。</p>
+      </details>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">理解</span> Diffing、分析、整合、Attention Set <span class="en2">stage 1–4</span></h3>
+      <ul class="tight">
+        <li><b>Diffing：</b>LCS＋語法高亮＋Kythe 交叉引用（ch17）＋intraline diff（字元級）＋忽略空白＋<b>move detection</b>＋並排；prefetch 一切。最佳化 diff 是好工具的核心要求。</li>
+        <li><b>分析結果：</b>上傳快照觸發 Tricorder（ch20）；chip 紅/黃/灰、<b>binary 可行動性</b>、常附 <b>fix suggestion</b> 一鍵套用。</li>
+        <li><b>緊密工具整合：</b>Cider/Code Search/Tricorder/Rapid/Zapfhahn；<b>偏好連結而非嵌入</b>（唯覆蓋率用 gutter 色嵌入）；靠 FUSE workspace＋雲端 Source of Truth。</li>
+        <li><b>請求審查：</b><b>GwsQ</b> 依 email alias 自動指派；審查者建議考慮 owner/熟悉/可用/GwsQ。presubmits（加 email list、跑測試、強制不變式）失敗會擋住。</li>
+        <li><b>留言：</b>人人皆可、per-person 已審勾選、Please fix/Done/Ack 快捷、原子式 publish。</li>
+        <li><b>Attention set（「輪到誰」）：</b>粗體標出「變更卡在誰身上」；凸顯 code review 的<b>回合制</b>本質；實作後「無法想像以前怎麼活的」。dashboard 由 <b>Changelist Search</b>（regex、夠快可互動）驅動。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">評分</span> Change Approvals <span class="en2">三件式評分：LGTM＋Approval＋unresolved</span></h3>
+      <div class="claim">除了用留言給具體建議，還需要高層次的「OK」機制。Google 把評分簡化成<b>三件事</b>。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 180" role="img" aria-label="三件式評分：LGTM＋Approval＋無 unresolved comments → 可提交（標綠）">
+          <defs><marker id="s19" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--theme-scale)"/></marker></defs>
+          <rect x="24" y="40" width="180" height="50" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="114" y="60" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--accent)">① LGTM</text>
+          <text x="114" y="80" class="fig-mut" font-size="10.5" text-anchor="middle">符合標準・至少一個＝兩雙眼睛</text>
+          <rect x="24" y="100" width="180" height="50" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="114" y="120" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">② Approval</text>
+          <text x="114" y="140" class="fig-mut" font-size="10.5" text-anchor="middle">守門人允許進這塊程式碼庫</text>
+          <rect x="260" y="70" width="180" height="50" rx="10" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+          <text x="350" y="90" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-time)">③ 0 unresolved</text>
+          <text x="350" y="110" class="fig-mut" font-size="10.5" text-anchor="middle">soft requirement・作者可標 resolved</text>
+          <rect x="500" y="68" width="196" height="54" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2.6"/>
+          <text x="598" y="92" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">可提交（UI 標綠）</text>
+          <text x="598" y="112" class="fig-mut" font-size="10.5" text-anchor="middle">LGTM/Approval 永遠正面</text>
+          <path d="M204 70 L256 88" stroke="var(--theme-scale)" stroke-width="1.8" fill="none"/>
+          <path d="M204 120 L256 102" stroke="var(--theme-scale)" stroke-width="1.8" fill="none"/>
+          <path d="M440 95 L496 95" stroke="var(--theme-scale)" stroke-width="2.4" fill="none" marker-end="url(#s19)"/>
+          <text x="360" y="165" class="fig-mut" font-size="11" text-anchor="middle">審查者不能無理由 thumbs-down——負面回饋必須綁定具體可修的 unresolved comment</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 三件式評分：<b>LGTM</b>（符合標準、至少一個＝兩雙眼睛）＋<b>Approval</b>（守門人允許進這塊）＋<b>0 個 unresolved comment</b>（soft requirement）→ 可提交（UI 標綠）。LGTM/Approval 是 hard requirement、永遠正面；審查者不能無理由 thumbs-down，負面回饋必須綁定具體可修的東西。</figcaption>
+      </figure>
+      <div class="impl"><b>Hard（LGTM/Approval，只審查者能給/撤）vs Soft（unresolved comment，作者可標 resolved）</b> 的區分促進並仰賴<b>信任</b>——審查者可附 unresolved 留言就 LGTM、不必事後逐一檢查，跨時區特別省時。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">之後</span> After Commit、Gerrit <span class="en2">程式考古與開源替代</span></h3>
+      <div class="impl"><b>提交後：</b>用於<b>程式考古</b>（瀏覽變更歷史、留言與演進，用於稽核/理解「為何這樣改」「bug 怎麼引入」、製作教材）；支援提交後留言與回滾。<b>Gerrit：</b>Critique 因與 monorepo 緊密耦合而不對外；開源（Chrome/Android）或非 monorepo 專案用 Gerrit——獨立、與 Git 整合、更可設定的評分（−2 否決）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Trust and communication are core to the code review process. A tool can enhance the experience, but it can't replace them."</span><span class="zh">信任與溝通，是程式碼審查流程的核心。工具能增強這份體驗，卻無法取代它們。</span><div class="note">Conclusion／TL;DRs——全章最核心訊息；「信任的地基」原則把這句話設計進工具。</div></blockquote>
+    <blockquote class="q"><span class="en">"Code review is not for slowing others down; instead, it is for empowering others."</span><span class="zh">程式碼審查不是為了拖慢別人，而是為了賦能於人。</span><div class="note">Foundation of trust——故信任作者會處理小意見、不必再加一輪複查。</div></blockquote>
+    <blockquote class="q"><span class="en">"Communication problems are rarely solved through tooling."</span><span class="zh">溝通問題，鮮少能靠工具來解決。</span><div class="note">Generic communication——故優先用一般留言而非複雜協定；使用者是人。</div></blockquote>
+    <blockquote class="q"><span class="en">"Every change requires an LGTM regardless of approval status, ensuring that at least two pairs of eyes viewed the change."</span><span class="zh">不論核准狀態如何，每個變更都需要一個 LGTM，以確保至少有兩雙眼睛看過這個變更。</span><div class="note">Scoring——簡化的三件式評分；LGTM 是「兩雙眼睛」的最低保證。</div></blockquote>
+    <blockquote class="q"><span class="en">"Reviewers cannot just thumbs-down a change with no useful feedback; all negative feedback must be tied to something specific to be fixed."</span><span class="zh">審查者不能只是對一個變更比個倒讚卻不給有用回饋；所有負面回饋都必須綁定某個具體、可被修正的東西。</span><div class="note">簡化評分對文化的正面影響——LGTM/Approval 永遠正面。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Critique</span><br>Google 自家、最受歡迎的程式碼審查工具；支撐提交前審查六階段，與其他開發工具緊密整合。</div>
+      <div class="kw"><span class="term">四條原則</span><br>Simplicity / Trust / Generic communication / Workflow integration；Simplicity 影響最大（曾為此放棄「Code Central」三合一）。</div>
+      <div class="kw"><span class="term">Precommit Review（提交前審查）</span><br>變更進程式碼庫前先審；六階段：建立→請求→留言→修改→核准→提交。</div>
+      <div class="kw"><span class="term">Snapshot（快照）</span><br>變更在某時間點的 patch；上傳觸發分析器，可比對任意兩快照的 diff。</div>
+      <div class="kw"><span class="term">Diffing</span><br>LCS＋語法高亮＋Kythe 交叉引用＋intraline＋忽略空白＋move detection＋並排；最佳化 diff 是好審查工具的核心。</div>
+      <div class="kw"><span class="term">Analyzer Chips / Tricorder</span><br>分析結果以 chip 呈現（紅/黃/灰、binary 可行動性、附 fix suggestion）；Tricorder 是靜態分析工具（見 ch20）。</div>
+      <div class="kw"><span class="term">GwsQ</span><br>依 email alias 自動指派審查者；建議考慮 owner/熟悉度/可用性/GwsQ 設定。</div>
+      <div class="kw"><span class="term">Presubmits</span><br>請求審查與提交時跑（加 email list、跑測試套件、強制不變式）；失敗會擋住變更。</div>
+      <div class="kw"><span class="term">Attention Set / "Whose Turn"</span><br>標出「變更目前卡在誰身上」（粗體）；凸顯 code review 的回合制本質；小優化大幅減摩擦。</div>
+      <div class="kw"><span class="term">Changelist Search</span><br>驅動 dashboard 的搜尋系統，索引全 Google 變更最新狀態、支援 regex、夠快可互動。</div>
+      <div class="kw"><span class="term">LGTM / Approval / Unresolved（三件式評分）</span><br>LGTM＝符合標準可提交、Approval＝守門人允許進這塊、unresolved＝作者必須處理；每變更至少一個 LGTM。</div>
+      <div class="kw"><span class="term">Gerrit</span><br>獨立開源、與 Git 緊密整合的審查工具；用於開源/非 monorepo 專案；有 −2 否決與更可設定的評分。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你用/做的審查工具，偏向 <b>Simplicity</b> 還是不斷加功能？有沒有「為一小撮使用者讓模型變複雜」的功能該砍？你敢不敢像 Google 放棄「Code Central」那樣克制把所有東西塞進一個工具？</li>
+      <li>你的團隊審查常卡在「現在輪到誰？」嗎？能不能引入類似 <b>attention set</b> 的小機制？回想一次「change 空等、因為沒人知道該誰動」——這個小優化能省多少時間？</li>
+      <li>你的評分機制是不是太複雜？能不能簡化成 <b>LGTM＋Approval＋unresolved comments</b>、並讓<b>負面回饋必須綁定具體可修的東西</b>？這對你的審查<b>文化</b>有什麼影響？</li>
+      <li>你的審查工具與其他工具整合到什麼程度？哪些該<b>連結</b>、哪些值得<b>嵌入</b>？回想 Critique「偏好連結、唯覆蓋率嵌入」的分寸——你有沒有為整合犧牲核心體驗？對照 ch17、ch20。</li>
+      <li>「<b>信任作者會處理小意見、不必事後逐一檢查</b>」在你的團隊行得通嗎？你們的審查是在賦能還是拖慢？跨時區時這份信任能省多少來回？對照 ch09、ch02 的 HRT。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 第 9 章談審查的「流程」、本章談支撐它的「工具」；三件式評分對應第 9 章的三個批准位元。</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— 上傳快照觸發 Tricorder 等分析器、結果以 chip 呈現並附 fix suggestion；本章是靜態分析「在審查時浮現」的載體。</span></div>
+      <div class="chip"><a href="ch17.html">ch17 Code Search</a> <span class="rel">— Critique 用 Kythe 做交叉引用 diff、可跳到 Code Search；兩者都是「以瀏覽/理解為核心」的介面。</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control</a> <span class="rel">— Critique 建立在 Piper monorepo 上，workspace 存在 FUSE 檔案系統、Source of Truth 在雲端，才能緊密整合。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— Critique 須處理「異常大、跨數百數千檔」的 LSC；全域審查者會自訂 dashboard 以免被洪水淹沒。</span></div>
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— 「信任的地基」「審查是賦能而非拖慢」直接呼應 HRT（謙遜、尊重、信任）。</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— Critique 連結 Rapid 發布工具，可看某變更是否已進某 release；審查是 CD 流水線前段關卡。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch18.html">← 上一章：Build Systems</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch20.html">下一章：Static Analysis →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools</div>
+    <div class="ch-no">CHAPTER 19</div>
+    <h1 class="title">Critique: Google's Code Review Tool</h1>
+    <div class="title-zh">A tool can make review smoother — but trust and communication make it work</div>
+    <div class="meta-row">
+      <span class="badge">by Caitlin Sadowski et al.</span>
+      <span class="badge">PDF p.427–444</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+      <span class="theme-tag t-time">Time</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Trust and communication are core to the code review process. A tool can enhance the experience, but it can't replace them."</span>
+      <span class="zh">A tool can enhance review, but trust and communication — between humans — are what make it work.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>Ch.9 covered the <b>process</b> of code review; this chapter covers the <b>tool</b> — Google's beloved in-house <b>Critique</b>. Four guiding principles: <b>Simplicity (most impact), Foundation of trust, Generic communication, Workflow integration</b>. Simplicity and integration are in tension — Google considered an all-in-one "Code Central" but <b>deliberately declined</b> it, keeping code review the primary focus.</p>
+      <p>It supports six stages of <b>precommit review</b>: create a change (upload a snapshot → triggers analyzers) → request review → comment (unresolved by default) → modify and reply → approval (LGTM, turns green) → commit. Plus: powerful diffing (LCS + Kythe cross-references + intraline + move detection + side-by-side), analyzer chips (red/yellow/gray, with fix suggestions), tight integration (links over embedding), <b>GwsQ</b> auto-assignment, the <b>attention set</b>, and a Changelist Search dashboard.</p>
+      <p>Scoring is simplified to three things: <b>LGTM + Approval + unresolved comments</b> — every change needs at least one LGTM (two pairs of eyes), and LGTM/Approval are always positive (no unmotivated thumbs-down). Conclusion: <b>trust and communication are core, a tool can enhance but not replace them, tight integration is key</b>.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You're choosing/building a review tool, agonizing over features.</b> The top principle is <b>Simplicity</b> (no unnecessary choices), even declining an all-in-one "Code Central." Understand "less is more" and reject complexity-adding features.</div>
+      <div class="why-card"><b>Your reviews stall on "whose turn?"</b> The <b>attention set</b> is a tiny feature with outsized effect — bolding "who it's blocked on," and once built no one could imagine working without it.</div>
+      <div class="why-card"><b>Your scoring is complex.</b> Critique simplifies to <b>LGTM + Approval + unresolved comments</b> and makes <b>LGTM/Approval always positive</b> (negative feedback ties to a specific unresolved comment) — positively shaping culture.</div>
+      <div class="why-card"><b>You want to plug a review tool into your ecosystem.</b> A key to success is <b>tight integration</b> (jump to Code Search, edit in Cider, view Tricorder) — but via <b>links, not embedding</b>, to avoid sacrificing the core experience.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">PRINCIPLES</span> Code Review Tooling Principles</h3>
+      <ul class="tight">
+        <li><b>Simplicity:</b> fast UI, easy navigation, clear visual state; "no unnecessary choices." <b>The most impactful</b> — features that complicate the model for a few users were dropped.</li>
+        <li><b>Foundation of trust:</b> review is for <b>empowering</b>, not slowing; trust authors to address minor comments rather than adding a re-review round.</li>
+        <li><b>Generic communication:</b> <b>communication problems are rarely solved by tooling</b>; prefer plain comments over complex protocols.</li>
+        <li><b>Workflow integration:</b> multiple integration points. <b>Tension:</b> considered "Code Central" but declined it; features are linked, not embedded.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">FLOW</span> Code Review Flow <span class="en2">the six stages of precommit review</span></h3>
+      <div class="claim">Critique supports <b>precommit review</b>, in six typical steps:</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 170" role="img" aria-label="Critique six-stage review flow: create, request review, comment-modify loop, approve, commit">
+          <defs><marker id="f19e" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <g font-size="11.5" text-anchor="middle">
+            <rect x="14" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="68" y="60" class="fig-txt" font-weight="700">① Create</text><text x="68" y="78" class="fig-mut" font-size="10">snapshot→analyzers</text>
+            <rect x="142" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+            <text x="196" y="60" class="fig-txt" font-weight="700">② Request</text><text x="196" y="78" class="fig-mut" font-size="10">mail reviewers</text>
+            <rect x="270" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--theme-trade)" stroke-width="1.8"/>
+            <text x="324" y="60" class="fig-txt" font-weight="700">③ Comment</text><text x="324" y="78" class="fig-mut" font-size="10">unresolved default</text>
+            <rect x="270" y="108" width="108" height="44" rx="9" fill="#12151f" stroke="var(--theme-trade)" stroke-width="1.8"/>
+            <text x="324" y="128" class="fig-txt" font-weight="700">④ Modify/reply</text><text x="324" y="144" class="fig-mut" font-size="10">new snapshot</text>
+            <rect x="398" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="452" y="60" class="fig-txt" font-weight="700">⑤ Approve</text><text x="452" y="78" class="fig-mut" font-size="10">LGTM · green</text>
+            <rect x="526" y="40" width="108" height="50" rx="9" fill="#12151f" stroke="var(--theme-scale)" stroke-width="1.8"/>
+            <text x="580" y="60" class="fig-txt" font-weight="700">⑥ Commit</text><text x="580" y="78" class="fig-mut" font-size="10">presubmits pass</text>
+          </g>
+          <path d="M122 65 L138 65" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#f19e)"/>
+          <path d="M250 65 L266 65" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#f19e)"/>
+          <path d="M378 65 L394 65" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#f19e)"/>
+          <path d="M506 65 L522 65" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#f19e)"/>
+          <path d="M314 90 L314 106" stroke="var(--theme-trade)" stroke-width="1.8" fill="none" marker-end="url(#f19e)"/>
+          <path d="M334 106 L334 92" stroke="var(--theme-trade)" stroke-width="1.8" fill="none" marker-end="url(#f19e)"/>
+          <text x="324" y="103" class="fig-mut" font-size="9.5" text-anchor="middle" fill="var(--theme-trade)">③④ repeat</text>
+        </svg>
+        <figcaption><b>Figure 19-1 redrawn</b> — Critique's six-stage flow: create a change (snapshot → triggers analyzers) → request review → ③ comment ↔ ④ modify/reply loop (unresolved comments published atomically) → approve (LGTM, UI turns green) → commit (presubmits pass). In emergencies, force-commit and review afterward.</figcaption>
+      </figure>
+      <details class="fig-orig">
+        <summary>About the original Figures 19-1–19-8 (mostly product UI screenshots)</summary>
+        <p>The book's eight figures are mostly Critique product UI screenshots: <b>19-1</b> the review flow; <b>19-2</b> intraline diff; <b>19-3</b> change summary and diff view; <b>19-4</b> analysis results (analyzer chips); <b>19-5</b> requesting reviewers; <b>19-6</b> commenting on the diff; <b>19-7</b> preparing comments to send; <b>19-8</b> the dashboard view. Consistent with the source's <code>CC BY-NC-ND</code> no-derivatives stance, these notes do not reproduce the screenshots; the original SVGs (the flow above, the scoring model below) reconstruct the operating logic instead. See the book for the originals.</p>
+      </details>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">UNDERSTAND</span> Diffing, analysis, integration, attention set <span class="en2">stages 1–4</span></h3>
+      <ul class="tight">
+        <li><b>Diffing:</b> LCS + syntax highlighting + Kythe cross-references (ch17) + intraline diff (character-level) + ignore-whitespace + <b>move detection</b> + side-by-side; prefetch everything. Optimizing the diff is a core requirement.</li>
+        <li><b>Analysis results:</b> uploading a snapshot triggers Tricorder (ch20); chips red/yellow/gray, <b>binary actionability</b>, often with a <b>fix suggestion</b> to apply in one click.</li>
+        <li><b>Tight integration:</b> Cider/Code Search/Tricorder/Rapid/Zapfhahn; <b>links over embedding</b> (only coverage embedded via gutter colors); enabled by FUSE workspaces + a cloud Source of Truth.</li>
+        <li><b>Request review:</b> <b>GwsQ</b> auto-assigns via an email alias; suggestions consider owner/familiarity/availability/GwsQ. Failed presubmits (email lists, test suites, invariants) block the change.</li>
+        <li><b>Commenting:</b> anyone can; per-person reviewed checkboxes; Please fix/Done/Ack shortcuts; published atomically.</li>
+        <li><b>Attention set ("whose turn"):</b> bolds "who the change is blocked on"; emphasizes review's <b>turn-based</b> nature; once built, "no one could imagine the previous state." The dashboard is powered by <b>Changelist Search</b> (regex, fast enough for interactive use).</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">SCORING</span> Change Approvals <span class="en2">three-part: LGTM + Approval + unresolved</span></h3>
+      <div class="claim">Beyond specific suggestions via comments, you need a high-level "OK." Google simplifies scoring to <b>three things</b>.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 180" role="img" aria-label="Three-part scoring: LGTM + Approval + zero unresolved comments → committable (turns green)">
+          <defs><marker id="s19e" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--theme-scale)"/></marker></defs>
+          <rect x="24" y="40" width="180" height="50" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="114" y="60" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--accent)">① LGTM</text>
+          <text x="114" y="80" class="fig-mut" font-size="10.5" text-anchor="middle">meets standards · ≥1 = two pairs of eyes</text>
+          <rect x="24" y="100" width="180" height="50" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="114" y="120" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">② Approval</text>
+          <text x="114" y="140" class="fig-mut" font-size="10.5" text-anchor="middle">gatekeeper allows into this part</text>
+          <rect x="260" y="70" width="180" height="50" rx="10" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+          <text x="350" y="90" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle" fill="var(--theme-time)">③ 0 unresolved</text>
+          <text x="350" y="110" class="fig-mut" font-size="10.5" text-anchor="middle">soft requirement · author can resolve</text>
+          <rect x="500" y="68" width="196" height="54" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2.6"/>
+          <text x="598" y="92" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">committable (UI green)</text>
+          <text x="598" y="112" class="fig-mut" font-size="10.5" text-anchor="middle">LGTM/Approval always positive</text>
+          <path d="M204 70 L256 88" stroke="var(--theme-scale)" stroke-width="1.8" fill="none"/>
+          <path d="M204 120 L256 102" stroke="var(--theme-scale)" stroke-width="1.8" fill="none"/>
+          <path d="M440 95 L496 95" stroke="var(--theme-scale)" stroke-width="2.4" fill="none" marker-end="url(#s19e)"/>
+          <text x="360" y="165" class="fig-mut" font-size="11" text-anchor="middle">reviewers can't thumbs-down without feedback — negative feedback must tie to a concrete unresolved comment</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — three-part scoring: <b>LGTM</b> (meets standards; ≥1 = two pairs of eyes) + <b>Approval</b> (gatekeeper allows it in) + <b>zero unresolved comments</b> (a soft requirement) → committable (UI turns green). LGTM/Approval are hard requirements, always positive; reviewers can't thumbs-down without feedback, which must tie to something specific to fix.</figcaption>
+      </figure>
+      <div class="impl">The distinction between <b>hard (LGTM/Approval — only reviewers grant/revoke) and soft (unresolved comments — the author can resolve)</b> promotes and relies on <b>trust</b> — a reviewer can LGTM with unresolved comments without later verifying, saving time especially across time zones.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">AFTER</span> After Commit &amp; Gerrit <span class="en2">archaeology and the open-source alternative</span></h3>
+      <div class="impl"><b>After commit:</b> used for <b>change archaeology</b> (browse a change's history, comments and evolution, for auditing/understanding "why" and "how a bug was introduced," producing training); supports post-commit comments and rollbacks. <b>Gerrit:</b> Critique isn't external (tightly coupled to the monorepo); open-source (Chrome/Android) or non-monorepo teams use Gerrit — standalone, Git-integrated, with more configurable scoring (−2 vetoes).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Trust and communication are core to the code review process. A tool can enhance the experience, but it can't replace them."</span><span class="zh">The chapter's central message; the "foundation of trust" principle designs this into the tool.</span><div class="note">Conclusion / TL;DRs.</div></blockquote>
+    <blockquote class="q"><span class="en">"Code review is not for slowing others down; instead, it is for empowering others."</span><span class="zh">So trust authors to address minor comments rather than adding a re-review round.</span><div class="note">The Foundation of trust principle.</div></blockquote>
+    <blockquote class="q"><span class="en">"Communication problems are rarely solved through tooling."</span><span class="zh">So prefer plain comments over complex protocols; users are human.</span><div class="note">The Generic communication principle.</div></blockquote>
+    <blockquote class="q"><span class="en">"Every change requires an LGTM regardless of approval status, ensuring that at least two pairs of eyes viewed the change."</span><span class="zh">The simplified three-part scoring; LGTM is the "two pairs of eyes" minimum.</span><div class="note">Scoring.</div></blockquote>
+    <blockquote class="q"><span class="en">"Reviewers cannot just thumbs-down a change with no useful feedback; all negative feedback must be tied to something specific to be fixed."</span><span class="zh">The cultural upside of simplified scoring — LGTM/Approval are always positive.</span><div class="note">Scoring's cultural influence.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Critique</span><br>Google's in-house, most-popular code review tool; supports the six-stage precommit review flow, tightly integrated with other tools.</div>
+      <div class="kw"><span class="term">The four principles</span><br>Simplicity / Trust / Generic communication / Workflow integration; Simplicity had the most impact (Google declined an all-in-one "Code Central").</div>
+      <div class="kw"><span class="term">Precommit review</span><br>Review before code enters the codebase; six stages: create → request → comment → modify → approve → commit.</div>
+      <div class="kw"><span class="term">Snapshot</span><br>A change's patch at a point in time; uploading triggers analyzers, and you can diff any two snapshots.</div>
+      <div class="kw"><span class="term">Diffing</span><br>LCS + syntax highlighting + Kythe cross-references + intraline + ignore-whitespace + move detection + side-by-side; optimizing the diff is a core requirement.</div>
+      <div class="kw"><span class="term">Analyzer chips / Tricorder</span><br>Analysis results as chips (red/yellow/gray, binary actionability, with fix suggestions); Tricorder is the static-analysis tool (see ch20).</div>
+      <div class="kw"><span class="term">GwsQ</span><br>Auto-assigns reviewers via an email alias; suggestions consider owner/familiarity/availability/GwsQ setup.</div>
+      <div class="kw"><span class="term">Presubmits</span><br>Run at review request and commit (email lists, test suites, invariants); a failure blocks the change.</div>
+      <div class="kw"><span class="term">Attention set / "whose turn"</span><br>Bolds "who the change is blocked on"; emphasizes review's turn-based nature; a small optimization that cuts friction.</div>
+      <div class="kw"><span class="term">Changelist Search</span><br>The search system powering the dashboard, indexing the latest state of all changes across Google, regex-queryable, fast for interactive use.</div>
+      <div class="kw"><span class="term">LGTM / Approval / unresolved (three-part scoring)</span><br>LGTM = meets standards; Approval = gatekeeper allows it in; unresolved = the author must address; every change needs at least one LGTM.</div>
+      <div class="kw"><span class="term">Gerrit</span><br>A standalone, open-source review tool tightly integrated with Git; for open-source/non-monorepo projects; supports −2 vetoes and more configurable scoring.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Is your review tool oriented toward <b>Simplicity</b> or ever-more features? Are there features that "complicate the model for a few users" to cut? Could you, like Google declining "Code Central," resist cramming everything into one tool?</li>
+      <li>Do your reviews stall on "whose turn?" Could you add an <b>attention set</b>-like mechanism? Recall a change idling because no one knew whose turn it was — how much time would this save?</li>
+      <li>Is your scoring too complex? Could you simplify to <b>LGTM + Approval + unresolved comments</b> and require <b>negative feedback to tie to something specific</b>? What would that do to your review <b>culture</b>?</li>
+      <li>How tightly is your review tool integrated with others? Which should be <b>linked</b>, which worth <b>embedding</b>? Recall Critique's "links by default, embed only coverage" — have you sacrificed simplicity for integration? Per ch17, ch20.</li>
+      <li>Does "<b>trust the author to address minor comments without re-checking</b>" work on your team? Is your review empowering or slowing? Across time zones, how much round-tripping would that trust save? Per ch09, ch02's HRT.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— Ch.9 is the process, this chapter the tool; the three-part scoring matches Ch.9's three approval bits.</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— uploading a snapshot triggers Tricorder and others, shown as chips with fix suggestions; this is how static analysis surfaces at review time.</span></div>
+      <div class="chip"><a href="ch17.html">ch17 Code Search</a> <span class="rel">— Critique uses Kythe for cross-reference diffs and jumps to Code Search; both are "browsing/understanding-centric" interfaces.</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control</a> <span class="rel">— Critique is built on the Piper monorepo, with workspaces in a FUSE filesystem and a cloud Source of Truth, enabling tight integration.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— Critique must handle unusually large LSCs across hundreds/thousands of files; global reviewers customize the dashboard.</span></div>
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— "foundation of trust" and "review empowers rather than slows" echo HRT (humility, respect, trust).</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— Critique links to the Rapid release tool to see whether a change is in a release; review is the front gate of the CD pipeline.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch18.html">← Prev: Build Systems</a><a class="idx" href="index.html">⌂ Index</a><a href="ch20.html">Next: Static Analysis →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

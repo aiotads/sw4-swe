@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 18 章 Build Systems ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools ｜ 工具</div>
+    <div class="ch-no">CHAPTER 18</div>
+    <h1 class="title">Build Systems and Build Philosophy</h1>
+    <div class="title-zh">建置系統與建置哲學</div>
+    <div class="meta-row">
+      <span class="badge">作者 Erik Kuefler</span>
+      <span class="badge">PDF p.399–426</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Limiting engineers' power and flexibility can improve their productivity."</span>
+      <span class="zh">限制工程師的權力與彈性，反而能提升他們的生產力。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>Google 從零打造了 <b>Blaze</b>（2015 開源版 <b>Bazel</b>），目標是讓建置<b>快</b>（單一指令、幾秒）<b>且正確</b>（任何人任何機器、相同輸入永遠相同結果）。<b>絕大多數的 build 是自動觸發的</b>，幾乎所有開發工具都掛在它上面。一個反覆出現的主題：<b>管理依賴是建置系統最根本的工作</b>。</p>
+      <p>核心對比兩種哲學：<b>Task-based（任務式，Ant/Maven/Gradle）</b>——基本單元是任意腳本，彈性高但<b>給工程師太多權力、給系統太少</b>，故難平行化/增量/維護；<b>Artifact-based（產物式，Blaze/Bazel）</b>——BUILD 檔是宣告式 manifest，工程師說「<b>建什麼</b>」、系統決定「<b>怎麼建</b>」，故能保證正確並大幅平行化與重用。</p>
+      <p>由此推展出<b>分散式建置</b>（遠端快取 ObjFS＋遠端執行 Forge，自 2008）。取捨是<b>時間/規模/彈性</b>：DIY 腳本→task-based→artifact-based。Google 相信幾乎每個新專案從一開始就該用 artifact-based。模組與依賴：<b>細粒度模組（1:1:1）、最小 visibility、嚴格傳遞依賴、手動釘版本、One-Version Rule</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你的 build 又慢又愛因「換台機器就壞」抓狂。</b> 你用的可能是 task-based，系統不知道腳本在幹嘛、無法安全平行化或可靠增量。看懂 artifact-based 才懂「<b>限制彈性反而提升生產力</b>」。</div>
+      <div class="why-card"><b>你以為「有 compiler 就夠」或「寫個 build 腳本就好」。</b> 跨語言、外部依賴、新人 bootstrap、自動建置——每步都讓 DIY 腳本崩潰。本章幫你判斷「何時該投資真正的建置系統」。</div>
+      <div class="why-card"><b>你被鑽石依賴、版本衝突、<span class="mono">latest</span> 害慘過。</b> 三帖藥：<b>手動釘版本、One-Version Rule、嚴格傳遞依賴</b>。理解「依賴是 target 的公開契約」。</div>
+      <div class="why-card"><b>你在決定模組要粗還是細。</b> <b>細粒度模組擴展更好</b>（1:1:1）——更快的分散式 build、更少重建、測試只跑受影響子集；配合工具自動管理 BUILD 檔。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">目的</span> Purpose、沒有建置系統會怎樣 <span class="en2">Fast & Correct</span></h3>
+      <div class="claim">所有建置系統的目的：把原始碼轉成可執行檔。好系統最佳化兩性質——<b>Fast（單一指令、幾秒）</b>與 <b>Correct（任何人任何機器、相同輸入永遠相同結果）</b>。Bazel 的目標是<b>不必在快與正確間二選一</b>。</div>
+      <div class="impl"><b>沒有建置系統：</b><span class="mono">javac *.java</span> 在單一目錄夠用；但一旦跨語言/編譯單元/外部依賴，shell 腳本最終淪為冗長、慢、不可重現、新人 bootstrap 痛苦的<b>經典規模問題</b>。<b>管理自己的程式碼很直接，管理依賴才是難題。</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">對比</span> Task-based vs Artifact-based <span class="en2">本章核心哲學</span></h3>
+      <div class="claim">解方是<b>把權力從工程師手中拿回給系統</b>：別讓工程師定義任意任務，而是工程師說 what、系統決定 how。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 240" role="img" aria-label="任務式 vs 產物式建置：任意腳本（系統盲目）對比宣告式 manifest（系統可平行化、重用、保證正確）">
+          <rect x="24" y="40" width="320" height="170" rx="12" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="184" y="64" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">✗ Task-based（任務式）</text>
+          <text x="184" y="88" class="fig-mut" font-size="11.5" text-anchor="middle">基本單元＝任意腳本（task）</text>
+          <text x="184" y="108" class="fig-mut" font-size="11.5" text-anchor="middle">工程師定義「怎麼做」</text>
+          <text x="184" y="134" class="fig-txt" font-size="11.5" text-anchor="middle">→ 系統不知道腳本在幹嘛</text>
+          <text x="184" y="156" class="fig-mut" font-size="11" text-anchor="middle">難平行化</text>
+          <text x="184" y="174" class="fig-mut" font-size="11" text-anchor="middle">難做增量 build</text>
+          <text x="184" y="192" class="fig-mut" font-size="11" text-anchor="middle">腳本難維護（race/非確定性）</text>
+          <rect x="376" y="40" width="320" height="170" rx="12" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2.4"/>
+          <text x="536" y="64" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">✓ Artifact-based（產物式）</text>
+          <text x="536" y="88" class="fig-mut" font-size="11.5" text-anchor="middle">BUILD 檔＝宣告式 manifest</text>
+          <text x="536" y="108" class="fig-mut" font-size="11.5" text-anchor="middle">工程師說「建什麼」、系統決定「怎麼建」</text>
+          <text x="536" y="134" class="fig-txt" font-size="11.5" text-anchor="middle">→ 系統完全掌控（函數式視角）</text>
+          <text x="536" y="156" class="fig-mut" font-size="11" text-anchor="middle">安全平行化（數量級提速）</text>
+          <text x="536" y="174" class="fig-mut" font-size="11" text-anchor="middle">輸入沒變就重用輸出</text>
+          <text x="536" y="192" class="fig-mut" font-size="11" text-anchor="middle">只重建最小集合、保證正確</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 任務式 vs 產物式建置：任務式給工程師太多權力（任意腳本），系統盲目故難平行化/增量/維護；產物式用宣告式 manifest，工程師說「建什麼」、系統決定「怎麼建」（函數式視角），故能安全平行化、重用、只重建最小集合並保證正確。</figcaption>
+      </figure>
+      <div class="impl"><b>Bazel 巧招：</b>tools as dependencies（toolchain 達平台獨立）、custom rule→action、<b>sandboxing（LXC）</b>讓 action 只見宣告的 I/O、外部依賴用<b>密碼學雜湊</b>確定化。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Distributed Builds <span class="en2">遠端快取＋遠端執行</span></h3>
+      <div class="claim">20 億行、依賴鏈極深（簡單 binary 常依賴數萬 target），單機<b>不可能</b>在合理時間建完——唯一解是分散式建置。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 220" role="img" aria-label="分散式建置：遠端快取與遠端執行；build master 把 action 排到 worker pool，worker 讀寫共享快取">
+          <defs><marker id="d18" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <rect x="24" y="90" width="120" height="44" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+          <text x="84" y="110" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle">使用者/CI</text>
+          <text x="84" y="126" class="fig-mut" font-size="10" text-anchor="middle">build 工具</text>
+          <rect x="190" y="90" width="130" height="44" rx="9" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+          <text x="255" y="110" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-time)">build master</text>
+          <text x="255" y="126" class="fig-mut" font-size="10" text-anchor="middle">拆成 action、排程</text>
+          <g fill="#12151f">
+            <rect x="370" y="44" width="120" height="34" rx="8" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <rect x="370" y="94" width="120" height="34" rx="8" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <rect x="370" y="144" width="120" height="34" rx="8" stroke="var(--theme-scale)" stroke-width="1.6"/>
+          </g>
+          <text x="430" y="66" class="fig-txt" font-size="11" text-anchor="middle">worker</text>
+          <text x="430" y="116" class="fig-txt" font-size="11" text-anchor="middle">worker</text>
+          <text x="430" y="166" class="fig-txt" font-size="11" text-anchor="middle">worker</text>
+          <rect x="540" y="80" width="150" height="64" rx="10" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.2"/>
+          <text x="615" y="106" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">共享遠端快取</text>
+          <text x="615" y="126" class="fig-mut" font-size="10" text-anchor="middle">ObjFS（key＝target＋輸入 hash）</text>
+          <path d="M144 112 L186 112" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#d18)"/>
+          <path d="M320 105 L366 62" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#d18)"/>
+          <path d="M320 112 L366 111" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#d18)"/>
+          <path d="M320 119 L366 160" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#d18)"/>
+          <path d="M490 61 L538 96" stroke="var(--theme-trade)" stroke-width="1.4" fill="none" marker-end="url(#d18)"/>
+          <path d="M490 111 L538 111" stroke="var(--theme-trade)" stroke-width="1.4" fill="none" marker-end="url(#d18)"/>
+          <path d="M490 161 L538 126" stroke="var(--theme-trade)" stroke-width="1.4" fill="none" marker-end="url(#d18)"/>
+          <text x="360" y="208" class="fig-mut" font-size="11" text-anchor="middle">前提：build 完全可重現（相同輸入→任何機器相同輸出）。worker 讀寫共享快取以傳遞中間產物</text>
+        </svg>
+        <figcaption><b>Figure 18-3／18-4 重繪</b> 分散式建置：每台機器的 build 工具把請求送到 <b>build master</b>，master 拆成 action 排到可擴展的 <b>worker pool</b>；worker 把結果寫進<b>共享遠端快取</b>（ObjFS，key＝target＋輸入 hash）、也從快取讀依賴。前提是 build 完全可重現——這對 task-based 幾乎不可能。Google 自 2008 用 ObjFS（快取）＋Forge（執行）。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> 模組與依賴 <span class="en2">1:1:1、One-Version、手動釘版本</span></h3>
+      <ul class="tight">
+        <li><b>細粒度模組（1:1:1）：</b>每目錄一個 package/target/BUILD（Pants 命名）；好處在規模下顯現——更快分散式 build、更少重建、<b>測試只跑受影響子集</b>。最小化 <b>visibility</b>。</li>
+        <li><b>內部依賴：</b>從源碼建、無「版本」；<b>strict transitive deps</b>——引用沒直接依賴的符號就失敗（避免「依賴變成公開契約」、讓 build 更快）。</li>
+        <li><b>外部依賴：</b><b>手動釘版本</b>（不要 <span class="mono">latest</span>，可發現/回滾）；<b>One-Version Rule</b> 避免鑽石依賴；Bazel 不自動下載傳遞依賴。</li>
+        <li><b>安全：</b>鏡像到自控伺服器、要求 hash、或 <b>vendoring</b>（check-in 到 <span class="mono">third_party</span>，把外部變內部）——Google 用之（仰賴超大 monorepo）。</li>
+      </ul>
+      <div class="impl"><b>結論：</b>限制工程師的權力與彈性反而提升生產力；「<b>能信任 build 是強大的</b>——增量 build 就是會動，幾乎不需清快取或跑 clean」。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Bazel's main objective is to avoid having to choose between speed and correctness."</span><span class="zh">Bazel 的主要目標，就是讓你不必在「速度」與「正確性」之間做選擇。</span><div class="note">Purpose of a Build System——老式系統常在兩者間走捷徑導致不一致的 build。</div></blockquote>
+    <blockquote class="q"><span class="en">"Such systems actually end up giving too much power to engineers and not enough power to the system."</span><span class="zh">這類（任務式）系統，最終把太多權力給了工程師，卻給系統太少。</span><div class="note">Task-Based 的黑暗面——系統不知道腳本在幹嘛，故難平行化、難增量、腳本難維護。</div></blockquote>
+    <blockquote class="q"><span class="en">"Engineers would still need to tell the system what to build, but the how of doing the build would be left to the system."</span><span class="zh">工程師仍需告訴系統「要建什麼」，但「怎麼建」則交給系統決定。</span><div class="note">Artifact-Based 的核心——宣告式 manifest、函數式視角。</div></blockquote>
+    <blockquote class="q"><span class="en">"Limiting engineers' power and flexibility can improve their productivity."</span><span class="zh">限制工程師的權力與彈性，反而能提升他們的生產力。</span><div class="note">Conclusion——全章最反直覺也最核心的洞見。</div></blockquote>
+    <blockquote class="q"><span class="en">"Relying on 'latest' versions is a recipe for disaster and unreproducible builds."</span><span class="zh">依賴「最新」版本，是一份通往災難與不可重現建置的食譜。</span><div class="note">TL;DRs／外部依賴——應在 source control 裡明確釘版本。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Blaze / Bazel</span><br>Google 內部建置系統 Blaze 與其 2015 開源版 Bazel；artifact-based，目標兼顧快與正確。</div>
+      <div class="kw"><span class="term">Fast & Correct（快與正確）</span><br>好建置系統的兩大目標：單一指令幾秒回傳；任何人任何機器相同輸入永遠相同輸出。</div>
+      <div class="kw"><span class="term">Task-Based Build System（任務式）</span><br>基本單元是任意腳本（task），如 Ant/Maven/Gradle；彈性高但給系統太少資訊，難平行化/增量/維護。</div>
+      <div class="kw"><span class="term">Artifact-Based Build System（產物式）</span><br>BUILD 檔是宣告式 manifest，工程師說 what、系統決定 how（Blaze/Bazel/Pants/Buck）；能平行化、重用、保證正確。</div>
+      <div class="kw"><span class="term">BUILD / Target / Workspace</span><br>BUILD 檔定義 target（java_binary/java_library，有 name/srcs/deps）；源樹根有 WORKSPACE 檔。</div>
+      <div class="kw"><span class="term">Tools as Dependencies / Toolchains</span><br>把 compiler 等工具當依賴（變了就重建）；toolchain 達成平台獨立。</div>
+      <div class="kw"><span class="term">Sandboxing（沙箱）</span><br>用 LXC（Docker 同技術）讓每個 action 只見宣告的 I/O，使衝突不可能、並限制網路。</div>
+      <div class="kw"><span class="term">Remote Caching / Remote Execution</span><br>共享快取避免重建（ObjFS）；把 action 分散到 worker pool（Forge）；前提是 build 完全可重現。</div>
+      <div class="kw"><span class="term">1:1:1 Rule</span><br>每目錄一個 package/target/BUILD（Pants 命名）；偏好細粒度模組以利分散式 build、增量與精準測試。</div>
+      <div class="kw"><span class="term">Strict Transitive Dependencies</span><br>引用沒直接依賴的符號就失敗；避免「依賴變成 target 的公開契約」、讓 build 更快。</div>
+      <div class="kw"><span class="term">One-Version Rule / Diamond Dependency</span><br>第三方依賴只准一個版本，避免 A 同時依賴 v1 與 v2 而壞（見 ch21）。</div>
+      <div class="kw"><span class="term">Vendoring / third_party</span><br>把外部依賴 check-in 到源樹（third_party），把外部依賴變成內部依賴；Google 用之（仰賴超大 monorepo）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>你的 build 是 <b>task-based 還是 artifact-based</b>？它能安全<b>平行化</b>與做可靠<b>增量 build</b> 嗎？還是你常被迫 <span class="mono">clean</span>、或因「換台機器就壞」抓狂？看懂「系統不知道腳本在幹嘛」，你會怎麼重構？</li>
+      <li>回想「沒有真正建置系統」的痛：你落在 DIY 腳本／task-based／artifact-based 哪一檔？「改建置系統的成本隨專案變大」——是不是該趁早投資？</li>
+      <li>你的外部依賴是<b>手動釘版本還是 <span class="mono">latest</span>/範圍</b>？被鑽石依賴坑過嗎？套用 <b>One-Version＋手動＋hash</b>：哪些依賴是顆未爆彈？對照 ch16、ch21。</li>
+      <li>你的模組<b>粗還是細</b>？算算「測試只跑受影響子集」對 CI 時間的節省。能不能往 <b>1:1:1</b> 靠、用工具自動管理依賴清單？對照 ch11、ch23。</li>
+      <li>本章說「<b>限制彈性反而提升生產力</b>」。你的工具/流程裡，有沒有「給人太多權力、卻讓系統無法保證正確或高效」之處？把哪個決策收回給自動工具會讓大家更輕鬆？</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch21.html">ch21 Dependency Management</a> <span class="rel">— 「管理依賴是建置系統最根本的工作」「One-Version Rule／鑽石依賴／傳遞依賴」都在第 21 章深入。</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— One-Version Rule、monorepo、VMR 靠 Bazel 外部依賴縫合；「依賴 at head」與「手動釘版本」互補。</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— 「絕大多數 build 自動觸發」「合併前再測」都是 CI；分散式建置是 CI 規模化的基礎。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— LSC 一次動數萬檔、strict transitive deps 的數百萬 target 重構，都仰賴 artifact-based 的可重現與精準測試。</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— 細粒度 target 讓「只跑受影響的測試子集」成為可能。</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— 「自動建置/測試/推到 production」是 CD 的引擎；可重現的 build 是可信發布的前提。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「為規模與時間最佳化」「限制彈性提升生產力」回扣全書三主軸。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch17.html">← 上一章：Code Search</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch19.html">下一章：Critique →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part IV — Tools</div>
+    <div class="ch-no">CHAPTER 18</div>
+    <h1 class="title">Build Systems and Build Philosophy</h1>
+    <div class="title-zh">Take power from engineers, give it to the system — everyone gets faster</div>
+    <div class="meta-row">
+      <span class="badge">by Erik Kuefler</span>
+      <span class="badge">PDF p.399–426</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Limiting engineers' power and flexibility can improve their productivity."</span>
+      <span class="zh">Counterintuitively, giving power to the system makes everyone faster.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>Google built <b>Blaze</b> from scratch (open-sourced 2015 as <b>Bazel</b>), aiming for builds that are <b>fast</b> (one command, seconds) <b>and correct</b> (any developer/machine, same inputs → same result). <b>The vast majority of builds are triggered automatically</b>, and nearly every dev tool hangs off it. A recurring theme: <b>managing dependencies is a build system's most fundamental job.</b></p>
+      <p>The core contrast of two philosophies: <b>Task-based (Ant/Maven/Gradle)</b> — the unit is an arbitrary script; flexible but <b>gives engineers too much power and the system too little</b>, so it's hard to parallelize/incrementalize/maintain; <b>Artifact-based (Blaze/Bazel)</b> — BUILD files are a declarative manifest where engineers say <b>what</b> to build and the system decides <b>how</b>, so it can guarantee correctness and heavily parallelize and reuse.</p>
+      <p>From there comes <b>distributed builds</b> (remote caching ObjFS + remote execution Forge, since 2008). The trade-offs are <b>time/scale/flexibility</b>: DIY scripts → task-based → artifact-based. Google believes almost every new project should use artifact-based from the start. Modules and dependencies: <b>fine-grained modules (1:1:1), minimal visibility, strict transitive deps, manual version pinning, the One-Version Rule.</b></p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>Your build is slow and maddening because "it breaks on another machine."</b> You're probably task-based; the system doesn't know what scripts do, so it can't safely parallelize or do reliable incrementals. Artifact-based explains why "<b>limiting flexibility improves productivity.</b>"</div>
+      <div class="why-card"><b>You think "a compiler is all I need" or "a build script will do."</b> Multiple languages, external deps, newcomer bootstrapping, automated builds — each breaks DIY scripts. The chapter helps you judge "when to invest in a real build system."</div>
+      <div class="why-card"><b>You've been burned by diamond dependencies, version conflicts, <span class="mono">latest</span>.</b> Three cures: <b>pin versions manually, the One-Version Rule, strict transitive deps.</b> Understand "a dependency is a target's public contract."</div>
+      <div class="why-card"><b>You're deciding coarse vs fine modules.</b> <b>Fine-grained scales better</b> (1:1:1) — faster distributed builds, fewer rebuilds, running only the affected test subset; tools auto-manage BUILD files.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">PURPOSE</span> Purpose &amp; life without a build system <span class="en2">Fast & Correct</span></h3>
+      <div class="claim">Every build system turns source into executables. A good one optimizes <b>Fast (one command, seconds)</b> and <b>Correct (any developer/machine, same inputs → same result)</b>. Bazel's goal: <b>avoid choosing between speed and correctness.</b></div>
+      <div class="impl"><b>Without a build system:</b> <span class="mono">javac *.java</span> suffices for one directory; but across languages/units/external deps, shell scripts become verbose, slow, unreproducible, a bootstrapping nightmare — the <b>classic problem of scale.</b> <b>Managing your own code is straightforward; managing dependencies is the hard part.</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">CONTRAST</span> Task-based vs Artifact-based <span class="en2">the core philosophy</span></h3>
+      <div class="claim">The fix is to <b>take power back from engineers and give it to the system</b>: not arbitrary tasks, but engineers say what, the system decides how.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 240" role="img" aria-label="Task-based vs artifact-based: arbitrary scripts (the system is blind) vs a declarative manifest (the system can parallelize, reuse, guarantee correctness)">
+          <rect x="24" y="40" width="320" height="170" rx="12" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2"/>
+          <text x="184" y="64" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">✗ Task-based</text>
+          <text x="184" y="88" class="fig-mut" font-size="11.5" text-anchor="middle">unit = arbitrary script (task)</text>
+          <text x="184" y="108" class="fig-mut" font-size="11.5" text-anchor="middle">engineers define "how"</text>
+          <text x="184" y="134" class="fig-txt" font-size="11.5" text-anchor="middle">→ the system doesn't know what scripts do</text>
+          <text x="184" y="156" class="fig-mut" font-size="11" text-anchor="middle">hard to parallelize</text>
+          <text x="184" y="174" class="fig-mut" font-size="11" text-anchor="middle">hard incremental builds</text>
+          <text x="184" y="192" class="fig-mut" font-size="11" text-anchor="middle">scripts hard to maintain (race/nondeterm)</text>
+          <rect x="376" y="40" width="320" height="170" rx="12" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2.4"/>
+          <text x="536" y="64" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">✓ Artifact-based</text>
+          <text x="536" y="88" class="fig-mut" font-size="11.5" text-anchor="middle">BUILD file = declarative manifest</text>
+          <text x="536" y="108" class="fig-mut" font-size="11.5" text-anchor="middle">engineers say "what", system decides "how"</text>
+          <text x="536" y="134" class="fig-txt" font-size="11.5" text-anchor="middle">→ full system control (functional view)</text>
+          <text x="536" y="156" class="fig-mut" font-size="11" text-anchor="middle">safe parallelism (order-of-magnitude)</text>
+          <text x="536" y="174" class="fig-mut" font-size="11" text-anchor="middle">reuse output when input unchanged</text>
+          <text x="536" y="192" class="fig-mut" font-size="11" text-anchor="middle">rebuild minimal set, guaranteed correct</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — task-based vs artifact-based: task-based gives engineers too much power (arbitrary scripts) and the blind system can't parallelize/incrementalize/maintain; artifact-based uses a declarative manifest where engineers say "what" and the system decides "how" (a functional view), so it parallelizes safely, reuses, rebuilds the minimal set, and guarantees correctness.</figcaption>
+      </figure>
+      <div class="impl"><b>Bazel's tricks:</b> tools as dependencies (toolchains for platform independence), custom rules → actions, <b>sandboxing (LXC)</b> so an action sees only its declared I/O, and external deps made deterministic via a <b>cryptographic hash.</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Distributed Builds <span class="en2">remote caching + remote execution</span></h3>
+      <div class="claim">2 billion lines, deep dependency chains (simple binaries depend on tens of thousands of targets) — a single machine <b>can't</b> build in reasonable time. The only answer is a distributed build.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 220" role="img" aria-label="Distributed build: remote caching and execution; the build master schedules actions to a worker pool that reads/writes a shared cache">
+          <defs><marker id="d18e" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+          <rect x="24" y="90" width="120" height="44" rx="9" fill="#12151f" stroke="var(--accent)" stroke-width="1.8"/>
+          <text x="84" y="110" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle">user/CI</text>
+          <text x="84" y="126" class="fig-mut" font-size="10" text-anchor="middle">build tool</text>
+          <rect x="190" y="90" width="130" height="44" rx="9" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+          <text x="255" y="110" class="fig-txt" font-size="12" font-weight="700" text-anchor="middle" fill="var(--theme-time)">build master</text>
+          <text x="255" y="126" class="fig-mut" font-size="10" text-anchor="middle">split into actions, schedule</text>
+          <g fill="#12151f">
+            <rect x="370" y="44" width="120" height="34" rx="8" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <rect x="370" y="94" width="120" height="34" rx="8" stroke="var(--theme-scale)" stroke-width="1.6"/>
+            <rect x="370" y="144" width="120" height="34" rx="8" stroke="var(--theme-scale)" stroke-width="1.6"/>
+          </g>
+          <text x="430" y="66" class="fig-txt" font-size="11" text-anchor="middle">worker</text>
+          <text x="430" y="116" class="fig-txt" font-size="11" text-anchor="middle">worker</text>
+          <text x="430" y="166" class="fig-txt" font-size="11" text-anchor="middle">worker</text>
+          <rect x="540" y="80" width="150" height="64" rx="10" fill="#1a1320" stroke="var(--theme-trade)" stroke-width="2.2"/>
+          <text x="615" y="106" class="fig-txt" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--theme-trade)">shared remote cache</text>
+          <text x="615" y="126" class="fig-mut" font-size="10" text-anchor="middle">ObjFS (key = target + input hash)</text>
+          <path d="M144 112 L186 112" stroke="var(--accent)" stroke-width="1.8" fill="none" marker-end="url(#d18e)"/>
+          <path d="M320 105 L366 62" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#d18e)"/>
+          <path d="M320 112 L366 111" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#d18e)"/>
+          <path d="M320 119 L366 160" stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#d18e)"/>
+          <path d="M490 61 L538 96" stroke="var(--theme-trade)" stroke-width="1.4" fill="none" marker-end="url(#d18e)"/>
+          <path d="M490 111 L538 111" stroke="var(--theme-trade)" stroke-width="1.4" fill="none" marker-end="url(#d18e)"/>
+          <path d="M490 161 L538 126" stroke="var(--theme-trade)" stroke-width="1.4" fill="none" marker-end="url(#d18e)"/>
+          <text x="360" y="208" class="fig-mut" font-size="11" text-anchor="middle">prerequisite: fully reproducible builds (same inputs → identical output anywhere). Workers share the cache for intermediates</text>
+        </svg>
+        <figcaption><b>Figures 18-3 / 18-4 redrawn</b> — distributed build: each machine's build tool sends requests to the <b>build master</b>, which splits them into actions over a scalable <b>worker pool</b>; workers write results to and read dependencies from a <b>shared remote cache</b> (ObjFS, key = target + input hash). The prerequisite is fully reproducible builds — nearly impossible for task-based systems. Google has used ObjFS (cache) + Forge (execution) since 2008.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFFS</span> Modules &amp; dependencies <span class="en2">1:1:1, One-Version, pin manually</span></h3>
+      <ul class="tight">
+        <li><b>Fine-grained modules (1:1:1):</b> one package/target/BUILD per directory (Pants's term); pays off at scale — faster distributed builds, fewer rebuilds, <b>running only the affected test subset.</b> Minimize <b>visibility.</b></li>
+        <li><b>Internal deps:</b> built from source, no "version"; <b>strict transitive deps</b> — fail when referencing a symbol without depending on it (avoids "dependencies as a public contract," speeds builds).</li>
+        <li><b>External deps:</b> <b>pin versions manually</b> (no <span class="mono">latest</span>; discoverable/rollback-able); the <b>One-Version Rule</b> avoids diamond dependencies; Bazel doesn't auto-download transitive deps.</li>
+        <li><b>Security:</b> mirror to servers you control, require hashes, or <b>vendoring</b> (check into <span class="mono">third_party</span>, converting external to internal) — used by Google (relying on a huge monorepo).</li>
+      </ul>
+      <div class="impl"><b>Conclusion:</b> limiting engineers' power and flexibility improves productivity; "<b>being able to trust the build is powerful</b> — incremental builds just work, and there's almost never a need to clear caches or run clean."</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Bazel's main objective is to avoid having to choose between speed and correctness."</span><span class="zh">Older systems cut corners between the two, producing inconsistent builds.</span><div class="note">Purpose of a Build System.</div></blockquote>
+    <blockquote class="q"><span class="en">"Such systems actually end up giving too much power to engineers and not enough power to the system."</span><span class="zh">Task-based systems don't know what scripts do, so they can't parallelize, incrementalize, or stay maintainable.</span><div class="note">The dark side of task-based build systems.</div></blockquote>
+    <blockquote class="q"><span class="en">"Engineers would still need to tell the system what to build, but the how of doing the build would be left to the system."</span><span class="zh">The artifact-based core — a declarative manifest, a functional perspective.</span><div class="note">Artifact-Based Build Systems.</div></blockquote>
+    <blockquote class="q"><span class="en">"Limiting engineers' power and flexibility can improve their productivity."</span><span class="zh">The chapter's most counterintuitive and central insight.</span><div class="note">Conclusion.</div></blockquote>
+    <blockquote class="q"><span class="en">"Relying on 'latest' versions is a recipe for disaster and unreproducible builds."</span><span class="zh">External dependencies should be pinned explicitly in source control.</span><div class="note">TL;DRs / external dependencies.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Blaze / Bazel</span><br>Google's internal Blaze and its 2015 open-source Bazel; artifact-based, aiming for both speed and correctness.</div>
+      <div class="kw"><span class="term">Fast & correct</span><br>A good build system's two goals: one command, seconds; any developer/machine, same inputs → same output.</div>
+      <div class="kw"><span class="term">Task-based build system</span><br>The unit is an arbitrary script (task), like Ant/Maven/Gradle; flexible but gives the system too little info.</div>
+      <div class="kw"><span class="term">Artifact-based build system</span><br>BUILD files are a declarative manifest; engineers say what, the system decides how (Blaze/Bazel/Pants/Buck).</div>
+      <div class="kw"><span class="term">BUILD / target / workspace</span><br>BUILD files define targets (java_binary/java_library with name/srcs/deps); a WORKSPACE file marks the root.</div>
+      <div class="kw"><span class="term">Tools as dependencies / toolchains</span><br>Treat tools like the compiler as dependencies (changing them rebuilds); toolchains give platform independence.</div>
+      <div class="kw"><span class="term">Sandboxing</span><br>LXC (Docker's tech) lets each action see only its declared I/O, making conflicts impossible and restricting the network.</div>
+      <div class="kw"><span class="term">Remote caching / remote execution</span><br>A shared cache avoids rebuilds (ObjFS); actions spread across a worker pool (Forge); prerequisite is reproducible builds.</div>
+      <div class="kw"><span class="term">1:1:1 rule</span><br>One package/target/BUILD per directory (Pants's term); prefer fine-grained modules for distributed builds, incrementality, precise testing.</div>
+      <div class="kw"><span class="term">Strict transitive dependencies</span><br>Fail when a symbol is referenced without a direct dependency; avoids "dependencies as a public contract," speeds builds.</div>
+      <div class="kw"><span class="term">One-Version Rule / diamond dependency</span><br>Only one version of each third-party dependency, avoiding A depending on both v1 and v2 (see ch21).</div>
+      <div class="kw"><span class="term">Vendoring / third_party</span><br>Checking external deps into the source tree (third_party), converting external to internal; used by Google (huge monorepo).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Is your build <b>task-based or artifact-based</b>? Can it safely <b>parallelize</b> and do reliable <b>incremental builds</b>, or are you forced to <span class="mono">clean</span> and maddened by "breaks on another machine"? How would you restructure it?</li>
+      <li>Recall your "no real build system" pain: where are you — DIY scripts / task-based / artifact-based? "Changing the build system gets more expensive as the project grows" — invest early?</li>
+      <li>Are your external deps <b>pinned manually or <span class="mono">latest</span>/range</b>? Burned by diamond dependencies? Apply <b>One-Version + manual + hash</b>: which are a time bomb? Per ch16, ch21.</li>
+      <li>Are your modules <b>coarse or fine</b>? Tally what "run only the affected test subset" saves your CI. Move toward <b>1:1:1</b> and auto-manage dependency lists? Per ch11, ch23.</li>
+      <li>The chapter says "<b>limiting flexibility improves productivity.</b>" Where did you "give people too much power while the system can't guarantee correctness or efficiency"? Which decision, given to automated tools, eases everyone's life?</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch21.html">ch21 Dependency Management</a> <span class="rel">— "managing dependencies is a build system's most fundamental job," the One-Version Rule, diamond/transitive dependencies are developed in Ch.21.</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control and Branch Management</a> <span class="rel">— the One-Version Rule, monorepo, VMRs via Bazel external deps; "dependencies at head" complements "pin versions manually."</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— "most builds triggered automatically," "re-test before merge" are CI; distributed builds are the foundation of CI at scale.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— LSCs touching tens of thousands of files and the strict-transitive-deps refactor rely on artifact-based reproducibility.</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— fine-grained targets make "run only the affected test subset" possible.</span></div>
+      <div class="chip"><a href="ch24.html">ch24 Continuous Delivery</a> <span class="rel">— "auto build/test/push to production" is CD's engine; reproducible builds are the prerequisite.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "optimizing for scale and time" and "limiting flexibility improves productivity" tie back to the three themes.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch17.html">← Prev: Code Search</a><a class="idx" href="index.html">⌂ Index</a><a href="ch19.html">Next: Critique →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>

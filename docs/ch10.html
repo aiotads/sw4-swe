@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 10 章 Documentation ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+  .colophon{max-width:860px; margin:2.5rem auto; padding:1.25rem 24px 0; border-top:1px solid var(--border); font-size:.8rem; line-height:1.7; color:var(--muted)}
+  .colophon a{color:var(--muted); text-decoration:underline; text-underline-offset:2px}
+  .colophon a:hover{color:var(--accent)}
+  .colophon .author{color:var(--fg); font-weight:600}
+  .colophon p{margin:.4rem 0}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes ｜ 流程</div>
+    <div class="ch-no">CHAPTER 10</div>
+    <h1 class="title">Documentation</h1>
+    <div class="title-zh">文件</div>
+    <div class="meta-row">
+      <span class="badge">作者 Tom Manshreck</span>
+      <span class="badge">PDF p.213–234</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Documentation is hugely important over time and scale. … Write for your audience, not yourself."</span>
+      <span class="zh">文件在時間與規模兩個維度上都極其重要。——為你的讀者而寫，別只為自己寫。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>幾乎每位工程師都抱怨過文件「品質差、數量少、根本沒有」。本章的核心診斷：<b>2010 年代末工程文件的處境，像極了 1980 年代末的軟體測試</b>——大家都知道該投入更多，但組織還沒真正認識到它的關鍵價值。Google 最成功的做法，是<b>把文件當成程式碼來對待（treat documentation like code）</b>，納入既有工程工作流。</p>
+      <p>「文件」泛指工程師為做好工作而寫的一切補充文字——不只獨立文件，<b>程式碼註解也算</b>。文件效益<b>都在下游</b>：你只寫一次，卻會被讀數百、數千次，初始成本被<b>攤提到所有未來讀者</b>身上——這就是它在時間與規模上的價值。最重要的心法是 C++ 風格指南的格律：<b>「為讀者最佳化」</b>。</p>
+      <p>全章主張：文件要<b>有 owner、進版本控制、走 code review、用 bug 系統追蹤、定期檢查（freshness date）</b>；寫之前先<b>認清受眾</b>（seekers 要一致性、stumblers 要清晰；customer 與 provider 分開）；一份文件只服務<b>單一目的</b>；五種文件類型各有寫法；好文件在 <b>completeness／accuracy／clarity</b> 三者間取捨。結論坦承：<b>文件在 Google 還不是「一等公民」</b>，但工程師「既是問題、也是解方」。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你覺得「寫文件」是浪費時間的雜事。</b> 用「攤提」翻轉它：文件<b>寫一次、被讀上千次</b>，成本分攤到所有讀者；它和測試一樣是對未來的投資。看懂這點，你會願意付那筆前期成本。</div>
+      <div class="why-card"><b>你的團隊 wiki 早已腐爛。</b> GooWiki 的崩壞（<b>約 90% 文件數月無人瀏覽或更新</b>、一度成為 Google <b>開發者年度調查頭號抱怨</b>）是前車之鑑。解方很具體：<b>搬進版本控制、給 owner、走 code review、用 bug 追蹤</b>。</div>
+      <div class="why-card"><b>你其實只寫給「現在的自己」。</b> 這是本章最常被引用的錯誤。學會先問「<b>我的讀者是誰</b>」（seekers／stumblers、customer／provider），並用 WHO/WHAT/WHEN/WHERE/WHY 框住開頭兩段，文件立刻好用很多。</div>
+      <div class="why-card"><b>什麼時候該找 technical writer？</b> 違反直覺：<b>團隊幾乎都能寫好「給自己」的文件</b>，真正需要協助的是<b>寫給「另一個受眾」、跨 API 邊界</b>的文件——writer 的關鍵價值是「以局外人身分挑戰你團隊的假設」。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">為何</span> Why Is Documentation Needed? <span class="en2">為什麼需要文件</span></h3>
+      <div class="claim">效益<b>都在下游</b>、不立即回饋作者（與測試相反）；但<b>會隨時間自行回本</b>——寫一次、被讀千次，成本攤提給所有未來讀者。它回答「<b>當初為什麼這樣設計／實作</b>」（包括兩年後回看的你）。</div>
+      <div class="impl"><b>即使對作者也有四個即時好處：</b>①幫你<b>把 API 想清楚</b>（「解釋不了、定義不了，大概就是沒設計好」）；②維護路線圖與歷史紀錄；③讓程式更專業（「文件好」常是「維護得好」的指標）；④<b>減少別人來問</b>。但絕大多數效益歸讀者——故一切回到<b>為讀者最佳化</b>。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">核心</span> Documentation Is Like Code <span class="en2">把文件當程式碼對待</span></h3>
+      <div class="claim">文件是一種<b>工具</b>，用另一種語言（通常英文）寫成，目的和程式碼裡的規範相同：<b>強制一致、提升清晰、避免理解錯誤</b>。所以盡量比照程式碼處理。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="把文件當程式碼對待：程式碼工作流與文件工作流並列對照">
+          <defs><marker id="d10" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--theme-scale)"/></marker></defs>
+          <text x="180" y="28" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--accent)">程式碼的工作流</text>
+          <text x="540" y="28" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-time)">文件比照辦理</text>
+          <!-- rows -->
+          <g font-size="12.5">
+            <rect x="24" y="44" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="64" class="fig-txt" text-anchor="middle">owner（擁有者）</text>
+            <rect x="384" y="44" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="64" class="fig-mut" text-anchor="middle">每份文件都要有 owner（否則腐爛）</text>
+            <rect x="24" y="82" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="102" class="fig-txt" text-anchor="middle">source control（版本控制）</text>
+            <rect x="384" y="82" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="102" class="fig-mut" text-anchor="middle">放進原始碼樹、與程式並列（g3doc）</text>
+            <rect x="24" y="120" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="140" class="fig-txt" text-anchor="middle">code review（審查）</text>
+            <rect x="384" y="120" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="140" class="fig-mut" text-anchor="middle">變更走 review，隨程式一起改</text>
+            <rect x="24" y="158" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="178" class="fig-txt" text-anchor="middle">bug tracking（問題追蹤）</text>
+            <rect x="384" y="158" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="178" class="fig-mut" text-anchor="middle">用 bug 系統追蹤文件問題</text>
+            <rect x="24" y="196" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="216" class="fig-txt" text-anchor="middle">testing（測試）</text>
+            <rect x="384" y="196" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="216" class="fig-mut" text-anchor="middle">定期評估＋freshness date（新鮮度）</text>
+          </g>
+          <path d="M336 59 L382 59" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10)"/>
+          <path d="M336 97 L382 97" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10)"/>
+          <path d="M336 135 L382 135" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10)"/>
+          <path d="M336 173 L382 173" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10)"/>
+          <path d="M336 211 L382 211" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10)"/>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 把文件當程式碼對待：程式碼有的工作流機制（owner／版本控制／review／bug 追蹤／測試），文件全部比照辦理——關鍵不是建新流程，而是<b>沿用既有開發者工作流</b>。</figcaption>
+      </figure>
+      <div class="impl"><b>Case Study｜GooWiki 崩壞：</b>沒有 owner →過時；無新增流程 →重複文件激增；扁平命名（光設定 Borg 就 7~10 份）；<b>能修的人不是用的人</b>。解方＝搬進版本控制，品質戲劇性改善；引進 Markdown 與 g3doc 後，能在<b>同一個變更裡同時改程式與文件</b>。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">受眾</span> Know Your Audience <span class="en2">認清你的受眾</span></h3>
+      <div class="claim">最重要的錯誤就是<b>只寫給自己</b>。動筆前先辨識<b>主要受眾</b>並對其書寫。好文件<b>不必完美</b>——「<b>如果你能讀，你就能寫</b>」；讀者站在你曾站過的地方，只是還沒有你現在的領域知識。</div>
+      <ul class="tight">
+        <li><b>seekers（搜尋者）</b>知道要什麼→關鍵是<b>一致性</b>（reference 格式統一好掃讀）；<b>stumblers（誤撞者）</b>還不確定→關鍵是<b>清晰</b>（檔頭給概觀、TL;DR 標明「不感興趣可停讀」）。</li>
+        <li><b>customer（API 使用者）與 provider（專案成員）的文件要分開</b>——實作細節對維護者重要，終端使用者不該需要讀到。</li>
+        <li>訣竅是<b>讓文件保持精短</b>——寫短常需先寫長再刪修。Pascal：「<b>要是我有更多時間，這封信會寫得更短。</b>」</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">類型</span> Documentation Types <span class="en2">五種類型，別混用</span></h3>
+      <div class="claim">一份文件該有<b>單一目的</b>並堅守它（像 API「只做一件事、做好」）。早期「巨型 wiki 頁」把連結、概念、reference 全攪在一起而失敗。</div>
+      <ul class="tight">
+        <li><b>Reference（參考，含註解）：</b>最常見。API 註解 vs 實作註解；盡量<b>單一來源</b>、從註解生成。function comment 用<b>祈使動詞開頭</b>（Merges, Deletes, Creates）；Google <b>不用</b> <span class="mono">Returns:／Throws:</span> 樣板，一段散文把參數/回傳/例外一起講更清楚。</li>
+        <li><b>Design Docs（設計文件）：</b>重大專案前須<b>核准</b>；模板強制考慮 security／i18n／storage／privacy；涵蓋目標、策略、<b>關鍵決策與取捨、替代方案</b>；是「<b>寫程式前的 code review</b>」與日後衡量成敗的標尺。</li>
+        <li><b>Tutorials（教學）：</b>「Hello World」；最佳時機是<b>你剛加入團隊時</b>；<b>明確編號每一步</b>、合併原子操作、別編號系統回應。</li>
+        <li><b>Conceptual（概念）：</b><b>補充而非取代</b> reference；最難寫、最常被忽略；犧牲完整與準確<b>換清晰</b>。「<b>註解是文件的 unit test，概念文件就是 integration test</b>」。</li>
+        <li><b>Landing Pages（著陸頁）：</b>只當<b>交通警察</b>——標示用途、只放連結；<b>別一頁服侍兩個主人</b>（顧客入口 vs 團隊首頁）。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">審查</span> Documentation Reviews <span class="en2">三種審查</span></h3>
+      <div class="impl">想「測試」文件有沒有用，就找別人讀讀看。三種審查：<b>technical review（求準確</b>，領域專家、常就是 code review 一部分）、<b>audience review（求清晰</b>，不熟領域者）、<b>writing review（求一致</b>，technical writer）。文件一旦 tied 進工程工作流，就會隨時間改善。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">哲學</span> Documentation Philosophy <span class="en2">WHO/WHAT/WHY、三參數取捨</span></h3>
+      <div class="claim">多數技術文件只答 <b>HOW</b>，工程師常忽略其餘五問（<b>設計文件例外——WHY 與 HOW 同等重要</b>）；在開頭兩段補足 WHO/WHAT/WHEN/WHERE/WHY 可避免混淆。文件至少該有<b>開頭、中段、結尾</b>；在文件裡<b>適度冗餘是有用的</b>。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 290" role="img" aria-label="好文件的三參數取捨三角：完整、準確、清晰，很難三者兼得">
+          <polygon points="360,46 86,250 634,250" fill="none" stroke="var(--theme-trade)" stroke-width="2.5"/>
+          <circle cx="360" cy="46" r="6" fill="var(--theme-time)"/>
+          <circle cx="86" cy="250" r="6" fill="var(--theme-scale)"/>
+          <circle cx="634" cy="250" r="6" fill="var(--accent)"/>
+          <text x="360" y="32" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--theme-time)">Completeness 完整</text>
+          <text x="86" y="274" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">Accuracy 準確</text>
+          <text x="634" y="274" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--accent)">Clarity 清晰</text>
+          <text x="360" y="150" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle">很難三者兼得</text>
+          <text x="360" y="174" class="fig-mut" font-size="12" text-anchor="middle">想更「完整」，清晰常受損</text>
+          <text x="225" y="160" class="fig-mut" font-size="11.5" text-anchor="middle" transform="rotate(-37 225 160)">reference：偏完整</text>
+          <text x="497" y="160" class="fig-mut" font-size="11.5" text-anchor="middle" transform="rotate(37 497 160)">conceptual：偏清晰</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 好文件的三參數——完整、準確、清晰——很難三者兼得。「好文件」＝「正在做它該做的那件事」：reference 求完整、概念文件求清晰、landing page 求組織；故一份文件別做超過一件事。</figcaption>
+      </figure>
+      <div class="impl"><b>Deprecating（棄用）：</b>文件不再有用就移除或標為過時；<b>freshness date</b>（逾期三個月寄提醒）＋「<b>Last reviewed by…</b>」署名是低成本維護法。<b>何時需 technical writer：</b>團隊都能寫好「給自己」的文件，外援用在<b>跨 API 邊界、寫給另一受眾</b>的文件——以局外人挑戰假設。<b>結論：</b>文件在 Google <b>還不是一等公民</b>（本質主觀、由讀者非同步衡量）；工程師「<b>既是問題、也是解方</b>」。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"You might write a document only once, but it will be read hundreds, perhaps thousands of times afterward; its initial cost is amortized across all the future readers."</span><span class="zh">你或許只會寫這份文件一次，但它之後會被讀數百、也許數千次；它的初始成本，被攤提到所有未來的讀者身上。</span><div class="note">Why Is Documentation Needed？——文件在時間與規模上的價值核心，呼應全書 Time 主軸。</div></blockquote>
+    <blockquote class="q"><span class="en">"Documentation is often so tightly coupled to code that it should, as much as possible, be treated as code."</span><span class="zh">文件常和程式碼緊密耦合，以至於它應該盡可能被當成程式碼來對待。</span><div class="note">Documentation Is Like Code——全章主軸；引出 owner/版控/review/bug 追蹤/測試七項處置。</div></blockquote>
+    <blockquote class="q"><span class="en">"If comments are the unit tests of documentation, conceptual documents are the integration tests."</span><span class="zh">如果說註解是文件的單元測試，那概念文件就是它的整合測試。</span><div class="note">Conceptual Documentation——以測試金字塔類比：註解貼著單一程式，概念文件描述跨 API 的整體行為。</div></blockquote>
+    <blockquote class="q"><span class="en">"If I had more time, I would have written you a shorter letter." (Blaise Pascal)</span><span class="zh">要是我有更多時間，這封信會寫得更短。（巴斯卡）</span><div class="note">Know Your Audience——短而清晰能同時滿足專家與新手；寫短常需先寫長再刪修。</div></blockquote>
+    <blockquote class="q"><span class="en">"Write for your audience, not yourself."</span><span class="zh">為你的讀者而寫，別只為自己寫。</span><div class="note">TL;DRs——全章對「最常見錯誤」的一句總結；先辨識受眾再下筆。</div></blockquote>
+    <blockquote class="q"><span class="en">"They are both the problem and the solution."</span><span class="zh">他們既是問題、也是解方。</span><div class="note">Conclusion——要改善文件品質，工程師與整個組織必須認知這一點。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Treat Documentation Like Code（把文件當程式碼對待）</span><br>本章核心方法論：文件要有 owner、進版本控制、走 code review、用 bug 系統追蹤、定期評估；沿用既有開發者工作流，而非另建新流程。</div>
+      <div class="kw"><span class="term">Optimize for the Reader（為讀者最佳化）</span><br>取自 C++ 風格指南；文件效益絕大多數歸讀者，寫一次被讀千次，故以讀者視角為準。</div>
+      <div class="kw"><span class="term">Canonical Documentation（權威文件）</span><br>多份文件衝突時指定的唯一主要來源；用 go/ 連結與「放進原始碼並列」扶植，其他重複者併入或棄用。</div>
+      <div class="kw"><span class="term">g3doc</span><br>Google 把文件嵌在程式碼旁的框架（Markdown、可在 Code Search 瀏覽）；讓工程師在同一變更裡同時改程式與文件。</div>
+      <div class="kw"><span class="term">Seekers vs Stumblers（搜尋者 vs 誤撞者）</span><br>seeker 知道要什麼、關鍵是一致性；stumbler 還不確定、關鍵是清晰（檔頭概觀、TL;DR）。</div>
+      <div class="kw"><span class="term">Customer vs Provider（顧客 vs 提供者）</span><br>API 使用者 vs 專案成員；兩者文件要分開，實作細節與設計決策不該塞進 API 文件。</div>
+      <div class="kw"><span class="term">API vs Implementation Comments（API vs 實作註解）</span><br>前者不談實作/設計、不假設讀者熟 API；後者可假設較多領域知識（但別假設太多，人會離開專案）。</div>
+      <div class="kw"><span class="term">五種文件類型（Reference/Design/Tutorial/Conceptual/Landing）</span><br>各有單一目的、不可混用；conceptual 最難寫、補充而非取代 reference，犧牲完整與準確換清晰。</div>
+      <div class="kw"><span class="term">Completeness／Accuracy／Clarity（完整／準確／清晰）</span><br>好文件三參數，難三者兼得；「好文件」＝「正在做它該做的那件事」，一份文件別做超過一件事。</div>
+      <div class="kw"><span class="term">Freshness Date（新鮮度日期）</span><br>記錄上次審查時間、逾期（如三個月）自動寄提醒；配「Last reviewed by…」署名，低成本確保定期檢視。</div>
+      <div class="kw"><span class="term">WHO/WHAT/WHEN/WHERE/WHY</span><br>多數技術文件只答 HOW；在開頭兩段補足這五問避免混淆（設計文件的 WHY 與 HOW 同等重要）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>把你最近寫的一份文件攤開：它其實是<b>寫給「現在的你」還是寫給「讀者」</b>？主要受眾是 seeker 還是 stumbler、customer 還是 provider？在開頭兩段補上 WHO/WHAT/WHY，它會不會立刻好用很多？</li>
+      <li>盤點你團隊的文件：有多少像 GooWiki 那樣<b>沒有 owner、過時、重複</b>？哪幾份可以<b>搬進版本控制、給 owner、走 code review、加 freshness date</b>，讓它「像程式碼一樣」被維護？（對照 ch15 棄用）</li>
+      <li>你的 API 文件裡有沒有混進<b>設計決策或實作細節</b>？把它們挪到 design doc 會不會更清晰？有沒有試圖「一頁服侍兩個主人」（landing page 同時當團隊首頁與顧客入口）？</li>
+      <li>用 <b>completeness／accuracy／clarity 三角</b>檢視你最不滿意的一份文件：它想三者兼得卻什麼都沒做好嗎？明確選定它的<b>單一目的</b>後，你會犧牲哪一項來成全另一項？</li>
+      <li>你的團隊是不是把「找 technical writer」當萬靈丹？對照本章：你們真正需要外援的，是<b>跨 API 邊界、寫給另一受眾</b>的文件嗎？還是「給自己的文件」其實團隊自己就能寫好，只缺把它當程式碼維護的紀律？</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— 「為讀者最佳化」「強制一致」直接取自 C++ 風格指南；對註解風格的要求是「規則」在文件上的延伸。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 文件變更走 code review、文件的 technical review 常就是 code review 一部分；這是「把文件當程式碼」最關鍵的一步。</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— go/ 連結、canonical 權威來源、文件作為組織記憶，都是第 3 章「擴展知識分享」的具體載體。</span></div>
+      <div class="chip"><a href="ch17.html">ch17 Code Search</a> <span class="rel">— Google 因 Code Search 夠強幾乎不另產獨立 reference；註解與程式並列、可直接搜尋，是「文件貼著程式碼」的基礎設施。</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— 「棄用文件」與「棄用程式碼」同理；freshness date 是文件版的生命週期管理。</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— 「文件像測試」的類比貫穿全章（投資前期、回本於後；註解＝unit test、概念文件＝integration test）。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「寫一次、讀千次」「對時間與規模極其重要」直接回扣「軟體工程＝整合時間維度」與三主軸。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch09.html">← 上一章：Code Review</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch11.html">下一章：Testing Overview →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes</div>
+    <div class="ch-no">CHAPTER 10</div>
+    <h1 class="title">Documentation</h1>
+    <div class="title-zh">Treat docs like code — and write for the reader, not yourself</div>
+    <div class="meta-row">
+      <span class="badge">by Tom Manshreck</span>
+      <span class="badge">PDF p.213–234</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Documentation is hugely important over time and scale. … Write for your audience, not yourself."</span>
+      <span class="zh">Docs pay off across time and scale — and the reader, not you, is who they're for.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>Nearly every engineer has complained about documentation — its quality, quantity, or sheer absence. The core diagnosis: <b>the state of engineering docs in the late 2010s resembles software testing in the late 1980s</b> — everyone knows more effort is needed, but the org hasn't recognized its critical benefits. Google's most successful approach: <b>treat documentation like code</b> and fold it into the existing engineering workflow.</p>
+      <p>"Documentation" means every supplemental text an engineer writes — not just standalone docs but <b>code comments too</b>. The benefits are all <b>downstream</b>: written once, read hundreds or thousands of times, with cost <b>amortized across all future readers</b> — that's its value over time and scale. The guiding maxim, from the C++ Style Guide: <b>"optimize for the reader."</b></p>
+      <p>The claims: docs should <b>have owners, live in source control, go through code review, be bug-tracked, and be periodically checked (freshness dates)</b>; <b>know your audience</b> first (seekers want consistency, stumblers want clarity; keep customer and provider apart); a doc serves a <b>single purpose</b>; the five types each have their craft; good docs trade off among <b>completeness, accuracy, clarity</b>. The candid conclusion: <b>docs aren't yet a first-class citizen at Google</b>, but engineers are "both the problem and the solution."</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You think writing docs is wasted time.</b> Amortization flips that: a doc is <b>written once, read thousands of times</b>, its cost spread across all readers. Like testing, an investment in the future. See that and you'll pay the upfront cost.</div>
+      <div class="why-card"><b>Your team wiki has rotted.</b> GooWiki's collapse (<b>~90% of docs unviewed/unupdated for months</b>; once Google's <b>#1 developer-survey complaint</b>) is the cautionary tale. The fix is concrete: <b>source control, owners, code review, bug tracking</b>.</div>
+      <div class="why-card"><b>You write only for present-you.</b> The chapter's most-cited mistake. Ask "<b>who is my audience</b>" first (seekers/stumblers, customer/provider), and frame the first two paragraphs with WHO/WHAT/WHEN/WHERE/WHY — instantly more useful.</div>
+      <div class="why-card"><b>When do you need a technical writer?</b> Counterintuitively: <b>teams can write their own docs fine</b>; help is needed for docs aimed at <b>another audience, crossing API boundaries</b> — the writer's value is "challenging your team's assumptions as an outsider."</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">WHY</span> Why Is Documentation Needed?</h3>
+      <div class="claim">Benefits are all <b>downstream</b> and don't immediately reward the author (the opposite of testing); but they <b>pay off over time</b> — written once, read thousands of times, amortized across all readers. Docs answer "<b>why was this designed/implemented this way</b>" (including for the you reading it two years later).</div>
+      <div class="impl"><b>Even for the author, four immediate wins:</b> ① it <b>formulates the API</b> ("can't explain or define it → not designed well enough"); ② a maintenance road map and historical record; ③ more professional code ("good docs" indicates "well maintained"); ④ <b>fewer questions from others</b>. But most benefit accrues to readers — so it returns to <b>optimize for the reader</b>.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">CORE</span> Documentation Is Like Code</h3>
+      <div class="claim">Docs are a <b>tool</b>, written in another language (usually English) for the same goals as code conventions: <b>enforce consistency, improve clarity, avoid comprehension errors</b>. So treat them like code wherever possible.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 250" role="img" aria-label="Treat docs like code: the code workflow mapped onto the doc workflow">
+          <defs><marker id="d10e" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--theme-scale)"/></marker></defs>
+          <text x="180" y="28" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--accent)">the code workflow</text>
+          <text x="540" y="28" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle" fill="var(--theme-time)">docs follow suit</text>
+          <g font-size="12.5">
+            <rect x="24" y="44" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="64" class="fig-txt" text-anchor="middle">owners</text>
+            <rect x="384" y="44" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="64" class="fig-mut" text-anchor="middle">every doc has an owner (or it rots)</text>
+            <rect x="24" y="82" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="102" class="fig-txt" text-anchor="middle">source control</text>
+            <rect x="384" y="82" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="102" class="fig-mut" text-anchor="middle">in the source tree, beside code (g3doc)</text>
+            <rect x="24" y="120" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="140" class="fig-txt" text-anchor="middle">code review</text>
+            <rect x="384" y="120" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="140" class="fig-mut" text-anchor="middle">changes reviewed, change with the code</text>
+            <rect x="24" y="158" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="178" class="fig-txt" text-anchor="middle">bug tracking</text>
+            <rect x="384" y="158" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="178" class="fig-mut" text-anchor="middle">track doc issues as bugs</text>
+            <rect x="24" y="196" width="312" height="30" rx="7" fill="#12151f" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="180" y="216" class="fig-txt" text-anchor="middle">testing</text>
+            <rect x="384" y="196" width="312" height="30" rx="7" fill="#12151f" stroke="var(--theme-time)" stroke-width="1.5"/>
+            <text x="540" y="216" class="fig-mut" text-anchor="middle">periodic evaluation + freshness dates</text>
+          </g>
+          <path d="M336 59 L382 59" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10e)"/>
+          <path d="M336 97 L382 97" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10e)"/>
+          <path d="M336 135 L382 135" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10e)"/>
+          <path d="M336 173 L382 173" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10e)"/>
+          <path d="M336 211 L382 211" stroke="var(--theme-scale)" stroke-width="1.6" fill="none" marker-end="url(#d10e)"/>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — treat docs like code: every mechanism code has (owners / source control / review / bug tracking / testing) is mirrored for docs. The key isn't a new process but <b>leveraging the existing developer workflow</b>.</figcaption>
+      </figure>
+      <div class="impl"><b>Case Study | GooWiki's collapse:</b> no owners → obsolescence; no add-process → duplicate proliferation; flat namespace (7–10 docs just for Borg setup); <b>those who could fix weren't those who used</b>. Fix = move into source control, quality improved dramatically; Markdown + g3doc let engineers change <b>code and docs in the same change</b>.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">AUDIENCE</span> Know Your Audience</h3>
+      <div class="claim">The biggest mistake is <b>writing only for yourself</b>. Identify your <b>primary audience</b> first and write to it. Good docs <b>needn't be perfect</b> — "<b>if you can read, you can write</b>"; your reader stands where you once stood, minus your domain knowledge.</div>
+      <ul class="tight">
+        <li><b>Seekers</b> know what they want → key is <b>consistency</b> (scannable reference); <b>stumblers</b> don't → key is <b>clarity</b> (overviews at the top, a TL;DR like "not interested? stop reading").</li>
+        <li><b>Keep customer docs (API users) apart from provider docs (project members)</b> — implementation details matter to maintainers, not end users.</li>
+        <li>The trick is to <b>keep docs short</b> — writing short usually means writing long, then editing down. Pascal: "<b>If I had more time, I would have written you a shorter letter.</b>"</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">TYPES</span> Documentation Types <span class="en2">five types, don't mix</span></h3>
+      <div class="claim">A doc should have a <b>single purpose</b> and stick to it (like an API that "does one thing well"). Early monolithic wiki pages — links, concepts, reference jumbled — failed for serving no single purpose.</div>
+      <ul class="tight">
+        <li><b>Reference (incl. comments):</b> most common. API vs implementation comments; <b>single-sourced</b>, generated from comments. Function comments start with an <b>indicative verb</b> (Merges, Deletes, Creates); Google <b>avoids</b> <span class="mono">Returns:/Throws:</span> boilerplate — a single prose sentence is clearer.</li>
+        <li><b>Design docs:</b> <b>approved</b> before any major project; the template forces security/i18n/storage/privacy; covers goals, strategy, <b>key decisions with trade-offs, alternatives</b>; "a form of <b>code review before any code</b>" and a yardstick for success.</li>
+        <li><b>Tutorials:</b> "Hello World"; best written <b>when you first join</b>; <b>number every step</b>, combine atomic operations, don't number system responses.</li>
+        <li><b>Conceptual:</b> <b>augment, not replace</b> reference; the hardest and most neglected; sacrifice completeness/accuracy <b>for clarity</b>. "<b>Comments are the unit tests; conceptual docs are the integration tests.</b>"</li>
+        <li><b>Landing pages:</b> just a <b>traffic cop</b> — state the purpose, link out only; <b>don't serve two masters</b> (customer entry vs team home).</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">REVIEWS</span> Documentation Reviews <span class="en2">three kinds</span></h3>
+      <div class="impl">To "test" whether a doc works, have someone else review it. Three kinds: <b>technical review (accuracy</b>, an SME — often part of a code review), <b>audience review (clarity</b>, someone unfamiliar with the domain), <b>writing review (consistency</b>, a technical writer). Once docs are tied into the workflow, they improve over time.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">PHILOSOPHY</span> Documentation Philosophy <span class="en2">WHO/WHAT/WHY, the trade-off triangle</span></h3>
+      <div class="claim">Most technical docs answer only <b>HOW</b>; engineers ignore the other questions (<b>design docs are the exception — WHY matters as much as HOW</b>); cover WHO/WHAT/WHEN/WHERE/WHY in the first two paragraphs. A doc should have a <b>beginning, middle, and end</b>; in docs, <b>some redundancy is useful</b>.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 290" role="img" aria-label="The trade-off triangle of good documentation: completeness, accuracy, clarity — rarely all three">
+          <polygon points="360,46 86,250 634,250" fill="none" stroke="var(--theme-trade)" stroke-width="2.5"/>
+          <circle cx="360" cy="46" r="6" fill="var(--theme-time)"/>
+          <circle cx="86" cy="250" r="6" fill="var(--theme-scale)"/>
+          <circle cx="634" cy="250" r="6" fill="var(--accent)"/>
+          <text x="360" y="32" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--theme-time)">Completeness</text>
+          <text x="86" y="274" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--theme-scale)">Accuracy</text>
+          <text x="634" y="274" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle" fill="var(--accent)">Clarity</text>
+          <text x="360" y="150" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle">rarely all three</text>
+          <text x="360" y="174" class="fig-mut" font-size="12" text-anchor="middle">more "complete" → clarity suffers</text>
+          <text x="225" y="160" class="fig-mut" font-size="11.5" text-anchor="middle" transform="rotate(-37 225 160)">reference: complete</text>
+          <text x="497" y="160" class="fig-mut" font-size="11.5" text-anchor="middle" transform="rotate(37 497 160)">conceptual: clear</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the three parameters of good documentation: completeness, accuracy, clarity — you rarely get all three. A "good document" is "one doing its intended job": reference favors completeness, conceptual favors clarity, a landing page favors organization — so one doc shouldn't do more than one job.</figcaption>
+      </figure>
+      <div class="impl"><b>Deprecating:</b> remove or mark obsolete when no longer useful; a <b>freshness date</b> (reminder after three months) + a "<b>Last reviewed by…</b>" byline is low-cost upkeep. <b>When you need a technical writer:</b> teams write "docs for themselves" fine; use writers for <b>cross-API-boundary docs for another audience</b> — outsiders who challenge assumptions. <b>Conclusion:</b> docs aren't yet a <b>first-class citizen</b> at Google (inherently subjective, judged by the reader asynchronously); engineers are "<b>both the problem and the solution</b>."</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"You might write a document only once, but it will be read hundreds, perhaps thousands of times afterward; its initial cost is amortized across all the future readers."</span><span class="zh">A doc's one-time writing cost is spread over every future reader — that's why the upfront effort pays off.</span><div class="note">Why Is Documentation Needed? — docs' value over time.</div></blockquote>
+    <blockquote class="q"><span class="en">"Documentation is often so tightly coupled to code that it should, as much as possible, be treated as code."</span><span class="zh">Give docs owners, source control, reviews, bug tracking, and periodic testing — the same machinery as code.</span><div class="note">Documentation Is Like Code — the central thesis.</div></blockquote>
+    <blockquote class="q"><span class="en">"If comments are the unit tests of documentation, conceptual documents are the integration tests."</span><span class="zh">Comments sit against one piece of code (unit); conceptual docs explain behavior across APIs/modules (integration).</span><div class="note">Conceptual Documentation.</div></blockquote>
+    <blockquote class="q"><span class="en">"If I had more time, I would have written you a shorter letter." (Blaise Pascal)</span><span class="zh">Short, clear docs satisfy both expert and novice — writing short usually means writing long, then editing down.</span><div class="note">Know Your Audience.</div></blockquote>
+    <blockquote class="q"><span class="en">"Write for your audience, not yourself."</span><span class="zh">Identify the reader (seeker/stumbler, customer/provider) before you write — the one-line summary of the most common mistake.</span><div class="note">TL;DRs.</div></blockquote>
+    <blockquote class="q"><span class="en">"They are both the problem and the solution."</span><span class="zh">Engineers and the org must own doc quality — producing good docs is part of the job and saves you time long-term.</span><div class="note">Conclusion.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Treat documentation like code</span><br>The chapter's core method: docs get owners, source control, code review, bug tracking, and periodic evaluation; leverage the existing workflow rather than building a new one.</div>
+      <div class="kw"><span class="term">Optimize for the reader</span><br>The C++ Style Guide maxim; docs' benefits accrue mostly to readers, written once and read thousands of times.</div>
+      <div class="kw"><span class="term">Canonical documentation</span><br>The single primary source designated when docs conflict; promoted via go/ links and "alongside the code," with duplicates consolidated or deprecated.</div>
+      <div class="kw"><span class="term">g3doc</span><br>Google's framework for embedding docs next to code (Markdown, browsable in Code Search); change code and docs in the same change.</div>
+      <div class="kw"><span class="term">Seekers vs stumblers</span><br>Seekers know what they want → consistency; stumblers don't → clarity (overviews, TL;DRs).</div>
+      <div class="kw"><span class="term">Customer vs provider</span><br>API user vs project member; keep their docs apart, and don't put implementation details/design decisions in API docs.</div>
+      <div class="kw"><span class="term">API vs implementation comments</span><br>The former skip implementation/design and don't assume API fluency; the latter assume more domain knowledge (but not too much — people leave projects).</div>
+      <div class="kw"><span class="term">The five types (Reference/Design/Tutorial/Conceptual/Landing)</span><br>Each a single purpose, not mixed; conceptual is hardest, augmenting (not replacing) reference, trading completeness/accuracy for clarity.</div>
+      <div class="kw"><span class="term">Completeness / accuracy / clarity</span><br>The three parameters, rarely all three; a "good document" is "one doing its intended job," so one doc shouldn't do more than one job.</div>
+      <div class="kw"><span class="term">Freshness date</span><br>A doc records its last review; overdue (e.g., three months) triggers a reminder; paired with a "Last reviewed by…" byline, low-cost upkeep.</div>
+      <div class="kw"><span class="term">WHO/WHAT/WHEN/WHERE/WHY</span><br>Most docs answer only HOW; covering these in the first two paragraphs avoids confusion (a design doc's WHY matters as much as HOW).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Open a doc you recently wrote: was it written for <b>present-you or the reader</b>? Is its audience a seeker or stumbler, customer or provider? Would adding WHO/WHAT/WHY to the first two paragraphs make it instantly more useful?</li>
+      <li>Audit your team's docs: how many are like GooWiki — <b>ownerless, stale, duplicated</b>? Which could be <b>moved into source control, given owners, code-reviewed, and given a freshness date</b> to be maintained "like code"? (Per ch15 deprecation.)</li>
+      <li>Do your API docs leak <b>design decisions or implementation details</b>? Move them to a design doc — clearer? Does any doc "serve two masters" (a landing page that's both team home and customer entry)?</li>
+      <li>Apply the <b>completeness/accuracy/clarity triangle</b> to your least-liked doc: is it failing all three by trying for all three? Once you pick its <b>single purpose</b>, which would you sacrifice for another?</li>
+      <li>Does your team treat "get a technical writer" as the cure-all? Per this chapter: do you really need help only for <b>cross-API-boundary docs for another audience</b>? Or could the team write "docs for itself" fine, lacking only the discipline to maintain them like code?</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— "optimize for the reader" and "enforce consistency" come straight from the C++ Style Guide; comment-style requirements are "rules" applied to docs.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— doc changes go through code review, and a doc's technical review is often part of one; this is the key step in "treat docs like code."</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— go/ links, canonical sources, and docs as organizational memory are concrete vehicles for Ch.3's "scaling knowledge sharing."</span></div>
+      <div class="chip"><a href="ch17.html">ch17 Code Search</a> <span class="rel">— Google rarely generates separate reference because Code Search is strong; comments beside code, directly searchable, are the infrastructure.</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— "deprecating documents" mirrors "deprecating code"; freshness dates are the doc version of lifecycle management.</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— the "docs are like tests" analogy runs throughout (invest upfront, pay off later; comments = unit tests, conceptual = integration tests).</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "write once, read thousands of times" and "hugely important over time and scale" tie back to the book's three themes.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch09.html">← Prev: Code Review</a><a class="idx" href="index.html">⌂ Index</a><a href="ch11.html">Next: Testing Overview →</a></nav>
+</div>
+</div>
+
+<footer class="colophon">
+  <p>本頁為研究筆記，內容改寫自 <a href="https://abseil.io/resources/swe-book" rel="noopener"><i>Software Engineering at Google</i></a>（eds. Titus Winters, Tom Manshreck, Hyrum Wright；© Google, LLC），原書以 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license noopener">CC BY-NC-ND 4.0</a> 授權釋出。</p>
+  <p>中英並陳筆記、繁體中文改寫與 inline SVG 視覺化：<span class="author">© 2026 Allen Huang</span>。僅供學習與研究之非商業用途，非原作者或出版商之官方產物。</p>
+</footer>
+
+</body>
+</html>
