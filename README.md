@@ -4,8 +4,8 @@
 > **中英並陳的研究筆記（Markdown）＋ 精簡靜態 HTML 視覺化**，並用一份總索引串連全書。
 > 產出供團隊內 **L4~L6 軟體工程師**精讀。
 
-🔗 **線上閱讀（GitHub Pages）：** `https://<org-or-user>.github.io/<repo>/`
-（部署後請把網址換成實際的；入口頁是 [`site/index.html`](site/index.html)）
+🔗 **線上閱讀（GitHub Pages）：** <https://aiotads.github.io/sw4-swe/>
+（入口頁是 [`docs/index.html`](docs/index.html)）
 
 ---
 
@@ -44,8 +44,8 @@ chapters/chNN.md        ← 繁中研究筆記（七段結構）
 chapters/chNN.en.md     ← 英文研究筆記（English-to-English 導讀）
    │  視覺化重繪
    ▼
-site/chNN.html          ← 各章雙語視覺化（自包含、無 JS、無 CDN）
-site/index.html         ← 總索引：依 5 大 Part 分組，串連全部章節
+docs/chNN.html          ← 各章雙語視覺化（自包含、無 JS、無 CDN）
+docs/index.html         ← 總索引：依 5 大 Part 分組，串連全部章節
 ```
 
 ### 目錄結構
@@ -62,7 +62,7 @@ d:\ah\swe\
 │   ├── raw/chNN.txt                       ← 切好的原文（資料來源）
 │   ├── chNN.md                            ← 成品：繁中研究筆記
 │   └── chNN.en.md                         ← 成品：英文研究筆記
-└── site/                                  ← ★ GitHub Pages 發佈根目錄
+└── docs/                                  ← ★ GitHub Pages 發佈來源（Pages source = /docs）
     ├── index.html                         ← 總索引（網站入口）
     ├── chNN.html                          ← 各章視覺化
     └── assets/                            ← 共用主題資源
@@ -136,14 +136,16 @@ d:\ah\swe\
 
 ```bash
 # 直接開總索引
-start site/index.html      # Windows
-# open site/index.html     # macOS
+start docs/index.html      # Windows
+# open docs/index.html     # macOS
 
 # 或起一個簡單本機伺服器
-python -m http.server -d site 8000
+python -m http.server -d docs 8000
 # 瀏覽 http://localhost:8000
 ```
 
 ## 部署到 GitHub Pages
 
-網站根目錄是 [`site/`](site/)。在 repo 設定裡把 Pages 來源指到 `site/`（或把 `site/` 內容放到 `gh-pages` 分支 / `docs/`），即可發佈。入口頁為 `site/index.html`。
+網站發佈來源是 [`docs/`](docs/)。在 repo 的 **Settings → Pages** 把 **Source** 設為
+**Deploy from a branch**、分支選 `main`（或你的預設分支）、資料夾選 **`/docs`**，即可發佈。
+入口頁為 `docs/index.html`，對應網址 <https://aiotads.github.io/sw4-swe/>。

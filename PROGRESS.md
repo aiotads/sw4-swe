@@ -1,13 +1,13 @@
 # PROGRESS — SWE@Google 研讀進度帳本（單一事實來源）
 
 > 本檔是跨 session 的進度記憶。**每個新 session 開工前先讀本檔**，找到「下一章」續做；
-> **每完成一章，立即更新本檔 + `CLAUDE.md` 進度 + `site/index.html` 卡片狀態與進度條**。
+> **每完成一章，立即更新本檔 + `CLAUDE.md` 進度 + `docs/index.html` 卡片狀態與進度條**。
 > 產出規格見 `.claude/skills/swe-research/SKILL.md`（五階段 + 圖政策 + 中英雙語）。
 
 ## ▶ 下一步（NEXT UP）
 - **Ch9 — Code Review（程式碼審查）**，PDF p.193–212
 - 本章原書圖況待 `_figs.py` 確認；多為流程/概念，無 UI 截圖（Critique 的 UI 截圖在 ch19）→ 概念圖用 inline SVG（建議：CL 審查流程／LGTM·Approval·readability 三道關卡）。
-- 動作：產 `chapters/ch09.md` + `chapters/ch09.en.md` + 雙語 `site/ch09.html` → 更新本檔、CLAUDE.md、index.html → 等使用者確認再進 Ch10。
+- 動作：產 `chapters/ch09.md` + `chapters/ch09.en.md` + 雙語 `docs/ch09.html` → 更新本檔、CLAUDE.md、index.html → 等使用者確認再進 Ch10。
 
 ## 狀態圖例
 - ✅ 完成　🚧 進行中　⬜ 未開始

@@ -3,14 +3,14 @@ name: swe-research
 description: >
   五階段研究閱讀流程（廣讀→精讀→思考→提問→重複閱讀），把《Software Engineering
   at Google》逐章轉成「中英並陳的研究筆記 Markdown + 精簡靜態 HTML 視覺化」。
-  當需要產出或修訂任一章的 chapters/chNN.md 與 site/chNN.html，或更新 site/index.html
+  當需要產出或修訂任一章的 chapters/chNN.md 與 docs/chNN.html，或更新 docs/index.html
   時使用本技能。受眾為 L4~L6 軟體工程師，輸出繁體中文、保留英文核心原意。
 ---
 
 # SKILL：SWE@Google 五階段研究閱讀流程
 
 把一章原文（`chapters/raw/chNN.txt`）轉成兩份成品：研究筆記 `chapters/chNN.md`
-與視覺化 `site/chNN.html`，全程遵循固定的研究流程與品質守則。**閱讀 CLAUDE.md
+與視覺化 `docs/chNN.html`，全程遵循固定的研究流程與品質守則。**閱讀 CLAUDE.md
 取得全書主軸、檔案結構與排版細節，本檔只規範「方法」。**
 
 ## 進度記憶與續做（每次開工先做）
@@ -20,7 +20,7 @@ description: >
   1. `PROGRESS.md`：該章四欄（MD/EN/HTML/IDX）改 ✅、更新「▶ 下一步」指向下一章、
      更新總表完成數、在「變更日誌」加一行（日期用對話中的當前日期）。
   2. `CLAUDE.md` 的「進度」清單。
-  3. `site/index.html`：該章卡片 `todo`→完成、加主軸標籤、更新進度條寬度與 `n / 25` 文字
+  3. `docs/index.html`：該章卡片 `todo`→完成、加主軸標籤、更新進度條寬度與 `n / 25` 文字
      （中文與英文兩個版本都要改）。
   4. 回報使用者並等確認再進下一章（除非使用者要求連續產出）。
 - 一律一次只做一章，確認後再續，確保隨時可安全中斷、下次無縫接續。
@@ -113,10 +113,10 @@ description: >
   可收合區塊（`<details>` 為原生、不需 JS）；主視覺另用乾淨 SVG 流程示意還原其運作邏輯。
 - **無正式 Figure 的章節**：可自行設計 1~2 張「概念整理 SVG」（如分類矩陣、決策樹）強化
   視覺化，但不得杜撰原書沒有的數據。
-- 抽原圖指令：`page.get_images(full=True)` + `fitz.Pixmap`，輸出到 `site/assets/imgNN/`
+- 抽原圖指令：`page.get_images(full=True)` + `fitz.Pixmap`，輸出到 `docs/assets/imgNN/`
   或直接 base64；務必確認抽出的是正確 Figure（比對前後文字）。
 
-## HTML 成品（site/chNN.html）
+## HTML 成品（docs/chNN.html）
 - **精簡靜態**：單一自包含檔案，內嵌 `<style>`，**不用 JavaScript、不依賴外部 CDN**。
   唯一例外：UI 截圖以 base64 內嵌（仍屬自包含）。
 - 套用 CLAUDE.md 規範的共用主題（深色學術風、同一套 CSS 變數與版面）。
@@ -135,4 +135,4 @@ description: >
 - [ ] 無過淺（名詞解釋）或過深（學術黑話）的段落。
 - [ ] HTML 可單檔開啟、無外部依賴、主題與其他章一致、頁尾導航連結正確。
 - [ ] 跨章連結指向存在的章。
-- [ ] 產出後在 `site/index.html` 將該章標記為完成。
+- [ ] 產出後在 `docs/index.html` 將該章標記為完成。

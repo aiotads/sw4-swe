@@ -2,11 +2,11 @@
 
 把整本《Software Engineering at Google》（602 頁、25 章、5 大部分）逐章轉成
 **中英並陳的研究筆記（Markdown）＋ 精簡靜態 HTML 視覺化**，最後用一份
-`site/index.html` 串連全部。產出供 **L4~L6 軟體工程師**精讀。
+`docs/index.html` 串連全部。產出供 **L4~L6 軟體工程師**精讀。
 
 ## 工作流程
 **續做進度看 `PROGRESS.md`**（單一事實來源，跨 session 記憶）——新 session 開工先讀它的
-「▶ 下一步」，完成一章後依 SKILL 規定更新它 + 本檔 + `site/index.html`。
+「▶ 下一步」，完成一章後依 SKILL 規定更新它 + 本檔 + `docs/index.html`。
 
 所有章節的產出與修訂都走 **`swe-research` SKILL**（見
 `.claude/skills/swe-research/SKILL.md`）。該 SKILL 規範「方法」（五階段流程、
@@ -72,7 +72,7 @@ d:\ah\swe\
 │   ├── raw/chNN.txt                       ← 切好的原文（資料來源）
 │   ├── chNN.md                            ← 成品：繁中研究筆記
 │   └── chNN.en.md                         ← 成品：英文研究筆記（English-to-English）
-└── site/
+└── docs/                                  ← GitHub Pages 發佈來源（Pages source = /docs）
     ├── index.html                         ← 總索引（依 5 大 Part 分組）
     ├── chNN.html                          ← 成品：各章視覺化
     └── assets/style.css                   ← 共用主題（HTML 內嵌或外連皆可）
