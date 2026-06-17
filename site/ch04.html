@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 4 章 Engineering for Equity ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.steps{margin:8px 0 2px; padding-left:22px}
+  ol.steps li{margin:7px 0}
+  ol.steps li b{color:var(--accent)}
+  .qbox{background:#12151f; border:1px solid var(--border); border-radius:10px; padding:10px 16px; margin:10px 0}
+  .qbox .q-eq{color:var(--theme-trade); font-weight:600}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture ｜ 文化</div>
+    <div class="ch-no">CHAPTER 04</div>
+    <h1 class="title">Engineering for Equity</h1>
+    <div class="title-zh">為公平而工程</div>
+    <div class="meta-row">
+      <span class="badge">作者 Demma Rodriguez</span>
+      <span class="badge">PDF p.97–108</span>
+      <span class="theme-tag t-culture">Culture 文化</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Bias is the default."</span>
+      <span class="zh">偏見，是預設值。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>這章把鏡頭從「團隊內部如何協作」轉向「<b>我們為誰打造產品、又無意間傷害了誰</b>」。作者 Demma Rodriguez 坦白：Google 寫這章不是因為知道所有答案，而是因為它<b>公開失敗過</b>。全章軸心只有一句：<b>偏見是預設值（Bias is the default）</b>——不是因為工程師壞，而是人皆有<b>無意識偏見</b>；當工程團隊本身不具代表性（Google 工程人口以男性、白人或亞裔為主），這份偏見會悄悄寫進設計決策與訓練資料，最後讓產品對少數族群失效。</p>
+      <p>最痛的案例是 2015 年 Google Photos 把黑人使用者標成「大猩猩」，<b>直到 2018 年都還沒被妥善修好</b>。作者由此重新定義「卓越工程師」：光有 CS 學位與寫好程式不夠，你還要有<b>辨識力（discernment）</b>——知道何時該做、何時不該做。原則包括：<b>拒絕單一解方</b>（光修招聘 pipeline 不夠，還要看晉升與留任）、<b>挑戰既有流程</b>（內部轉調系統揭露「過去績效不預測未來績效」）、以及五步出路。貫穿全章的工程取捨是：<b>寧可放慢，也別交付會傷害部分使用者的產品（別拿公平換短期速度）。</b></p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你以為「技術中立」，所以偏見不關你的事。</b> Google Photos、自動完成、人臉辨識的真實翻車證明：<b>技術本身不是兇手，但設計不夠 resilient 就會放大傷害</b>。你寫的每個預設值、每個訓練資料集，都在替某群人決定要不要被看見。</div>
+      <div class="why-card"><b>你正在做招聘、面試或帶團隊。</b> 面試別人就有責任理解「偏見如何進入錄取結果」；當 hiring manager 你要對「候選人名單是否平衡」負責。它把抽象的 DEI 口號翻成你下週就能做的可量化動作。</div>
+      <div class="why-card"><b>你習慣「先做主流情境、邊角之後再說」。</b> 這個常見方法<b>有瑕疵</b>——它讓本就佔優勢的使用者先起跑、擴大不平等。「為最不像你的使用者設計」是會讓<b>所有人</b>體驗都更好的最佳實務。</div>
+      <div class="why-card"><b>你需要對抗「為速度犧牲一切」的論證。</b> 內部轉調系統案例是教科書級範本：一位工程師質疑看似合理的功能、用資料推翻假設，花掉時間換到更公平的流程。這就是有理由的工程決策。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Bias Is the Default <span class="en2">偏見是預設值</span></h3>
+      <div class="claim">沒有刻意關注不同背景的使用者時，<b>再有才華的團隊也會在無意間辜負使用者</b>。多數人帶有<b>無意識偏見</b>，它比刻意排斥更難緩解——即使想做對，也未必認得出自己的偏見。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 760 420" role="img" aria-label="偏見是預設值的惡性循環">
+          <defs>
+            <marker id="ahz" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--theme-trade)"/></marker>
+          </defs>
+          <!-- 節點 -->
+          <g text-anchor="middle">
+            <rect x="240" y="34" width="280" height="62" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="380" y="60" class="fig-txt" font-size="13.5" font-weight="700">① 工程團隊不具代表性</text>
+            <text x="380" y="80" class="fig-mut" font-size="12">多為男性、白人／亞裔</text>
+
+            <rect x="520" y="179" width="220" height="62" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="630" y="205" class="fig-txt" font-size="13.5" font-weight="700">② 偏見寫進設計與資料</text>
+            <text x="630" y="225" class="fig-mut" font-size="12">資料集不完整、不代表人口</text>
+
+            <rect x="240" y="324" width="280" height="62" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="380" y="350" class="fig-txt" font-size="13.5" font-weight="700">③ 產品傷害弱勢使用者</text>
+            <text x="380" y="370" class="fig-mut" font-size="12">Photos「大猩猩」、人臉辨識偏誤</text>
+
+            <rect x="20" y="179" width="220" height="62" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="130" y="205" class="fig-txt" font-size="13.5" font-weight="700">④ 信任流失</text>
+            <text x="130" y="225" class="fig-mut" font-size="12">招聘代表性目標受挫</text>
+          </g>
+          <!-- 順時針箭頭 -->
+          <path d="M520 78 C600 95 640 130 638 173" fill="none" stroke="var(--theme-trade)" stroke-width="2" marker-end="url(#ahz)"/>
+          <path d="M628 241 C615 290 540 325 524 342" fill="none" stroke="var(--theme-trade)" stroke-width="2" marker-end="url(#ahz)"/>
+          <path d="M240 348 C150 332 120 290 126 247" fill="none" stroke="var(--theme-trade)" stroke-width="2" marker-end="url(#ahz)"/>
+          <path d="M134 179 C150 130 215 96 236 82" fill="none" stroke="var(--theme-trade)" stroke-width="2" marker-end="url(#ahz)"/>
+          <!-- 中心 -->
+          <text x="380" y="205" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Bias is the default</text>
+          <text x="380" y="227" class="fig-mut" font-size="12.5" text-anchor="middle">偏見是預設值（惡性循環）</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 偏見的惡性循環——非代表性團隊→偏誤寫進設計與資料→產品傷害弱勢→信任流失反過來削弱代表性目標。<b>打破點：</b>多元團隊＋為最不像你的人設計＋量測公平。</figcaption>
+      </figure>
+      <div class="sub" style="margin:12px 0 0">
+        <h3 style="font-size:1rem"><span class="pill pill-trade">案例</span> Google Misses the Mark on Racial Inclusion</h3>
+        <div class="impl">2015 年 Jacky Alciné 指出 Google Photos 把黑人朋友分類為「大猩猩」，<b>遲至 2018 年仍未妥善解決</b>。三大成因：① <b>資料集不完整</b>、不代表人口；② <b>組織本身缺代表性</b>，無意識偏見讓更具代表性的產品被擱置；③ <b>目標市場沒涵蓋這些群體</b>，測試沒抓到、使用者替它抓到。類似失敗：自動完成回傳歧視結果、廣告被操弄、YouTube 漏接仇恨言論。<b>技術不是兇手，但設計不夠 resilient</b>。</div>
+      </div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Understanding the Need for Diversity <span class="en2">理解為何需要多元</span></h3>
+      <div class="claim">成為卓越工程師<b>要求把多元視角帶進設計與實作</b>；負責招聘/面試的人也必須為更具代表性的人力做貢獻。</div>
+      <p>要打破兩個迷思：①「有 CS 學位＋經驗就具備卓越工程師的全部技能」（學位是必要基礎，但不充分）；②「只有 CS 學位的人才能設計產品」（如案例所示，這套方法<b>不足以做出包容公平的工程</b>）。</p>
+      <div class="impl"><b>工程意涵：</b>把工作放進「完整生態系」框架，至少理解使用者人口組成，刻意關注<b>和自己不同的人</b>，尤其是被流程與環境<b>剝奪權利（disenfranchised）</b>的使用者。理想是團隊具代表性；缺乏時，個別工程師得學會「為所有使用者打造」。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Building Multicultural Capacity <span class="en2">建立多元文化能力</span></h3>
+      <div class="claim">卓越工程師的標誌之一是<b>理解產品如何讓不同群體得利或受害</b>的能力，並有<b>辨識力</b>——知道何時該做、何時<b>不該做</b>，能辨識並拒絕帶來負面後果的功能。</div>
+      <ul class="tight">
+        <li><b>你握有比你以為更大的權力：</b>你可能打造數十億人每天用的工具。第一步是<b>承認你偏見的預設狀態</b>，才看得見常被遺忘、會因你的產品得利或受害的使用者。</li>
+        <li><b>人臉辨識的危害：</b>AI 人臉辨識持續對有色人種不利。<b>若訓練資料與打造者都只代表一小撮人，就不能期待輸出有效</b>——此時應<b>願意延後開發</b>換更完整準確的資料。</li>
+        <li><b>就算有代表性、資料仍可能有偏：</b>2016 年研究發現<b>超過 1.17 億名美國成年人</b>被收進執法人臉辨識資料庫；對黑人社群的過度執法會造成<b>帶種族偏見的錯誤率</b>。軟體部署加速，獨立測試卻沒跟上。</li>
+      </ul>
+      <div class="impl"><b>工程意涵：</b>擴展教育到多文化、種族與性別研究，<b>不只是你的責任，也是雇主的責任</b>。改變需要每個人持續投資，長出「理解人類多元經驗」的能力。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Making Diversity Actionable <span class="en2">讓多元可被行動</span></h3>
+      <div class="claim">系統性公平可達成，前提是<b>接受「我們都對科技業的系統性歧視負有責任」</b>。把個人當責推延或抽象化是無效、甚至不負責任的。</div>
+      <p>書中點名一句愛用的「藉口」：「我們很努力在修〔系統性歧視〕，但要怎麼對抗〔數百年〕歷史性歧視？」——這把焦點<b>引向哲學/學術對話，遠離能改善結果的聚焦努力</b>。</p>
+      <div class="impl"><b>工程意涵：</b>換成可量化動作。身為招聘主管你要對這些負責：<b>候選人名單是否平衡？</b>錄取後<b>成長機會的分配是否公平？</b>每位主管都有增進團隊公平的手段——<b>我們都是系統的一部分，這是我們要修的問題。</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> Reject Singular Approaches <span class="en2">拒絕單一解方</span></h3>
+      <div class="claim">問題複雜、多因，不能用單一哲學修復不平等——<b>即使它由我們敬佩或握有體制權力的人提倡</b>。</div>
+      <ul class="tight">
+        <li><b>「光修招聘 pipeline」是迷思：</b>修 pipeline 是基礎，但不是當下最該修的。要同時辨識<b>晉升與留任</b>的系統性不平等。<b>Black+ 員工流失率高於所有其他群體</b>，直接拖累代表性目標。</li>
+        <li><b>「先做主流、邊角之後再說」有瑕疵：</b>它讓本就佔優勢者先起跑、<b>擴大不平等</b>；把考慮所有群體推遲到設計快完成，等於降低卓越工程師的標準。<b>從一開始就納入包容性設計</b>會讓所有人體驗更好。</li>
+      </ul>
+      <div class="impl"><b>工程意涵：</b><b>「為最不像你的使用者設計」不只明智，而是最佳實務。</b>下一步是更全面的使用者研究（跨語言、文化、國家、社經、能力、年齡），<b>先聚焦最難或最少被代表的情境</b>。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> Challenge Established Processes <span class="en2">挑戰既有流程</span></h3>
+      <div class="claim">打造公平系統有時意味著<b>挑戰會產生無效結果的既有流程</b>。</div>
+      <p><b>案例（內部全球招聘需求系統）：</b>recruiters 為效率要求加一個功能——當內部轉調者表達興趣時，立刻把其績效評分（特別是<b>較低的</b>）highlight 給 hiring manager。表面上替人省時是好事，但被提出三個公平問題：</p>
+      <div class="qbox">
+        <div class="q-eq">① 發展性評估是績效的「預測性」指標嗎？</div>
+        <div class="q-eq">② 呈現給未來主管的評估「沒有個人偏見」嗎？</div>
+        <div class="q-eq">③ 績效評分「在不同組織間有標準化」嗎？</div>
+      </div>
+      <p>只要任一答案是「否」，呈現評分就可能導致不公、因而<b>無效</b>的結果。徹底檢視後結論是：<b>拿差評者換到新團隊很可能克服差評</b>，得到滿意/優異評分的機率和從未拿差評的人一樣。<b>績效評分只反映受評當下、在特定角色的表現，不預測未來</b>，不該用來判斷對未來角色的準備度。</p>
+      <div class="impl"><b>工程意涵：</b>分析確實佔用可觀專案時間，<b>但正向的取捨是換來更公平的內部流動流程</b>——這正是 ch01「工程決策要有理由」的活教材。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Values Versus Outcomes <span class="en2">價值觀 vs 結果</span></h3>
+      <div class="claim">Google 核心價值建立在尊重與多元包容承諾上，卻年復一年未達標。<b>失敗點不在價值觀、意圖或投資，而在政策在「實作層級」的落實。</b></div>
+      <p>舊習難改：你習慣設計、習慣收回饋的使用者，未必代表你需要觸及的所有人（不適合女性身體的穿戴裝置、對深膚色效果差的視訊軟體）。五步出路：</p>
+      <ol class="steps">
+        <li><b>照鏡子：</b>沒有代表性人力、沒把社群回饋擺第一，就無法 build for everyone。</li>
+        <li><b>別 build for everyone，要 build <i>with</i> everyone：</b>和使用者一起打造，把最脆弱社群放<b>設計中心而非事後補丁</b>。</li>
+        <li><b>為「使用最困難的人」設計：</b>為有額外障礙者打造會讓產品對所有人更好。<b>別拿公平換短期速度</b>。</li>
+        <li><b>別假設公平，要量測公平：</b>決策者也有偏見；迎合一群可能剝奪另一群，取捨難察且可能不可逆。與 DEI 專家合作。</li>
+        <li><b>改變是可能的：</b>用過去失敗的方法或只靠既有技能都解不了——我們必須改變。</li>
+      </ol>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Stay Curious, Push Forward <span class="en2">保持好奇，持續前行</span></h3>
+      <div class="claim">從「打造工具」轉向「<b>增進對產品如何衝擊人類的理解</b>」。先聚焦最受偏見與歧視衝擊的使用者，靠持續改進與<b>擁抱自己的失敗</b>加速進展。</div>
+      <div class="impl"><b>工程意涵：</b>呼應 ch01「軟體工程＝整合時間維度」——今天的設計決策會在數十年、數十億人尺度上產生後果。把公平當成<b>需持續被量測、而非一次性宣示</b>的工程屬性。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Bias is the default."</span><span class="zh">偏見，是預設值。</span><div class="note">全章軸心，也是 TL;DR 第一條。重點不在指控誰惡意，而在承認「不主動矯正，系統就會朝偏見傾斜」。</div></blockquote>
+    <blockquote class="q"><span class="en">"The technology itself is not really to blame. ... But it was also not resilient enough in its design to exclude discriminatory language that is considered hate speech."</span><span class="zh">技術本身其實不該被怪罪……但它的設計也不夠穩健（resilient），無法排除被視為仇恨言論的歧視性語言。</span><div class="note">把責任從「技術中立」拉回到「設計選擇」——這是工程師能控制的地方。</div></blockquote>
+    <blockquote class="q"><span class="en">"Designing for the user who is least like you is not just wise, it's a best practice."</span><span class="zh">為那位最不像你的使用者設計，不只是明智，更是一種最佳實務。</span><div class="note">把包容從道德義務重新框定成工程品質標準。</div></blockquote>
+    <blockquote class="q"><span class="en">"Don't build for everyone. Build with everyone."</span><span class="zh">別「為」所有人打造，要「和」所有人一起打造。</span><div class="note">對品牌口號「Build for everyone」的尖銳修正——把使用者從被動受眾變成共同設計者。</div></blockquote>
+    <blockquote class="q"><span class="en">"It's better to slow down than to release a product that might cause harm to some users."</span><span class="zh">寧可放慢腳步，也不要交付一個可能傷害部分使用者的產品。</span><div class="note">TL;DR 收尾。把「公平 vs 速度」明確定為工程取捨，並給出立場：別拿公平換短期速度。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Bias Is the Default（偏見是預設值）</span><br>本章核心命題。人皆有無意識偏見，系統若不主動矯正就會朝既有刻板印象傾斜；不是惡意問題，是預設狀態問題。</div>
+      <div class="kw"><span class="term">Unconscious Bias（無意識偏見）</span><br>人在無自覺下強化刻板印象的傾向。比刻意排斥更難緩解，因為連想做對的人都未必認得出自己的偏見。</div>
+      <div class="kw"><span class="term">Representation（代表性）</span><br>工程團隊在種族、性別等維度上反映其使用者人口的程度。缺乏代表性＝缺乏理解弱勢使用者所需的視角。</div>
+      <div class="kw"><span class="term">Discernment（辨識力）</span><br>卓越工程師除技術能力外的判斷力：知道何時該做、何時不該做某功能，並能辨識並拒絕帶來負面後果的產品。</div>
+      <div class="kw"><span class="term">Build <i>with</i> Everyone（和所有人一起打造）</span><br>對「build for everyone」的修正。把弱勢社群放設計中心、與使用者共同打造，而非把邊緣情境當事後補丁。</div>
+      <div class="kw"><span class="term">Design for the Least-Like-You User（為最不像你的使用者設計）</span><br>從最難使用產品的人出發，結果讓所有人體驗更好；是最佳實務而非政治正確。</div>
+      <div class="kw"><span class="term">Inclusive Design（包容性設計）</span><br>從一開始就納入所有使用者群體，而非「先做主流、邊角之後再說」（後者會擴大不平等）。</div>
+      <div class="kw"><span class="term">Equity vs Velocity（公平 vs 速度）</span><br>本章核心工程取捨。寧可放慢取得更完整資料，也不要為短期速度交付會傷害使用者的產品。</div>
+      <div class="kw"><span class="term">Progression &amp; Retention（晉升與留任）</span><br>代表性不能只靠修招聘 pipeline；晉升不公與高流失（如 Black+ 流失率最高）同樣關鍵。</div>
+      <div class="kw"><span class="term">Measure Equity（量測公平）</span><br>別假設公平，要在系統各處量測它。決策者本身也有偏見，迎合一群可能剝奪另一群，取捨難察且可能不可逆。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>挑一個你最近做的<b>預設值或預設流程</b>（預設語言、預設頭像、表單的性別/姓名欄位、預設測試帳號）。它預設了什麼樣的「典型使用者」？哪一群人會因此感到不被看見或更難用？</li>
+      <li>你產品的<b>訓練/測試資料、beta 使用者</b>，是否代表真實使用者人口？若不是，缺的是哪一群？仿照人臉辨識的教訓——你有沒有「該放慢去取得更完整資料」的地方？</li>
+      <li>把內部轉調系統案例套到你手上：你的團隊有沒有一個<b>看似提升效率、實則可能放大偏見</b>的功能或流程？它通得過那三個公平問題（預測性？無個人偏見？跨組織標準化？）嗎？</li>
+      <li>若你會面試或招聘：最近一次的<b>候選人名單平衡嗎</b>？你如何分辨「修 pipeline」與「也在修晉升與留任」？對照 ch03 心理安全感——你的團隊讓弱勢新成員感到被歡迎嗎？</li>
+      <li>你的組織在「公平 vs 速度」之間，實際上（而非口頭上）獎勵哪一個？要怎麼把「公平」變成像延遲、可用性一樣<b>會被量測、會進考核</b>的工程屬性？對照 ch01「資料驅動、可被推翻」的文化。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「為公平而工程」是「軟體工程＝整合時間維度」在倫理尺度上的延伸：今天的設計在數十年、數十億人尺度產生後果。</span></div>
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— 第 2 章末「Googley」的偏見風險（悄悄等於「跟我一樣」）正是本章「偏見是預設值」在招聘場景的具體化。</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— 「專業是多維向量、多元帶來不同視角」直接承接第 3 章；帶弱勢新成員需要的心理安全感也源自該章。</span></div>
+      <div class="chip"><a href="ch05.html">ch05 How to Lead a Team</a> <span class="rel">— 「每位主管都有增進團隊公平的手段」是領導章的前置責任；當責不可外推。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— 「別假設公平，要量測公平」呼應第 7 章用資料而非直覺評估的精神。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch03.html">← 上一章：Knowledge Sharing</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch05.html">下一章：How to Lead a Team →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture</div>
+    <div class="ch-no">CHAPTER 04</div>
+    <h1 class="title">Engineering for Equity</h1>
+    <div class="title-zh">Bias is the default — correct for it, or your products will tilt toward it</div>
+    <div class="meta-row">
+      <span class="badge">by Demma Rodriguez</span>
+      <span class="badge">PDF p.97–108</span>
+      <span class="theme-tag t-culture">Culture</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Bias is the default."</span>
+      <span class="zh">In plain terms: unless you actively correct for it, what you build will tilt toward existing bias — not from malice, but as the default state.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>This chapter turns the lens from "how a team collaborates" to "<b>who we build for — and who we unintentionally harm</b>." Author Demma Rodriguez is candid: Google wrote this not because it has the answers, but because it has <b>failed publicly</b>. The spine is one claim: <b>bias is the default</b> — not because engineers are bad, but because everyone carries <b>unconscious bias</b>; and when an engineering team isn't representative (Google's is mostly male, mostly White or Asian), that bias gets written into design decisions and training data, and the product fails minority users.</p>
+      <p>The sharpest case: the 2015 Google Photos incident labeling a Black user's friends as "gorillas," <b>still unfixed as late as 2018</b>. From there the author redefines the "great engineer": a CS degree and good code aren't enough — you need <b>discernment</b>, knowing when to build and when <i>not</i> to. Principles: <b>reject singular approaches</b> (the hiring pipeline alone isn't enough — see progression and retention), <b>challenge established processes</b> (an internal-mobility case shows "past performance doesn't predict future performance"), and a five-step way out. The trade-off throughout: <b>better to slow down than ship a product that harms some users (don't trade equity for short-term velocity).</b></p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You assume "tech is neutral," so bias isn't your problem.</b> The real failures of Google Photos, autocomplete, and facial recognition show: <b>the tech isn't the culprit, but a design that isn't resilient amplifies harm</b>. Every default and training set decides whether some group gets seen.</div>
+      <div class="why-card"><b>You hire, interview, or lead.</b> Interviewing carries responsibility for how biased outcomes happen; as a hiring manager you're accountable for whether your candidate slate is balanced. It turns abstract DEI slogans into quantifiable actions for next week.</div>
+      <div class="why-card"><b>You default to "majority case first, edge cases later."</b> That common method is <b>flawed</b> — it gives already-advantaged users a head start and widens inequity. "Design for the user least like you" is a best practice that makes it better for <b>everyone</b>.</div>
+      <div class="why-card"><b>You need an argument against "sacrifice everything for speed."</b> The internal-mobility case is a textbook template: one engineer questioned a plausible feature, used data to overturn an assumption, and traded time for a more equitable process. An engineering decision made with reasons.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Bias Is the Default</h3>
+      <div class="claim">Without deliberately focusing on users of different backgrounds, <b>even the most talented team will inadvertently fail its users</b>. Most people carry <b>unconscious bias</b>, harder to mitigate than intentional exclusion — even wanting to do right, we may not recognize our own bias.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 760 420" role="img" aria-label="The vicious cycle of bias as the default">
+          <defs>
+            <marker id="ahe" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--theme-trade)"/></marker>
+          </defs>
+          <g text-anchor="middle">
+            <rect x="240" y="34" width="280" height="62" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="380" y="60" class="fig-txt" font-size="13.5" font-weight="700">① Non-representative team</text>
+            <text x="380" y="80" class="fig-mut" font-size="12">mostly male, White / Asian</text>
+
+            <rect x="520" y="179" width="220" height="62" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="630" y="205" class="fig-txt" font-size="13.5" font-weight="700">② Bias enters design &amp; data</text>
+            <text x="630" y="225" class="fig-mut" font-size="12">incomplete, unrepresentative data</text>
+
+            <rect x="240" y="324" width="280" height="62" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="380" y="350" class="fig-txt" font-size="13.5" font-weight="700">③ Product harms vulnerable users</text>
+            <text x="380" y="370" class="fig-mut" font-size="12">Photos "gorillas", facial-recog bias</text>
+
+            <rect x="20" y="179" width="220" height="62" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="130" y="205" class="fig-txt" font-size="13.5" font-weight="700">④ Trust erodes</text>
+            <text x="130" y="225" class="fig-mut" font-size="12">representation goal undermined</text>
+          </g>
+          <path d="M520 78 C600 95 640 130 638 173" fill="none" stroke="var(--theme-trade)" stroke-width="2" marker-end="url(#ahe)"/>
+          <path d="M628 241 C615 290 540 325 524 342" fill="none" stroke="var(--theme-trade)" stroke-width="2" marker-end="url(#ahe)"/>
+          <path d="M240 348 C150 332 120 290 126 247" fill="none" stroke="var(--theme-trade)" stroke-width="2" marker-end="url(#ahe)"/>
+          <path d="M134 179 C150 130 215 96 236 82" fill="none" stroke="var(--theme-trade)" stroke-width="2" marker-end="url(#ahe)"/>
+          <text x="380" y="205" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Bias is the default</text>
+          <text x="380" y="227" class="fig-mut" font-size="12.5" text-anchor="middle">a self-reinforcing loop</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the vicious cycle of bias: a non-representative team → bias in design and data → harm to vulnerable users → eroded trust that undermines representation goals. <b>Break it with:</b> a diverse team + designing for the least-like-you user + measuring equity.</figcaption>
+      </figure>
+      <div class="sub" style="margin:12px 0 0">
+        <h3 style="font-size:1rem"><span class="pill pill-trade">CASE</span> Google Misses the Mark on Racial Inclusion</h3>
+        <div class="impl">In 2015 Jacky Alciné showed Google Photos classified his Black friends as "gorillas," <b>still not properly fixed by 2018</b>. Three causes: ① an <b>incomplete dataset</b> not representing the population; ② the <b>org itself lacked representation</b>, so unconscious bias left a more representative product on the table; ③ the <b>target market didn't include those groups</b>, tests missed it, users caught it. Similar failures: autocomplete returns discriminatory results, ads get manipulated, YouTube misses hate speech. <b>The tech isn't the culprit — but the design wasn't resilient enough.</b></div>
+      </div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Understanding the Need for Diversity</h3>
+      <div class="claim">Being a great engineer <b>requires bringing diverse perspectives into design and implementation</b>; whoever hires/interviews must contribute to a more representative workforce.</div>
+      <p>Disrupt two myths: ① "a CS degree + experience gives you all the skills of a great engineer" (a necessary foundation, but insufficient); ② "only people with CS degrees can design products" (as the cases show, that approach is <b>insufficient for inclusive, equitable engineering</b>).</p>
+      <div class="impl"><b>Takeaway:</b> frame work within the <b>complete ecosystem</b>, understand user demographics, and focus on <b>people different from you</b> — especially those <b>disenfranchised</b> by the processes and environment in which they access tech. Ideally teams are representative; absent that, individuals must learn to build for all users.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Building Multicultural Capacity</h3>
+      <div class="claim">A mark of a great engineer is <b>understanding how products advantage and disadvantage different groups</b>, with <b>discernment</b> — knowing when to build and when <b>not to</b>, and rejecting features that drive adverse outcomes.</div>
+      <ul class="tight">
+        <li><b>You wield more power than you realize:</b> you may build tools billions use daily. The first step is to <b>recognize the default state of your bias</b> — only then can you see the often-forgotten users who benefit or are harmed.</li>
+        <li><b>Facial-recognition harm:</b> AI facial recognition keeps disadvantaging people of color. <b>If both the training data and the builders represent only a small subsection, you can't expect valid output</b> — be <b>willing to delay development</b> for more complete data.</li>
+        <li><b>Even with representation, data can be biased:</b> a 2016 study found <b>more than 117 million American adults</b> in a law-enforcement facial-recognition database; disproportionate policing of Black communities can yield <b>racially biased error rates</b>. Software deploys ever faster; independent testing doesn't keep up.</li>
+      </ul>
+      <div class="impl"><b>Takeaway:</b> extending your education to multicultural, race-and-gender studies is <b>not just your responsibility but your employer's</b>. Change requires each of us to invest continuously in the capacity to understand the diverse experiences of humanity.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Making Diversity Actionable</h3>
+      <div class="claim">Systemic equity is attainable if we <b>accept we're all accountable for systemic discrimination in tech</b>. Deferring or abstracting personal accountability is ineffective, even irresponsible.</div>
+      <p>The chapter names a favorite "excuse": "We're working hard to fix [systemic discrimination], but how do we combat [hundreds of years] of historical discrimination?" — a detour into <b>philosophical/academic conversation, away from focused efforts</b> to improve outcomes.</p>
+      <div class="impl"><b>Takeaway:</b> swap it for quantifiable actions. As a hiring manager you're accountable: <b>is your candidate slate balanced?</b> After hiring, <b>is the distribution of growth opportunities equitable?</b> Every lead has the means to augment equity — <b>we're all part of the system, and it's ours to fix.</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> Reject Singular Approaches</h3>
+      <div class="claim">Problems are complex and multifactorial — no single philosophy fixes inequity, <b>even when promoted by people we admire or who hold power</b>.</div>
+      <ul class="tight">
+        <li><b>"Just fix the hiring pipeline" is a myth:</b> a fundamental step, but not the immediate issue. Recognize systemic inequity in <b>progression and retention</b> too. <b>Attrition among Black+ Googlers outpaces all other groups</b>, confounding representation goals.</li>
+        <li><b>"Majority first, edge cases later" is flawed:</b> it gives already-advantaged users a head start, <b>widening inequity</b>; deferring all user groups to near the end <b>lowers the bar</b> for a great engineer. <b>Build in inclusive design from the start</b> — it improves the experience for everyone.</li>
+      </ul>
+      <div class="impl"><b>Takeaway:</b> <b>designing for the user least like you isn't just wise — it's a best practice.</b> Next step: more comprehensive UX research (across languages, cultures, countries, class, abilities, ages), <b>focusing on the hardest or least-represented use case first</b>.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> Challenge Established Processes</h3>
+      <div class="claim">Building equitable systems sometimes means <b>challenging established processes that drive invalid results</b>.</div>
+      <p><b>Case (internal global hiring-requisition system):</b> recruiters asked, for efficiency, to <b>highlight a transfer's performance ratings — especially low ones</b> — to the hiring manager. Saving time looks good, but three equity questions were raised:</p>
+      <div class="qbox">
+        <div class="q-eq">① Are developmental assessments a "predictive" measure of performance?</div>
+        <div class="q-eq">② Are the assessments shown to managers "free of individual bias"?</div>
+        <div class="q-eq">③ Are performance scores "standardized across organizations"?</div>
+      </div>
+      <p>If any answer is "no," presenting ratings could drive inequitable — therefore <b>invalid</b> — results. A thorough review concluded: <b>candidates with a poor rating were likely to overcome it on a new team</b>, just as likely to earn a satisfactory/exemplary rating as those who never had one. <b>Ratings reflect only current-role performance at evaluation time; they don't predict future performance</b> and shouldn't gauge readiness for a future role.</p>
+      <div class="impl"><b>Takeaway:</b> the analysis took significant project time, <b>but the positive trade-off was a more equitable internal-mobility process</b> — a live example of ch01's "engineering decisions need reasons."</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Values Versus Outcomes</h3>
+      <div class="claim">Google's values rest on respect and diversity, yet year after year it misses the mark. <b>The failure point isn't values, intentions, or investments, but the application of policies at the implementation level.</b></div>
+      <p>Old habits die hard: the users you're used to may not represent everyone you must reach (wearables that don't fit women's bodies; video software that fails on darker skin). The five-step way out:</p>
+      <ol class="steps">
+        <li><b>Take a hard look in the mirror:</b> you can't "build for everyone" without a representative workforce or community-first feedback.</li>
+        <li><b>Don't build for everyone, build <i>with</i> everyone:</b> co-design with users, putting vulnerable communities <b>at the center, not as an afterthought</b>.</li>
+        <li><b>Design for the user who'll struggle most:</b> building for added challenges makes it better for everyone. <b>Don't trade equity for short-term velocity.</b></li>
+        <li><b>Don't assume equity; measure it:</b> decision-makers are biased too; serving one group may disenfranchise another, often irreversibly. Partner with DEI experts.</li>
+        <li><b>Change is possible:</b> past failed approaches and existing skills alone won't solve it — we need to change.</li>
+      </ol>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Stay Curious, Push Forward</h3>
+      <div class="claim">Move from "building tools" to <b>growing our understanding of how products impact humanity</b>. Focus first on users most impacted by bias, accelerating through Continuous Improvement and <b>owning our failures</b>.</div>
+      <div class="impl"><b>Takeaway:</b> echoes ch01's "software engineering = programming integrated over time" — today's design decisions have consequences across decades and billions. Treat equity as a property to be <b>continuously measured, not declared once</b>.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Bias is the default."</span><span class="zh">Left uncorrected, systems drift toward existing bias — not about accusing anyone of malice, but recognizing the baseline tilt.</span><div class="note">The spine of the chapter and the first TL;DR.</div></blockquote>
+    <blockquote class="q"><span class="en">"The technology itself is not really to blame. ... But it was also not resilient enough in its design to exclude discriminatory language that is considered hate speech."</span><span class="zh">Don't hide behind "tech is neutral" — harm comes from design choices, which are exactly what engineers control.</span><div class="note">The reflection after the Google Photos case.</div></blockquote>
+    <blockquote class="q"><span class="en">"Designing for the user who is least like you is not just wise, it's a best practice."</span><span class="zh">Inclusion isn't only an ethical duty; it's a quality bar that makes the product better for all users.</span><div class="note">The core mindset of Reject Singular Approaches.</div></blockquote>
+    <blockquote class="q"><span class="en">"Don't build for everyone. Build with everyone."</span><span class="zh">Turn users from a passive audience into co-designers, with the most vulnerable at the center rather than an afterthought.</span><div class="note">A sharp correction of Google's "Build for everyone" slogan.</div></blockquote>
+    <blockquote class="q"><span class="en">"It's better to slow down than to release a product that might cause harm to some users."</span><span class="zh">When equity and speed conflict, choose equity — don't trade it for short-term velocity.</span><div class="note">The closing TL;DR, framing equity vs velocity as an explicit engineering trade-off.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Bias is the default</span><br>The core claim. Everyone has unconscious bias; uncorrected systems tilt toward existing stereotypes. A default-state problem, not a malice problem.</div>
+      <div class="kw"><span class="term">Unconscious bias</span><br>Reinforcing stereotypes without awareness. Harder to mitigate than intentional exclusion, because even well-meaning people may not recognize their own bias.</div>
+      <div class="kw"><span class="term">Representation</span><br>How far an engineering team reflects its users' population (race, gender, etc.). Lacking it = lacking the perspective to understand vulnerable users.</div>
+      <div class="kw"><span class="term">Discernment</span><br>Judgment beyond technical skill: knowing when to build a feature and when <i>not</i> to, and rejecting products that drive adverse outcomes.</div>
+      <div class="kw"><span class="term">Build <i>with</i> everyone</span><br>The correction to "build for everyone": co-design with users, centering vulnerable communities instead of treating edge cases as afterthoughts.</div>
+      <div class="kw"><span class="term">Design for the least-like-you user</span><br>Start from the person who'll struggle most; it improves the experience for everyone. A best practice, not box-ticking.</div>
+      <div class="kw"><span class="term">Inclusive design</span><br>Incorporate all user groups from the start, not "majority first, edge cases later" (which widens inequity).</div>
+      <div class="kw"><span class="term">Equity vs velocity</span><br>The core engineering trade-off. Better to slow down for more complete data than to ship something that harms users for short-term speed.</div>
+      <div class="kw"><span class="term">Progression &amp; retention</span><br>Representation can't be fixed by the hiring pipeline alone; unequal progression and high attrition (e.g., Black+ attrition is highest) matter just as much.</div>
+      <div class="kw"><span class="term">Measure equity</span><br>Don't assume equity; measure it throughout. Decision-makers are biased too; serving one group may disenfranchise another, often irreversibly.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Pick a recent <b>default or default flow</b> you built (default language, default avatar, a form's gender/name fields, a test account). What "typical user" does it assume? Which group is left feeling unseen or unable to use it?</li>
+      <li>Do your <b>training/test data and beta users</b> represent your real user population? If not, which group is missing? Per the facial-recognition lesson — is there somewhere you <i>should</i> slow down for more complete data?</li>
+      <li>Apply the internal-mobility case to your work: does your team have a feature that <b>looks efficiency-boosting but could amplify bias</b>? Does it pass the three equity questions (predictive? free of bias? standardized across orgs?)?</li>
+      <li>If you interview or hire: was your last <b>candidate slate balanced</b>? How do you tell "fixing the pipeline" from "fixing progression and retention too"? Per ch03's psychological safety — do you make underrepresented new members feel welcome?</li>
+      <li>In "equity vs velocity," which does your org <i>actually</i> (not rhetorically) reward? How would you make equity a measured, reviewed property — like latency or availability — not a slogan? Per ch01's "data-driven, falsifiable" culture.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "engineering for equity" extends "software engineering = programming integrated over time" to the ethical scale.</span></div>
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— the bias risk in "Googley" (quietly "just like me") is this chapter's "bias is the default," made concrete in hiring.</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— "expertise is a multidimensional vector; diversity brings different perspectives" continues directly; welcoming members needs psychological safety.</span></div>
+      <div class="chip"><a href="ch05.html">ch05 How to Lead a Team</a> <span class="rel">— "every manager has the means to augment equity" is the leadership chapter's prerequisite; accountability can't be deferred.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— "don't assume equity, measure it" echoes Ch.7's data-over-intuition approach.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch03.html">← Prev: Knowledge Sharing</a><a class="idx" href="index.html">⌂ Index</a><a href="ch05.html">Next: How to Lead a Team →</a></nav>
+</div>
+</div>
+
+</body>
+</html>

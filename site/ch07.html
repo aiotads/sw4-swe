@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 7 章 Measuring Engineering Productivity ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.steps{margin:8px 0 2px; padding-left:22px}
+  ol.steps li{margin:7px 0}
+  ol.steps li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture ｜ 文化（收尾）</div>
+    <div class="ch-no">CHAPTER 07</div>
+    <h1 class="title">Measuring Engineering Productivity</h1>
+    <div class="title-zh">衡量工程生產力</div>
+    <div class="meta-row">
+      <span class="badge">作者 Ciera Jaspan</span>
+      <span class="badge">PDF p.151–166</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+      <span class="theme-tag t-culture">Culture 文化</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Success means giving a stakeholder the data they need to make a decision."</span>
+      <span class="zh">所謂成功，是把決策者做決定所需的資料交到他手上。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>這是「文化」篇的收尾，主題是 Google 如何<b>用資料、而非直覺</b>衡量並改善工程生產力。作者來自專門研究工程生產力的團隊——刻意混入認知心理學、行為經濟學等社會科學家，因為要研究的不只是「軟體製品」，還有「人」這一側（動機、誘因、處理複雜任務的策略）。</p>
+      <p>全章用一條真實案例貫穿：<a href="ch03.html">ch03</a> 的 <b>readability 制度到底值不值得？</b> 三個關卡：① <b>Triage 分流</b>——先把問題寫成具體問句，再追問五題，核心是「拿到結果（含<b>負面</b>）會不會導向具體行動」；② <b>GSM 框架</b>選指標（Goal→Signal→Metric），目標涵蓋 <b>QUANTS</b> 五面向以免顧此失彼；③ <b>用質化驗證量化</b>並採取行動。最終結論：readability <b>確實值得</b>——有它的作者程式碼被審查與提交都更快（即使已扣掉不再需要那麼多審查者）、滿意且有學到。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你想推一個「能提升生產力」的改動，卻拿不出證據。</b> GSM 是一套可防禦的方法：先講目標、再導出訊號與指標，讓利害關係人<b>事先</b>同意「這就是衡量它的最佳指標組」，杜絕事後換指標的扯皮。</div>
+      <div class="why-card"><b>你或主管愛用 LOC、commit 數、修了幾個 bug 當生產力指標。</b> Dijkstra 說 LOC 是「<b>花掉的</b>」不是「產出的」；本章警告「路燈效應」與<b>用指標考核個人</b>會立刻被 gaming、從此失效。</div>
+      <div class="why-card"><b>你常還沒想清楚「測來幹嘛」就先收數據。</b> Triage 逼你先問「拿到結果會採取什麼行動？」——若「什麼都不會改」，這次測量從一開始就是浪費。<b>測量成功＝決策者真的用了資料。</b></div>
+      <div class="why-card"><b>你只信硬數據、看不起問卷/訪談。</b> 量化＋質化「三角驗證」：median build latency 的烏龍（自動建置被誤計）正是靠質化抽樣才抓到。質化指標也是指標。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Why Measure Productivity? <span class="en2">為何要衡量</span></h3>
+      <div class="claim">組織<b>線性</b>成長時，溝通成本卻是<b>二次方</b>成長（Brooks《人月神話》）。所以無法把業務範圍線性擴展到組織規模——另一條路是<b>讓每個工程師更有生產力</b>。</div>
+      <div class="impl"><b>工程意涵：</b>但改進循環本身要耗人力——目標是「<b>不只提升生產力，還要有效率地提升</b>」。Google 成立專責研究團隊、混入社會科學家，把全書 Scale 主軸用在「人」身上。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> Triage：值得測嗎？ <span class="en2">Is It Even Worth Measuring?</span></h3>
+      <div class="claim">測量昂貴，且<b>光是追蹤就會改變工程師行為、掩蓋真相</b>。先寫成具體問句，再追問五題：</div>
+      <ol class="steps">
+        <li><b>你預期什麼結果、為什麼？</b>（承認非中立，先講預設立場以對抗偏誤）</li>
+        <li><b>若資料支持，會採取什麼行動？</b>（不會行動就別測）</li>
+        <li><b>若得到負面結果，會採取行動嗎？</b>——<b>這題殺掉最多專案</b>：只想知道、不會改方向，就不值得測。</li>
+        <li><b>誰、何時會根據結果行動？</b>（並了解什麼形式的資料能說服他）</li>
+      </ol>
+      <div class="impl"><b>不值得測的常見情況：</b>現在無力改變、結果很快被作廢、決策者成見不可動搖、只是<b>虛榮指標（vanity metrics）</b>、可用指標太不精確（如 LOC）。<b>工程意涵：</b>測量的成功不是證明假設對錯，而是把決策者所需的資料交到他手上；他不用，就是失敗。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">框架</span> GSM：用目標與訊號選指標 <span class="en2">Goals / Signals / Metrics</span></h3>
+      <div class="claim">決定要測之後，用 GSM 由上而下選指標——LOC 顯然不行。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 300" role="img" aria-label="GSM 框架：目標、訊號、指標三層，由上而下定義、由下而上追溯">
+          <rect x="120" y="34" width="480" height="58" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2.5"/>
+          <text x="360" y="60" class="fig-txt" font-size="16" font-weight="700" text-anchor="middle">Goal · 目標</text>
+          <text x="360" y="80" class="fig-mut" font-size="12.5" text-anchor="middle">想理解的最終結果（不含測量方式）</text>
+          <rect x="120" y="118" width="480" height="58" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2.5"/>
+          <text x="360" y="144" class="fig-txt" font-size="16" font-weight="700" text-anchor="middle">Signal · 訊號</text>
+          <text x="360" y="164" class="fig-mut" font-size="12.5" text-anchor="middle">你怎麼知道達成了（未必本身可測）</text>
+          <rect x="120" y="202" width="480" height="58" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2.5"/>
+          <text x="360" y="228" class="fig-txt" font-size="16" font-weight="700" text-anchor="middle">Metric · 指標</text>
+          <text x="360" y="248" class="fig-mut" font-size="12.5" text-anchor="middle">訊號的可測代理（實際量到的）</text>
+          <!-- 箭頭 -->
+          <path d="M95 50 L95 244" stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#dn7)"/>
+          <path d="M625 244 L625 50" stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#up7)"/>
+          <defs>
+            <marker id="dn7" markerWidth="9" markerHeight="9" refX="3" refY="6" orient="auto"><path d="M0,0 L6,0 L3,6 Z" fill="var(--muted)"/></marker>
+            <marker id="up7" markerWidth="9" markerHeight="9" refX="3" refY="0" orient="auto"><path d="M0,6 L6,6 L3,0 Z" fill="var(--muted)"/></marker>
+          </defs>
+          <text x="78" y="150" class="fig-mut" font-size="12" text-anchor="middle" transform="rotate(-90 78 150)">由上而下定義（避免路燈效應）</text>
+          <text x="642" y="150" class="fig-mut" font-size="12" text-anchor="middle" transform="rotate(90 642 150)">可追溯性 traceability</text>
+        </svg>
+        <figcaption><b>本章核心框架（自製）</b> GSM：<b>由上而下</b>先定目標、再訊號、最後指標 → 避免「路燈效應」（只用好測的指標）；<b>由下而上</b>每個指標都能追溯回訊號與目標。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>三個好處：</b>避免<b>路燈效應</b>（只在燈下找鑰匙）、事先有原則地選指標避免 <b>metrics creep/bias</b>、顯示<b>覆蓋缺口</b>（有些訊號不可測，沒關係——至少你知道）。</li>
+        <li><b>目標非一對一：</b>每個目標至少一個訊號、可有多個、可共用；指標是訊號的<b>不完美代理</b>，可用多個來<b>三角驗證</b>。</li>
+        <li><b>code quality 暫不可測：</b>學界代理都沒真正抓到它 → readability 決定不把它當量化指標，只請工程師自評。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> QUANTS：生產力的五個面向 <span class="en2">目標要涵蓋全部，以免顧此失彼</span></h3>
+      <div class="claim">團隊常忘了納入取捨——「<b>我能讓審查飛快：把 code review 整個拿掉就好</b>」。所以把生產力切成五個彼此取捨的面向：</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="QUANTS：品質、專注、智識複雜度、速度、滿意度五個彼此取捨的面向">
+          <g text-anchor="middle">
+            <rect x="14" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="80" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--theme-scale)">Q</text>
+            <text x="80" y="92" class="fig-txt" font-size="13" font-weight="700">品質</text><text x="80" y="110" class="fig-mut" font-size="11">Quality</text>
+            <rect x="156" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="222" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--accent)">A</text>
+            <text x="222" y="92" class="fig-txt" font-size="13" font-weight="700">專注</text><text x="222" y="110" class="fig-mut" font-size="11">Attention</text>
+            <rect x="298" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="364" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--theme-trade)">N</text>
+            <text x="364" y="88" class="fig-txt" font-size="12.5" font-weight="700">智識複雜度</text><text x="364" y="106" class="fig-mut" font-size="10.5">iNtellectual</text>
+            <rect x="440" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+            <text x="506" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--theme-time)">T</text>
+            <text x="506" y="92" class="fig-txt" font-size="13" font-weight="700">速度</text><text x="506" y="110" class="fig-mut" font-size="11">Tempo/velocity</text>
+            <rect x="582" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="648" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--theme-scale)">S</text>
+            <text x="648" y="92" class="fig-txt" font-size="13" font-weight="700">滿意度</text><text x="648" y="110" class="fig-mut" font-size="11">Satisfaction</text>
+          </g>
+          <text x="360" y="160" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle">五者彼此取捨——別改善一項卻拖垮另一項</text>
+          <text x="360" y="184" class="fig-mut" font-size="12" text-anchor="middle">（QUANTS 的 U 只是讓字唸得出來；核心是這五個 Q/A/N/T/S 面向）</text>
+        </svg>
+        <figcaption><b>本章核心框架（自製）</b> QUANTS 五面向：目標要覆蓋全部，確保不會「為了 Tempo 速度犧牲 Quality 品質」。readability 涵蓋了 Q/N/T/S 四項；Attention 沒目標也 OK。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">驗證</span> Using Data to Validate Metrics <span class="en2">用質化驗證量化</span></h3>
+      <div class="claim">照 GSM 跑完仍可能「指標沒抓對訊號」——用<b>質化資料驗證量化指標</b>。</div>
+      <ul class="tight">
+        <li><b>median build latency 烏龍：</b>經驗抽樣發現有人「根本沒啟動建置」——是<b>自動工具</b>在跑、工程師沒被卡，不該計入「典型體驗」，於是排除。</li>
+        <li><b>量化 vs 質化：</b>量化給規模與信心、沒有脈絡與「為什麼」；質化給敘事與下一步。<b>兩者衝突時，通常是量化沒抓對。</b></li>
+        <li><b>三個來源：</b>readability 專屬問卷（避回憶偏誤、引入近因/抽樣偏誤）＋季度問卷＋細粒度 logs（review/shepherding/submit 時間）。</li>
+        <li><b>鐵則：</b>絕不用生產力指標<b>考核個人</b>——會立刻被 gaming。「放下衡量個人、擁抱衡量<b>總體效應</b>。」</li>
+      </ul>
+      <div class="impl"><b>採取行動：</b>建議要「<b>工具驅動</b>」內建進工作流與誘因——假設工程師在有正確資料與合適工具時就會做出恰當取捨。readability 結論：整體<b>值得</b>，並據痛點改善了工具與流程。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"When you are successful at measuring your software process, you aren't setting out to prove a hypothesis correct or incorrect; success means giving a stakeholder the data they need to make a decision."</span><span class="zh">當你成功地衡量了軟體流程，你並不是要證明某個假設對或錯；所謂成功，是把決策者做決定所需的資料交到他手上。</span><div class="note">Triage 節總結，也是全章心法——測量為決策服務，不是為了證明立場。</div></blockquote>
+    <blockquote class="q"><span class="en">"We should only measure a software process when a concrete decision will be made based on the outcome."</span><span class="zh">只有當會根據結果做出一個具體決定時，我們才應該去衡量一個軟體流程。</span><div class="note">Triage 五問的核心結論。拿到結果什麼都不會改，就不值得測。</div></blockquote>
+    <blockquote class="q"><span class="en">"I can make your review velocity very fast: just remove code reviews entirely."</span><span class="zh">我能讓你的審查速度飛快：把 code review 整個拿掉就好。</span><div class="note">研究員的反諷，點出只盯單一面向（速度）卻忘了取捨（品質）的危險——QUANTS 因此而生。</div></blockquote>
+    <blockquote class="q"><span class="en">"…if we wish to count lines of code, we should not regard them as 'lines produced' but as 'lines spent'."</span><span class="zh">……如果我們真要計算程式碼行數，不該把它們當成「產出的行數」，而該當成「花掉的行數」。</span><div class="note">Dijkstra（EWD 1036）。LOC 是負債不是資產；別用容易測但鼓勵爛碼的指標。</div></blockquote>
+    <blockquote class="q"><span class="en">"The only way to make these measurements work is to let go of the idea of measuring individuals and embrace measuring the aggregate effect."</span><span class="zh">要讓這些測量真正有效，唯一的辦法是放下「衡量個人」的念頭，轉而衡量總體效應。</span><div class="note">footnote 9。生產力指標一旦用於個人績效考核就會被 gaming，從此失效。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">GSM Framework（Goals/Signals/Metrics）</span><br>由上而下選指標：目標→訊號→指標。避免路燈效應、保持可追溯性。</div>
+      <div class="kw"><span class="term">QUANTS（生產力五面向）</span><br>Quality 品質、Attention 專注、iNtellectual complexity 智識複雜度、Tempo/velocity 速度、Satisfaction 滿意度。彼此取捨，確保不顧此失彼。</div>
+      <div class="kw"><span class="term">Streetlight Effect（路燈效應）</span><br>只用手邊好測的指標（在路燈下找鑰匙），而非真正能回答目標的指標。GSM 由上而下就是為避免它。</div>
+      <div class="kw"><span class="term">Traceability（可追溯性）</span><br>每個指標都能追回它代理的訊號與要量的目標。確保你知道在測什麼、為何測。</div>
+      <div class="kw"><span class="term">Triage（測量分流）</span><br>投入前用五問判斷「值不值得測」。核心：拿到結果（含負面）會不會導向具體行動。</div>
+      <div class="kw"><span class="term">Vanity Metrics（虛榮指標）</span><br>只用來支持一個你本來就要做的決定的指標。Google 最常用來勸退測量的理由。</div>
+      <div class="kw"><span class="term">Quantitative vs Qualitative（量化 vs 質化）</span><br>量化給規模與信心、沒有脈絡；質化給「為什麼」與敘事。衝突時通常是量化沒抓對。質化也是指標。</div>
+      <div class="kw"><span class="term">Experience Sampling（經驗抽樣）</span><br>在工程師正做某任務的當下打斷、問幾題，捕捉情境中的真實體驗。用來抓出 median build latency 的自動建置誤計。</div>
+      <div class="kw"><span class="term">Recall / Recency / Sampling Bias</span><br>問卷時點與對象造成的三種偏誤；流程後立即問可避回憶偏誤，但引入近因與抽樣偏誤。</div>
+      <div class="kw"><span class="term">Tool-Driven Recommendation（工具驅動的建議）</span><br>把改進內建進開發者的日常工作流與誘因，而非只叫人改變思維；改變才更可能發生。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>挑一個你或主管最近用來談「生產力/績效」的指標（LOC、commit 數、velocity、修了幾個 bug、PR 數）。它是 Goal、Signal 還是 Metric？能<b>追溯</b>回哪個你真正在乎的目標嗎？還是只是「路燈下」最好測的那個？</li>
+      <li>把你最近想做的「流程/工具改動」套上 Triage 五問。最關鍵的一題：<b>如果量出來是負面結果，你（或決策者）真的會改變決定嗎？</b>不會的話，這是不是其實是 vanity metric？</li>
+      <li>用 QUANTS 檢查你團隊現行的「效率改善」目標：是不是只盯 Tempo/velocity，卻沒在量 Quality 或 Satisfaction？有沒有可能正在「把 code review 拿掉式」地犧牲另一面向？</li>
+      <li>你的組織有沒有把某個生產力/品質指標<b>用在個人績效考核</b>？有沒有被 gaming 的跡象（為衝指標而寫的水 code、灌的 commit）？對照「衡量總體、不衡量個人」。</li>
+      <li>回想上次「只信硬數據、不信問卷/訪談」的時刻。有沒有可能錯過了 median build latency 那種「量化其實沒抓對」的烏龍？你能設計一個<b>質化抽樣</b>去驗證最依賴的量化指標嗎？對照 ch06 Web Search。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— 本章是 readability「用線性換一致性」取捨的<b>資料結局</b>：研究團隊用 GSM 證實它整體值得。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「資料驅動、可被推翻」的文化在此具體化；個人生產力的次線性槓桿呼應「次線性擴展」。</span></div>
+      <div class="chip"><a href="ch06.html">ch06 Leading at Scale</a> <span class="rel">— Web Search 把延遲量化、用資料平衡品質與互動，是本章 GSM 精神的領導層實例。</span></div>
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— readability 倚賴的自動格式化、阻擋提交的 linter，正是讓「測量是否還值得」成立的背景。</span></div>
+      <div class="chip"><a href="ch05.html">ch05 How to Lead a Team</a> <span class="rel">— 「追蹤幸福感」「把隱性目標明確化」與本章 Satisfaction 面向、QUANTS 的明確化相互呼應。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch06.html">← 上一章：Leading at Scale</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch08.html">下一章：Style Guides and Rules →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture (closing)</div>
+    <div class="ch-no">CHAPTER 07</div>
+    <h1 class="title">Measuring Engineering Productivity</h1>
+    <div class="title-zh">Measure with data, not intuition — and only when a decision rides on it</div>
+    <div class="meta-row">
+      <span class="badge">by Ciera Jaspan</span>
+      <span class="badge">PDF p.151–166</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+      <span class="theme-tag t-culture">Culture</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Success means giving a stakeholder the data they need to make a decision."</span>
+      <span class="zh">In plain terms: measurement isn't about proving you're right — it's about handing the decider what they need.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>This closes the "Culture" part, on how Google measures and improves engineering productivity <b>with data, not intuition</b>. The author is from the dedicated productivity-research team — which deliberately mixes in social scientists (cognitive psychology, behavioral economics), because what needs studying isn't just software artifacts but the <b>human side</b> (motivation, incentives, strategies for complex tasks).</p>
+      <p>One real case runs through it: is <a href="ch03.html">ch03</a>'s <b>readability process even worth it?</b> Three gates: ① <b>Triage</b> — write the question concretely, ask five things, the crux being "would a result (incl. a <b>negative</b> one) lead to concrete action"; ② pick metrics with <b>GSM</b> (Goal→Signal→Metric), covering the <b>QUANTS</b> five facets so you don't improve one while tanking another; ③ <b>validate quant with qual</b>, then act. The verdict: readability is <b>worth it</b> — authors with it get reviewed and submit faster (even accounting for fewer reviewers), satisfied, and feel they learned.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You want to push a "productivity" change but can't prove it.</b> GSM is a defensible method: state the goal, derive signals and metrics, get stakeholders to agree <b>in advance</b> "these are the right metrics," killing the post-hoc "use different metrics" argument.</div>
+      <div class="why-card"><b>You or your boss love LOC, commits, or bugs-closed.</b> Dijkstra: LOC is "<b>lines spent</b>," not produced. The chapter warns of the streetlight effect and how <b>using metrics for individual reviews</b> gets gamed and destroys their value.</div>
+      <div class="why-card"><b>You collect data before thinking "what for."</b> Triage forces "what action follows the result?" — if "nothing changes," the measurement was a waste. <b>Success = the decider used the data.</b></div>
+      <div class="why-card"><b>You only trust hard data, dismiss surveys/interviews.</b> Quant + qual triangulation: the median-build-latency blunder (auto-builds miscounted) was caught only by qualitative sampling. Qualitative metrics are metrics too.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Why Measure Productivity?</h3>
+      <div class="claim">As an org grows <b>linearly</b>, communication costs grow <b>quadratically</b> (Brooks' <i>Mythical Man-Month</i>). So you can't scale business scope linearly with headcount — the other path is <b>making each engineer more productive</b>.</div>
+      <div class="impl"><b>Takeaway:</b> but the improvement loop costs people too — the goal is to improve productivity <b>efficiently</b>. Google staffs a dedicated research team with social scientists, applying the book's Scale thesis to *people*.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> Triage: Is It Even Worth Measuring?</h3>
+      <div class="claim">Measurement is expensive, and <b>the mere act of tracking can change behavior and mask the truth</b>. Write it as a concrete question, then ask five things:</div>
+      <ol class="steps">
+        <li><b>What result do you expect, and why?</b> (admit you're not neutral; state priors to fight bias)</li>
+        <li><b>If data supports it, what action follows?</b> (no action → don't measure)</li>
+        <li><b>If you get a negative result, will you act?</b> — <b>this kills most projects</b>: just wanting to know, with no change of course, isn't worth measuring.</li>
+        <li><b>Who acts on the result, and when?</b> (and what form of data convinces them)</li>
+      </ol>
+      <div class="impl"><b>Common reasons NOT to measure:</b> can't afford to change now, results soon invalidated, the decider's opinions are unshakable, it's only a <b>vanity metric</b>, or the available metrics are too imprecise (e.g., LOC). <b>Takeaway:</b> success isn't proving a hypothesis right/wrong — it's handing the decider the data they need; if they won't use it, it's a failure.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">FRAMEWORK</span> GSM: Goals / Signals / Metrics</h3>
+      <div class="claim">Once you decide to measure, use GSM top-down — LOC clearly won't do.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 300" role="img" aria-label="GSM framework: goal, signal, metric in three layers, defined top-down and traced bottom-up">
+          <rect x="120" y="34" width="480" height="58" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2.5"/>
+          <text x="360" y="60" class="fig-txt" font-size="16" font-weight="700" text-anchor="middle">Goal</text>
+          <text x="360" y="80" class="fig-mut" font-size="12.5" text-anchor="middle">the end result you want to understand (no metric)</text>
+          <rect x="120" y="118" width="480" height="58" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2.5"/>
+          <text x="360" y="144" class="fig-txt" font-size="16" font-weight="700" text-anchor="middle">Signal</text>
+          <text x="360" y="164" class="fig-mut" font-size="12.5" text-anchor="middle">how you'd know you achieved it (maybe unmeasurable)</text>
+          <rect x="120" y="202" width="480" height="58" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2.5"/>
+          <text x="360" y="228" class="fig-txt" font-size="16" font-weight="700" text-anchor="middle">Metric</text>
+          <text x="360" y="248" class="fig-mut" font-size="12.5" text-anchor="middle">a measurable proxy for the signal</text>
+          <path d="M95 50 L95 244" stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#dn7e)"/>
+          <path d="M625 244 L625 50" stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#up7e)"/>
+          <defs>
+            <marker id="dn7e" markerWidth="9" markerHeight="9" refX="3" refY="6" orient="auto"><path d="M0,0 L6,0 L3,6 Z" fill="var(--muted)"/></marker>
+            <marker id="up7e" markerWidth="9" markerHeight="9" refX="3" refY="0" orient="auto"><path d="M0,6 L6,6 L3,0 Z" fill="var(--muted)"/></marker>
+          </defs>
+          <text x="78" y="150" class="fig-mut" font-size="12" text-anchor="middle" transform="rotate(-90 78 150)">define top-down (avoid streetlight effect)</text>
+          <text x="642" y="150" class="fig-mut" font-size="12" text-anchor="middle" transform="rotate(90 642 150)">traceability</text>
+        </svg>
+        <figcaption><b>Core framework of the chapter (original)</b> — GSM: define <b>top-down</b> (goal → signal → metric) to avoid the "streetlight effect" (using only easy-to-measure metrics); trace <b>bottom-up</b> so every metric maps back to a signal and goal.</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Three benefits:</b> avoids the <b>streetlight effect</b>, picks metrics principled and in advance to prevent <b>metrics creep/bias</b>, and shows <b>coverage gaps</b> (some signals are unmeasurable — fine, at least you know).</li>
+        <li><b>Not 1:1:</b> every goal has ≥1 signal, possibly more, possibly shared; metrics are <b>imperfect proxies</b>, and several can <b>triangulate</b> one signal.</li>
+        <li><b>Code quality is currently unmeasurable:</b> no academic proxy truly captures it → readability didn't measure it quantitatively, only self-ratings.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> QUANTS: the five facets of productivity</h3>
+      <div class="claim">Teams forget the trade-offs — "<b>I can make reviews fast: just remove code reviews</b>." So productivity is split into five mutually trading-off facets:</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="QUANTS: quality, attention, intellectual complexity, tempo, satisfaction — five facets in trade-off">
+          <g text-anchor="middle">
+            <rect x="14" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="80" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--theme-scale)">Q</text>
+            <text x="80" y="100" class="fig-txt" font-size="12.5" font-weight="700">Quality</text>
+            <rect x="156" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+            <text x="222" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--accent)">A</text>
+            <text x="222" y="100" class="fig-txt" font-size="12.5" font-weight="700">Attention</text>
+            <rect x="298" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--theme-trade)" stroke-width="2"/>
+            <text x="364" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--theme-trade)">N</text>
+            <text x="364" y="96" class="fig-txt" font-size="11.5" font-weight="700">iNtellectual</text><text x="364" y="112" class="fig-mut" font-size="10">complexity</text>
+            <rect x="440" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--theme-time)" stroke-width="2"/>
+            <text x="506" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--theme-time)">T</text>
+            <text x="506" y="100" class="fig-txt" font-size="11.5" font-weight="700">Tempo/velocity</text>
+            <rect x="582" y="30" width="132" height="96" rx="10" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+            <text x="648" y="64" class="fig-txt" font-size="26" font-weight="800" fill="var(--theme-scale)">S</text>
+            <text x="648" y="100" class="fig-txt" font-size="12.5" font-weight="700">Satisfaction</text>
+          </g>
+          <text x="360" y="160" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle">the five trade off — don't improve one while tanking another</text>
+          <text x="360" y="184" class="fig-mut" font-size="12" text-anchor="middle">(the U just makes "QUANTS" pronounceable; the five facets are Q/A/N/T/S)</text>
+        </svg>
+        <figcaption><b>Core framework of the chapter (original)</b> — the QUANTS five facets: goals should cover all of them so you don't "sacrifice Quality for Tempo." Readability covered Q/N/T/S; having no Attention goal is fine.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">VALIDATE</span> Using Data to Validate Metrics</h3>
+      <div class="claim">Even after GSM, a metric may miss its signal — <b>validate quantitative metrics with qualitative data</b>.</div>
+      <ul class="tight">
+        <li><b>Median-build-latency blunder:</b> experience sampling found engineers who "didn't start a build" — <b>automated tools</b> did, and they weren't blocked, so it shouldn't count toward "typical experience"; excluded.</li>
+        <li><b>Quant vs qual:</b> quant gives scale and confidence, no context or "why"; qual gives narrative and next steps. <b>When they disagree, it's usually quant that's wrong.</b></li>
+        <li><b>Three sources:</b> readability-specific survey (avoids recall bias, introduces recency/sampling bias) + quarterly survey + fine-grained logs (review/shepherding/submit time).</li>
+        <li><b>The rule:</b> never use productivity metrics to evaluate <b>individuals</b> — instantly gamed. "Let go of measuring individuals; embrace the <b>aggregate effect</b>."</li>
+      </ul>
+      <div class="impl"><b>Taking action:</b> recommendations should be <b>tool-driven</b>, built into workflow and incentives — assume engineers make the right trade-offs given the right data and tools. Readability verdict: <b>worth it overall</b>, with pain points fixed in tooling and process.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"When you are successful at measuring your software process, you aren't setting out to prove a hypothesis correct or incorrect; success means giving a stakeholder the data they need to make a decision."</span><span class="zh">Measurement serves a decision, not your ego — its job is to inform a decider, not to win an argument.</span><div class="note">The summary of Triage and the chapter's whole philosophy.</div></blockquote>
+    <blockquote class="q"><span class="en">"We should only measure a software process when a concrete decision will be made based on the outcome."</span><span class="zh">If nothing changes regardless of the result, measuring it was never worth it.</span><div class="note">The core conclusion of the five Triage questions.</div></blockquote>
+    <blockquote class="q"><span class="en">"I can make your review velocity very fast: just remove code reviews entirely."</span><span class="zh">Optimize one facet blindly and you wreck another — speed up reviews by deleting the quality check.</span><div class="note">A researcher's quip illustrating why the QUANTS five facets exist.</div></blockquote>
+    <blockquote class="q"><span class="en">"…if we wish to count lines of code, we should not regard them as 'lines produced' but as 'lines spent'."</span><span class="zh">Code is a cost to be minimized, not output to be maximized; LOC is a liability metric.</span><div class="note">Dijkstra (EWD 1036), on why easy-but-perverse metrics like LOC mislead.</div></blockquote>
+    <blockquote class="q"><span class="en">"The only way to make these measurements work is to let go of the idea of measuring individuals and embrace measuring the aggregate effect."</span><span class="zh">Point productivity metrics at the system, never at people — or they'll be gamed into uselessness.</span><div class="note">Footnote 9, the rule against using productivity metrics in performance reviews.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">GSM framework (Goals/Signals/Metrics)</span><br>Pick metrics top-down: goal → signal → metric. Avoids the streetlight effect; preserves traceability.</div>
+      <div class="kw"><span class="term">QUANTS (five facets)</span><br>Quality, Attention, iNtellectual complexity, Tempo/velocity, Satisfaction. In mutual trade-off, so you don't improve one while tanking another.</div>
+      <div class="kw"><span class="term">Streetlight effect</span><br>Using only easy-to-measure metrics (keys under the streetlight) instead of those answering the goal. GSM's top-down flow avoids it.</div>
+      <div class="kw"><span class="term">Traceability</span><br>Every metric traces back to the signal it proxies and the goal it measures, so you know what you measure and why.</div>
+      <div class="kw"><span class="term">Triage (of measurement)</span><br>Five questions to decide whether it's worth measuring. The crux: would a result (incl. a negative one) lead to concrete action?</div>
+      <div class="kw"><span class="term">Vanity metrics</span><br>Metrics used only to support a decision you'd make anyway. Google's most common reason to tell people not to measure.</div>
+      <div class="kw"><span class="term">Quantitative vs qualitative</span><br>Quant gives scale and confidence but no context; qual gives "why" and narrative. When they disagree, it's usually quant that's wrong. Qual metrics are metrics too.</div>
+      <div class="kw"><span class="term">Experience sampling</span><br>Interrupting engineers in context of a task to ask a few questions, capturing the real in-the-moment experience. Caught the auto-build miscount.</div>
+      <div class="kw"><span class="term">Recall / recency / sampling bias</span><br>Memory/sampling biases driven by when and whom you survey; asking right after avoids recall bias but introduces recency and sampling bias.</div>
+      <div class="kw"><span class="term">Tool-driven recommendation</span><br>Build improvements into the developer's daily workflow and incentives, rather than telling people to change their thinking.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Pick a metric you or your boss uses for "productivity/performance" (LOC, commits, velocity, bugs closed, PRs). Is it a Goal, Signal, or Metric? Does it <b>trace back</b> to a goal you care about — or is it just the best-lit thing under the streetlight?</li>
+      <li>Run your latest proposed change through the five Triage questions. The crux: <b>if the result came back negative, would you (or the decider) actually change the decision?</b> If not, is this a vanity metric?</li>
+      <li>Use QUANTS to audit your "efficiency" goals: only watching Tempo/velocity while never measuring Quality or Satisfaction? Could you be "removing code reviews"-style sacrificing another facet?</li>
+      <li>Does your org use a productivity/quality metric in <b>individual performance reviews</b>? Any signs of gaming (filler code, padded commits)? Per "measure the aggregate, not individuals."</li>
+      <li>Recall a time you "only trusted hard data." Could you have missed a median-build-latency-style "the quant was wrong" blunder? Could you design a <b>qualitative sample</b> to validate the quant metric you rely on most? Per ch06's Web Search.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— the <b>data ending</b> to readability's "trade linear for consistency": the research team uses GSM to confirm it's worth it.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— the "data-driven, falsifiable" culture made concrete; individual productivity's sublinear lever echoes "scale sublinearly."</span></div>
+      <div class="chip"><a href="ch06.html">ch06 Leading at Scale</a> <span class="rel">— Web Search quantifying latency and balancing quality vs engagement with data is GSM's spirit at the leadership layer.</span></div>
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— the autoformatters and submission-blocking linters readability relies on are the backdrop that made "is it still worth it" a live question.</span></div>
+      <div class="chip"><a href="ch05.html">ch05 How to Lead a Team</a> <span class="rel">— "track happiness" and "make implicit goals explicit" resonate with this chapter's Satisfaction facet and QUANTS.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch06.html">← Prev: Leading at Scale</a><a class="idx" href="index.html">⌂ Index</a><a href="ch08.html">Next: Style Guides and Rules →</a></nav>
+</div>
+</div>
+
+</body>
+</html>

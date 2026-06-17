@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 3 章 Knowledge Sharing ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  table.t31{width:100%; border-collapse:collapse; margin:12px 0 2px; font-size:.93rem}
+  table.t31 th,table.t31 td{border:1px solid var(--border); padding:9px 12px; text-align:left; vertical-align:top}
+  table.t31 th{background:var(--card2); font-size:.86rem}
+  table.t31 th.good{color:var(--theme-scale)} table.t31 th.bad{color:var(--theme-trade)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture ｜ 文化</div>
+    <div class="ch-no">CHAPTER 03</div>
+    <h1 class="title">Knowledge Sharing</h1>
+    <div class="title-zh">知識分享</div>
+    <div class="meta-row">
+      <span class="badge">作者 Nina Chen、Mark Barolak</span>
+      <span class="badge">PDF p.71–96</span>
+      <span class="theme-tag t-culture">Culture 文化</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Your organization should be able to answer most of its own questions."</span>
+      <span class="zh">你的組織，應該有能力回答自己大部分的問題。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>這章講組織如何讓「專家腦袋裡的知識」流動到「每個需要它的人」手上。作者開門見山：你的組織比網路上任何陌生人都更懂自己的問題領域，所以<b>應該能自答大部分問題</b>——前提是同時擁有<b>知道答案的專家</b>與<b>散播知識的機制</b>。這些機制從最簡單（提問、寫下來）到結構化（教程、課程）都有，但最重要的前提是一種<b>學習文化</b>，而學習文化需要<b>心理安全感</b>——讓人敢承認自己不懂。</p>
+      <p>全章先盤點知識不流動的六種病灶（缺乏心理安全感、資訊孤島、SPOF、全有全無的專業度、鸚鵡學舌、鬧鬼墓園），再給出一條光譜式解方：知識分享必須<b>次線性擴展（scale sublinearly）</b>。從一對一的人類專家（高頻寬但不擴展），到群組／郵件列表／問答系統（更擴展但更可怕），再到組織級的<b>權威資訊源</b>（開發指南、<span class="mono">go/</span> 連結、codelabs、靜態分析）。<b>書寫知識與部落知識互補</b>，沒有單一解。最後以 Google 的 <b>readability</b> 收尾——透過 code review 標準化的師徒制，刻意用「線性擴展換一致性」的取捨，並有 EPR 研究證實對工程速度淨正面。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>團隊有個「什麼都只有他懂」的人，你覺得危險卻說不清。</b> 這章給你精確詞彙——SPOF、bus factor、全有全無的專業度——讓你把風險講成可管理的工程問題，而非「等他離職再說」。</div>
+      <div class="why-card"><b>你（或新人）卡住時不敢問。</b> 「我再多試一下就好」是初學者最大的錯。本章把「敢問」拉高到團隊效能第一要素（研究：心理安全感是高效團隊最重要因子），並教你在大群組裡維持那份安全感。</div>
+      <div class="why-card"><b>想接手沒人敢碰的 legacy 程式碼。</b> 「看不懂乾脆重寫」的衝動，用 <b>Chesterton's fence</b> 正面拆解：先搞懂它為什麼在那裡，再決定要不要動——直接決定你重構決策的品質。</div>
+      <div class="why-card"><b>想說服主管「寫文件、教別人」值得投資。</b> 本章把知識分享講成<b>非對稱取捨</b>——少數人投入、多數人長期受惠——並給出 peer bonus、readability 等真實的制度化誘因。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> Challenges to Learning <span class="en2">學習的挑戰</span></h3>
+      <div class="claim">缺乏學習文化時會冒出一組可辨識的病灶，且<b>隨公司擴張而惡化</b>。這六個詞是你的「組織健康聽診器」。</div>
+      <ul class="tight">
+        <li><b>缺乏心理安全感：</b>怕在他人面前冒險/犯錯而被罰，表現為恐懼文化、迴避透明。</li>
+        <li><b>資訊孤島：</b>各部分各自為政——衍生<b>資訊破碎</b>（局部全貌）、<b>資訊重複</b>（重造輪子）、<b>資訊歪斜</b>（各做各的、可能衝突）。書中比喻：不是單一全域最佳解，而是一堆局部最佳解。</li>
+        <li><b>SPOF（單點失效）：</b>關鍵資訊只在一人手上；與 ch02 的 bus factor 同源，常因「我來幫你就好」的善意而生。</li>
+        <li><b>全有全無的專業度：</b>團隊只有「全懂」與「新手」、中間真空。專家全包不帶人會自我增強。</li>
+        <li><b>鸚鵡學舌：</b>模仿而不理解——無腦複製模式或程式碼。</li>
+        <li><b>鬧鬼墓園：</b>因恐懼與迷信而沒人敢碰的程式區域。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Philosophy <span class="en2">哲學</span></h3>
+      <div class="claim">軟體工程＝<b>多人開發多版本程式</b>（multiperson development of multiversion programs）。人是核心，程式碼只是建造產品的一小部分產出。每個專家都曾是新手。</div>
+      <ul class="tight">
+        <li><b>一對一專家建議：</b>無價、可客製，但<b>不擴展</b>——專家放假/換隊就斷線。</li>
+        <li><b>書寫知識：</b>能擴展到全組織，代價是較一般化、較不貼合個案、有維護成本。</li>
+        <li><b>部落知識：</b>存在於「個人知道」與「已被寫下」之間的縫隙；寫下並維護＝從單點解放成人人可取用。</li>
+      </ul>
+      <div class="impl"><b>工程意涵：</b>即使一切完美文件化仍需真人——專家能<b>綜合</b>知識、判斷適用性與時效、知道去哪找或誰知道。<b>部落與書寫知識互補，最佳配比因組織而異、隨成長改變。</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Setting the Stage: Psychological Safety <span class="en2">鋪好舞台：心理安全感</span></h3>
+      <div class="claim">心理安全感是學習環境的關鍵；要學習就得先承認有不懂的東西。<b>Google 研究：心理安全感是高效團隊最重要的一塊。</b></div>
+      <ul class="tight">
+        <li><b>師徒制：</b>新人（Noogler）一進來就配 mentor——<b>刻意不是隊友、主管或 tech lead</b>，職責含答疑與協助 ramp-up，是「不知道還能問誰」時的安全網。導師＝在 Google 滿一年的志願者。</li>
+        <li><b>大型群組裡的安全感：</b>向一大群陌生人提問很可怕（問題可能被存檔多年），需求被放大。關鍵是讓互動<b>合作而非對抗</b>。</li>
+      </ul>
+      <table class="t31">
+        <tr><th class="good">推薦模式（合作）</th><th class="bad">反模式（對抗）</th></tr>
+        <tr><td>基本問題/錯誤被引導到正確方向</td><td>基本問題/錯誤被挑刺，提問者被責備</td></tr>
+        <tr><td>解釋的目的是幫提問者學會</td><td>解釋的目的是炫耀自己的知識</td></tr>
+        <tr><td>回應友善、有耐心、有幫助</td><td>回應居高臨下、尖酸、無建設性</td></tr>
+        <tr><td>互動是「一起找解法」的討論</td><td>互動是分出「贏家/輸家」的爭論</td></tr>
+      </table>
+      <div class="impl"><b>Recurse Center 社交規則：</b>不假裝驚訝、不要「其實啊…」、不要後座駕駛、不要微歧視。<b>工程意涵：</b>反模式常是<b>無意間</b>冒出的；把上表貼在團隊頻道置頂，勝過任何「要友善」的口號。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Growing Your Knowledge <span class="en2">增長你自己的知識</span></h3>
+      <div class="claim">知識分享從你自己開始。全章若只帶走一句：<b>永遠在學、永遠在問</b>。新人 ramp-up 約需<b>六個月</b>。</div>
+      <ul class="tight">
+        <li><b>Ask Questions 提問：</b>初學者最大的錯是卡住卻不求助。沒有某個神奇的一天你會突然全會——資深者也有不懂的領域，這沒關係。領導者更該示範：<b>懂得愈多，愈知道自己不懂的有多少</b>。回答端的耐心與善意讓人敢來求助。</li>
+        <li><b>Understand Context 理解脈絡：</b>學習也包含理解既有設計背後的決策。接手難懂的 legacy 別急著重寫——套 <b>Chesterton's fence</b>：移除/改變前，先搞懂它為何存在。</li>
+      </ul>
+      <div class="impl"><b>工程意涵：</b>工程師太快喊「這很爛！」。先理解脈絡，再判斷改動是否仍合理：合理就動，不合理就<b>把推理寫給未來的讀者</b>。許多風格指南刻意附 rationale，讓人理解而非死背（見 ch08）。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Scaling Your Questions: Ask the Community <span class="en2">讓提問擴展：問社群</span></h3>
+      <div class="claim">一對一頻寬高但規模有限。<b>幫未來的自己：學到就寫下來；幫未來的新人：把它分享出去。</b> 三種社群媒介各有取捨、互補：</div>
+      <ul class="tight">
+        <li><b>群組聊天：</b>一次問很多人、快速來回，旁觀者也能學、可存檔可搜。分主題型（開放、人多、答得快）與團隊型（小、對新人安全）。缺點：缺結構，事後難萃取。</li>
+        <li><b>郵件列表：</b><span class="mono">topic-users@</span>。易對廣受眾分享、可搜尋存檔、更有結構，被內部搜尋引擎 <b>Moma</b> 索引。找到答案要<b>貼回列表</b>。取捨：適合需脈絡的複雜問題、不適合快速來回；舊答案時效難判。</li>
+        <li><b>YAQS：</b>Google 內部版 Stack Overflow，能連到程式碼、討論機密；有用的答案被推升、可編輯保鮮。</li>
+      </ul>
+      <div class="impl"><b>工程意涵：</b>選媒介就是選取捨。書中也誠實點名 Google「email-heavy」文化暗面：偏好 email 往往<b>只因文化習慣，未必因為它更好</b>——選工具時的提醒。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Scaling Your Knowledge: You Always Have Something to Teach <span class="en2">你總有東西可教</span></h3>
+      <div class="claim">教學不限於專家；專業度不是二元，而是<b>多維向量</b>——這正是多元對組織成功至關重要的原因之一（見 ch04）。</div>
+      <ul class="tight">
+        <li><b>Office Hours：</b>固定排程面對面答疑。當問題還太模糊（連該問什麼都不知道）或太專、沒文件時特別有用。</li>
+        <li><b>Tech Talks & Classes：</b>engEDU 與草根的 <b>g2g</b>（Googler2Googler）。課程含演練、更貴，<b>保留給最重要/最難的主題</b>；建好後可靠共用教材擴展。課程最有效的四條件：主題複雜易誤解、相對穩定、受惠於有老師、需求量大到值得定期開。</li>
+        <li><b>Documentation：</b><b>第一次學某事是看出文件可改進之處的最佳時機</b>。修錯字到記錄部落知識（見 ch10）；<span class="mono">g3doc</span> 讓文件緊鄰原始碼、留可稽核變更史。<b>任何不可被發現/搜尋的文件等於不存在</b>；要有回饋機制。</li>
+        <li><b>Code：</b>程式碼就是知識；註解傳遞知識給未來的讀者（包括未來的你），但需主動維護否則過時。code review 對雙方都是學習機會（見 ch09）。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Scaling Your Organization's Knowledge <span class="en2">讓組織的知識擴展</span></h3>
+      <div class="claim">組織愈大，確保專業被分享愈難。這節是「次線性擴展」的具體工具箱。</div>
+      <ul class="tight">
+        <li><b>培養文化：</b><b>尊重</b>——「聰明的混蛋（brilliant jerk）」被容忍既普遍又有害，但當專家和當好人不互斥；「<b>混蛋不是好領導</b>」（高層〈No Jerks〉文件示範）。<b>誘因與表彰</b>——別嘴上一套、獎勵另一套；<b>peer bonus</b>（任何人可給任何人現金獎＋表彰）與 <b>kudos</b> 由下而上肯定貢獻。重點不是獎金，是同儕的肯定。</li>
+        <li><b>權威資訊源：</b>集中、全公司、由專家維護的語料庫，對抗孤島。<b>開發指南</b>（專家傳連結省解釋）、<b><span class="mono">go/</span> 連結</b>（短到能口頭分享、提供 permalink）、<b>codelabs</b>（靜態文件與真人課程的中間點）、<b>靜態分析</b>（加一個檢查，每個用戶都學到，高效擴展，見 ch20）。</li>
+        <li><b>保持在狀況內：</b>正式程度依重要性而定。<b>Newsletters</b>——寄得愈少愈有用、engagement 愈好；<b>Testing on the Toilet / Learning on the Loo</b> 貼在廁所隔間（見 ch11）。<b>Communities</b>——跨組織社群避免孤島。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> Readability: Standardized Mentorship Through Code Review <span class="en2">可讀性：透過審查的標準化師徒制</span></h3>
+      <div class="claim">「readability」遠不只程式好不好讀；它是<b>全公司標準化的師徒制流程</b>，傳播某語言的最佳實務（慣用法、結構、API 設計、函式庫、文件、測試）。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 760 350" role="img" aria-label="知識分享的擴展光譜，建立在心理安全感的地基上">
+          <text x="380" y="26" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">知識分享：在心理安全感的地基上，沿擴展性逐層往上</text>
+          <!-- 軸：擴展性 → -->
+          <text x="60" y="58" class="fig-mut" font-size="12">↑ 頻寬高・客製化（不擴展）</text>
+          <text x="700" y="300" class="fig-mut" font-size="12" text-anchor="end">擴展性 Scale →</text>
+          <!-- 階梯三層 -->
+          <g text-anchor="middle">
+            <rect x="60" y="200" width="210" height="76" rx="10" fill="none" stroke="var(--theme-trade)" stroke-width="3"/>
+            <text x="165" y="228" class="fig-txt" font-size="14" font-weight="700">一對一　1-to-1</text>
+            <text x="165" y="250" class="fig-mut" font-size="12.5">mentor／office hours</text>
+            <text x="165" y="268" class="fig-mut" font-size="12.5">高頻寬・最客製・最不擴展</text>
+
+            <rect x="278" y="140" width="210" height="76" rx="10" fill="none" stroke="var(--accent)" stroke-width="3"/>
+            <text x="383" y="168" class="fig-txt" font-size="14" font-weight="700">社群　Community</text>
+            <text x="383" y="190" class="fig-mut" font-size="12.5">群組聊天／郵件列表／YAQS</text>
+            <text x="383" y="208" class="fig-mut" font-size="12.5">更擴展・更可怕</text>
+
+            <rect x="496" y="80" width="210" height="76" rx="10" fill="none" stroke="var(--theme-scale)" stroke-width="3"/>
+            <text x="601" y="108" class="fig-txt" font-size="14" font-weight="700">組織級　Canonical</text>
+            <text x="601" y="130" class="fig-mut" font-size="12.5">開發指南／go/／codelabs</text>
+            <text x="601" y="148" class="fig-mut" font-size="12.5">靜態分析・次線性擴展</text>
+          </g>
+          <!-- 連接箭頭 -->
+          <path d="M270 224 L278 200 M488 164 L496 140" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+          <!-- 地基 -->
+          <rect x="60" y="298" width="646" height="40" rx="8" fill="var(--card2)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="383" y="323" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle">地基：心理安全感 Psychological Safety · 學習文化</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 知識分享是一條擴展光譜：愈往上愈擴展、頻寬與客製化遞減——三層全都立基於心理安全感。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>起源與規模：</b>始於一人——Craig Silverstein（員工編號 <b>#3</b>）逐行審每位新人的第一個重要 commit。如今<b>約 20%</b> 工程師參與 readability，<b>約 1–2%</b> 是審查者（全為志願者）。</li>
+        <li><b>流程：</b>強制 code review，<b>每個 CL 都需 readability 核可</b>。審查者被held 到最高標準：深厚語言專業＋<b>教學能力</b>，且必須當成師徒與合作、而非守門。</li>
+        <li><b>為何（取捨核心）：</b><b>程式碼被讀遠多於被寫</b>。中央化做了重大取捨：<b>只能線性擴展</b>（依賴真人），換來易強制一致、避免孤島與規範漂移。全 codebase 一致讓讀者專注「程式在做什麼」、利於大規模變更（見 ch22）與換隊。</li>
+        <li><b>成本與爭議：</b>沒 readability 成員的團隊摩擦增加、可能多輪 review、線性擴展劣勢。短期成本與長期收益<b>不在同一時間尺度</b>（前提：程式碼被寫來活數年/數十年；短命程式如 <span class="mono">experimental/</span>、Area 120 豁免）。它確實有爭議。</li>
+        <li><b>證據：</b>內部 <b>EPR（工程生產力研究）團隊</b>研究（見 ch07）顯示 readability 對速度<b>淨正面</b>：有 readability 的作者 CL 顯著更快被審查與提交、自評品質更高、絕大多數覺得值得且改變了行為。</li>
+      </ul>
+      <div class="impl"><b>工程意涵：</b>readability 是教科書級的「<b>用線性成本換次線性一致性收益</b>」案例，並用資料而非直覺驗證取捨——正是 ch01「工程是要有理由的決策」的縮影。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Your organization understands your problem domain better than some random person on the internet; your organization should be able to answer most of its own questions."</span><span class="zh">你的組織比網路上某個隨機路人更懂你的問題領域；你的組織應該有能力回答自己大部分的問題。</span><div class="note">開章第一句，定義了「知識分享」要解決的問題——前提是同時擁有專家與散播機制。</div></blockquote>
+    <blockquote class="q"><span class="en">"Software engineering can be defined as the multiperson development of multiversion programs."</span><span class="zh">軟體工程可以定義為「多人開發多版本程式」。</span><div class="note">出自 Philosophy 節（引 David Parnas）。「多人」對應 Scale，「多版本」對應 Time——呼應全書主軸。</div></blockquote>
+    <blockquote class="q"><span class="en">"If you take away only a single thing from this chapter, it is this: always be learning; always be asking questions."</span><span class="zh">如果你從這章只帶走一件事，就是這個：永遠在學習；永遠在提問。</span><div class="note">Ask Questions 節的核心命令；把「敢問」放到團隊效能的第一順位。</div></blockquote>
+    <blockquote class="q"><span class="en">"Before removing or changing something, first understand why it's there."</span><span class="zh">在移除或改變某樣東西之前，先搞懂它為什麼在那裡。</span><div class="note">Chesterton's fence 的精煉。對抗工程師「看不懂就想重寫」的衝動，是重構決策的安全閥。</div></blockquote>
+    <blockquote class="q"><span class="en">"Any sufficiently undiscoverable or unsearchable documentation might as well not exist."</span><span class="zh">任何足夠難以被發現、難以被搜尋的文件，存在與不存在沒有兩樣。</span><div class="note">提醒「可發現性」與內容品質同等重要——正是 go/ 連結與 g3doc 想解決的。</div></blockquote>
+    <blockquote class="q"><span class="en">"Code is read far more than it is written."</span><span class="zh">程式碼被閱讀的次數，遠多於它被撰寫的次數。</span><div class="note">readability 制度的根本理由；一致性的價值因此被放大到整個 monorepo。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Psychological Safety（心理安全感）</span><br>讓人敢冒險、敢犯錯、敢承認不懂而不怕被罰的環境。Google 研究指出它是高效團隊最重要的因子，也是知識分享文化的地基。</div>
+      <div class="kw"><span class="term">Tribal Knowledge（部落知識）</span><br>存在於「個人知道」與「已被文件化」之間縫隙的未成文知識。寫下並維護就從單點解放成人人可取用。</div>
+      <div class="kw"><span class="term">SPOF（單點失效）</span><br>關鍵資訊只在一人手上的瓶頸；與 ch02 的 bus factor 同源，常因「我來幫你就好」的善意而生。</div>
+      <div class="kw"><span class="term">All-or-Nothing Expertise（全有全無的專業度）</span><br>團隊只有「全懂的專家」與「新手」、中間真空；專家全包不帶人會自我增強此問題。</div>
+      <div class="kw"><span class="term">Haunted Graveyard（鬧鬼墓園）</span><br>因恐懼與迷信而沒人敢碰的程式區域。與「鸚鵡學舌」（模仿而不理解）並列為兩種知識缺口症狀。</div>
+      <div class="kw"><span class="term">Chesterton's Fence（柴斯特頓的籬笆）</span><br>改變或移除某物前，先理解它為何存在的原則。重構與接手 legacy 程式碼的決策安全閥。</div>
+      <div class="kw"><span class="term">Canonical Source of Information（權威資訊源）</span><br>集中、全公司、由專家維護的資訊語料庫，標準化並傳播知識、對抗孤島；建立成本高、效益廣。</div>
+      <div class="kw"><span class="term">go/ links（go/ 連結）</span><br>Google 內部短網址（與 Go 語言無關）。短到可口頭分享、提供穩定 permalink，是低摩擦知識分享的關鍵基礎建設。</div>
+      <div class="kw"><span class="term">Readability（可讀性制度）</span><br>透過 code review 標準化的全公司師徒制；每個 CL 需其核可。刻意用「線性擴展」換 codebase 一致性與工程師成長，經 EPR 研究證實淨正面。</div>
+      <div class="kw"><span class="term">Asymmetrical Trade-off（非對稱取捨）</span><br>少數人投入時間、多數人長期受惠的投資結構（如寫文件）。對組織整體有利，但需要好誘因才能促成。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>盤點你團隊的關鍵系統，哪一塊最接近 <b>all-or-nothing expertise</b> 或 <b>SPOF</b>？若那位專家明天放長假，最先垮的是什麼？你能用什麼最小成本（office hours？一篇 g3doc？一場 tech talk？）開始把它變成「可分散的知識」？</li>
+      <li>你的團隊頻道，比較像合作模式還是對抗模式？最近一次有新人問「基本問題」時，發生了什麼？Recurse Center 四條社交規則，哪一條你的團隊最常違反？</li>
+      <li>你手上有沒有一座 <b>haunted graveyard</b>——「能動但沒人敢碰」的程式碼？套上 Chesterton's fence：你真的知道它為何長這樣嗎？要回答，你該問誰、查哪份文件？</li>
+      <li>你上次學會新流程後，<b>有沒有回頭修「Getting Started」文件</b>裡讓你卡住的那一步？若沒有，是什麼擋住你（沒權限？覺得不是我的事？沒回饋機制）？</li>
+      <li>readability 用「線性擴展換一致性」。你的組織有沒有哪個流程也在做類似取捨（強制 review？中央化平台團隊？）？它的短期成本 vs 長期收益落在什麼時間尺度？你會怎麼像 EPR 一樣<b>用資料</b>驗證它值不值得？</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— 心理安全感與「謙遜提問、尊重回答」直接延續 HRT；SPOF 即第 2 章 bus factor 的組織版。</span></div>
+      <div class="chip"><a href="ch04.html">ch04 Engineering for Equity</a> <span class="rel">— 「專業是多維向量、多元帶來不同視角」與「無微歧視」通往公平議題。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— readability 是否值得，正是用 EPR 團隊的研究來驗證的真實案例。</span></div>
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— 風格指南附 rationale、readability 傳播的最佳實務標準，是本章權威資訊源的具體形態。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— readability 是 code review 文化的自然延伸；本章師徒制在審查流程中落地。</span></div>
+      <div class="chip"><a href="ch10.html">ch10 Documentation</a> <span class="rel">— 本章「更新/建立/推廣文件」是第 10 章文件主題的前導與動機。</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— 把可程式化檢查的最佳實務自動傳播，是知識分享「次線性擴展」的工具化極致。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch02.html">← 上一章：How to Work Well on Teams</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch04.html">下一章：Engineering for Equity →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture</div>
+    <div class="ch-no">CHAPTER 03</div>
+    <h1 class="title">Knowledge Sharing</h1>
+    <div class="title-zh">Move the answers from the few who know to everyone who needs them</div>
+    <div class="meta-row">
+      <span class="badge">by Nina Chen &amp; Mark Barolak</span>
+      <span class="badge">PDF p.71–96</span>
+      <span class="theme-tag t-culture">Culture</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Your organization should be able to answer most of its own questions."</span>
+      <span class="zh">In plain terms: the answers already live inside your company — the job is distribution, not invention.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>This chapter is about moving knowledge out of experts' heads and into the hands of everyone who needs it. The opening is blunt: your organization understands its own domain better than any stranger online, so it <b>should be able to answer most of its own questions</b> — given both <b>experts who know the answers</b> and <b>mechanisms to distribute that knowledge</b>. Those range from the trivial (ask; write it down) to the structured (tutorials, classes), but the crucial precondition is a <b>culture of learning</b>, which requires <b>psychological safety</b> — the safety to admit you don't know.</p>
+      <p>It first names six pathologies of non-flowing knowledge (lack of psychological safety, information islands, SPOF, all-or-nothing expertise, parroting, haunted graveyards), then offers a spectrum: knowledge sharing must <b>scale sublinearly</b>. From one-to-one human experts (high bandwidth, doesn't scale), through groups / mailing lists / Q&amp;A (more scalable but scarier), to org-wide <b>canonical sources</b> (developer guides, <span class="mono">go/</span> links, codelabs, static analysis). <b>Written and tribal knowledge complement each other</b> — no silver bullet. It closes with Google's <b>readability</b> program: mentorship standardized through code review, deliberately trading linear scaling for consistency, shown net-positive for velocity by internal EPR research.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>Your team has an "only-they-understand-it" person and you can't name the danger.</b> This gives you the vocabulary — SPOF, bus factor, all-or-nothing expertise — to frame it as a manageable engineering problem, not "we'll deal with it when they leave."</div>
+      <div class="why-card"><b>You (or your new hires) freeze instead of asking.</b> "Let me try harder first" is the beginner's biggest mistake. The chapter makes <i>daring to ask</i> the top factor in team effectiveness (psychological safety is the #1 predictor) and shows how to preserve it in large groups.</div>
+      <div class="why-card"><b>You're inheriting legacy code nobody dares touch.</b> The "rewrite because I can't read it" urge gets dismantled by <b>Chesterton's fence</b>: understand why it's there before removing it — directly raising refactoring quality.</div>
+      <div class="why-card"><b>You want to argue that docs and teaching are worth it.</b> The chapter frames sharing as an <b>asymmetrical trade-off</b> — a few invest, many benefit — and shows the institutional incentives (peer bonuses, readability) that make it happen.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> Challenges to Learning</h3>
+      <div class="claim">Without a learning culture, a recognizable set of pathologies emerge — and they get <b>worse as the company scales</b>. These six words are a stethoscope for org health.</div>
+      <ul class="tight">
+        <li><b>Lack of psychological safety:</b> fear of risk/mistakes in front of others; shows up as a culture of fear and avoidance of transparency.</li>
+        <li><b>Information islands:</b> groups don't communicate — producing <b>fragmentation</b> (incomplete picture), <b>duplication</b> (reinvented wheels), <b>skew</b> (same thing done differently, possibly conflicting). The book's image: not one global maximum, but many local maxima.</li>
+        <li><b>SPOF:</b> critical info in one person; same as Ch.2's bus factor, often born of "let me just handle that for you."</li>
+        <li><b>All-or-nothing expertise:</b> only total experts and novices, nothing in between. Experts doing everything self-reinforces it.</li>
+        <li><b>Parroting:</b> mimicry without understanding — mindlessly copying code.</li>
+        <li><b>Haunted graveyards:</b> code nobody dares touch out of fear and superstition.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Philosophy</h3>
+      <div class="claim">Software engineering = the <b>multiperson development of multiversion programs</b>. People are the core; code is a small part of building a product. Every expert was once a novice.</div>
+      <ul class="tight">
+        <li><b>One-to-one advice:</b> invaluable and tailorable, but <b>doesn't scale</b> — the expert leaves and the team is stranded.</li>
+        <li><b>Documented knowledge:</b> scales org-wide, at the cost of being generalized, less applicable to individuals, and carrying maintenance cost.</li>
+        <li><b>Tribal knowledge:</b> lives in the gap between what individuals know and what's written; document it = freed from a single point to available to all.</li>
+      </ul>
+      <div class="impl"><b>Takeaway:</b> even perfect docs still need humans — experts <b>synthesize</b>, judge applicability and freshness, and know where to find things (or who does). <b>Tribal and written knowledge complement each other; the best mix varies by org and changes as it grows.</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Setting the Stage: Psychological Safety</h3>
+      <div class="claim">Psychological safety is critical to learning; to learn you must first admit you don't understand. <b>Google's research: it's the single most important part of an effective team.</b></div>
+      <ul class="tight">
+        <li><b>Mentorship:</b> a Noogler gets a mentor — <b>deliberately not a teammate, manager, or tech lead</b> — whose job includes answering questions and a safety net for "I don't know who else to ask." Mentors are volunteers with 1+ years at Google.</li>
+        <li><b>Safety in large groups:</b> asking a crowd of strangers is scary (questions get archived for years), so the need is amplified. Keep interactions <b>cooperative, not adversarial</b>.</li>
+      </ul>
+      <table class="t31">
+        <tr><th class="good">Recommended (cooperative)</th><th class="bad">Antipattern (adversarial)</th></tr>
+        <tr><td>Basic questions/mistakes guided the right way</td><td>Basic questions/mistakes picked on; asker chastised</td></tr>
+        <tr><td>Explanations aim to help the asker learn</td><td>Explanations aim to show off one's knowledge</td></tr>
+        <tr><td>Responses are kind, patient, helpful</td><td>Responses are condescending, snarky, unconstructive</td></tr>
+        <tr><td>Shared discussions to find solutions</td><td>Arguments with "winners" and "losers"</td></tr>
+      </table>
+      <div class="impl"><b>Recurse Center social rules:</b> no feigned surprise, no well-actuallys, no back-seat driving, no subtle -isms. <b>Takeaway:</b> antipatterns emerge <i>unintentionally</i>; pinning that table to your channel beats any "be nice" slogan.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Growing Your Knowledge</h3>
+      <div class="claim">Sharing starts with yourself. If you take one thing: <b>always be learning; always be asking questions</b>. Ramp-up takes ~<b>six months</b>.</div>
+      <ul class="tight">
+        <li><b>Ask Questions:</b> the beginner's biggest mistake is not asking when stuck. There's no magic day you suddenly know everything — even veterans have gaps, and that's OK. Leaders must model it: <b>the more you know, the more you know you don't</b>. Patience and kindness when answering make it safe to ask.</li>
+        <li><b>Understand Context:</b> learning includes understanding decisions behind existing design. Don't rush to rewrite hard legacy — apply <b>Chesterton's fence</b>: before removing/changing, understand why it's there.</li>
+      </ul>
+      <div class="impl"><b>Takeaway:</b> engineers reach for "this is bad!" too fast. Seek context, then judge: if your change still makes sense, make it; if not, <b>write down your reasoning for future readers</b>. Many style guides include the rationale so readers understand rather than memorize (see ch08).</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Scaling Your Questions: Ask the Community</h3>
+      <div class="claim">One-to-one is high-bandwidth but limited. <b>Do future-you a favor: write down what you learn. Do future newcomers a favor: share it.</b> Three media, each with trade-offs:</div>
+      <ul class="tight">
+        <li><b>Group chats:</b> ask many at once, quick back-and-forth, onlookers learn, often archived/searchable. Topic-driven (open, fast) vs team-oriented (small, safer). Downside: little structure, hard to extract later.</li>
+        <li><b>Mailing lists:</b> <span class="mono">topic-users@</span>. Easy to share widely, searchable archives, more structure, indexed by <b>Moma</b>. Found your answer? <b>Post it back</b>. Trade-offs: great for complex context-heavy questions, clumsy for quick exchanges; old answers' relevance is hard to judge.</li>
+        <li><b>YAQS:</b> Google's internal Stack Overflow — link to code, discuss confidential info; helpful answers promoted, editable to stay fresh.</li>
+      </ul>
+      <div class="impl"><b>Takeaway:</b> choosing a medium is choosing a trade-off. The chapter is candid about Google's email-heavy culture: it defaults to email <b>mostly from habit, not because it's better</b> — a warning when <i>you</i> pick tools.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Scaling Your Knowledge: You Always Have Something to Teach</h3>
+      <div class="claim">Teaching isn't limited to experts; expertise isn't binary but a <b>multidimensional vector</b> — one reason diversity is critical to org success (see ch04).</div>
+      <ul class="tight">
+        <li><b>Office hours:</b> scheduled face-to-face Q&amp;A. Best when a problem is too ambiguous to even know what to ask, or so specialized there's no doc.</li>
+        <li><b>Tech talks &amp; classes:</b> engEDU and grassroots <b>g2g</b> (Googler2Googler). Classes have exercises, cost more, <b>reserved for the most important/difficult topics</b>; scale via shared materials. Work best when: complex enough to cause misunderstanding, relatively stable, benefit from live teachers, and have enough demand to run regularly.</li>
+        <li><b>Documentation:</b> <b>the first time you learn something is the best time to improve the docs</b>. Typo fixes to documenting tribal knowledge (see ch10); <span class="mono">g3doc</span> puts docs next to source with auditable history. <b>Undiscoverable docs might as well not exist</b>; ensure a feedback path.</li>
+        <li><b>Code:</b> code is knowledge; comments transmit it to future readers (including Future You) but go stale without upkeep. Code review teaches both sides (see ch09).</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Scaling Your Organization's Knowledge</h3>
+      <div class="claim">Bigger orgs make sharing harder. This section is the concrete toolbox for sublinear scaling.</div>
+      <ul class="tight">
+        <li><b>Cultivating culture:</b> <b>Respect</b> — tolerance/reverence of the "brilliant jerk" is pervasive and harmful, but expert ≠ unkind; "<b>jerks are not good leaders</b>" (the top-down "No Jerks" doc). <b>Incentives</b> — don't reward behavior that violates your stated values; <b>peer bonuses</b> (any Googler → any Googler, cash + recognition) and <b>kudos</b> recognize contributions bottom-up. It's not the bonus — it's the peer acknowledgement.</li>
+        <li><b>Canonical sources:</b> centralized, expert-maintained corpuses that counter islands. <b>Developer guides</b> (experts share a link instead of re-explaining), <b><span class="mono">go/</span> links</b> (short enough to say aloud; permalinks), <b>codelabs</b> (halfway between docs and classes), <b>static analysis</b> (add one check, every user learns it — scales efficiently, see ch20).</li>
+        <li><b>Staying in the loop:</b> formality matches importance. <b>Newsletters</b> — less often + more useful = better engagement; <b>Testing on the Toilet / Learning on the Loo</b> posted in toilet stalls (see ch11). <b>Communities</b> — cross-org groups avoid islands.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> Readability: Standardized Mentorship Through Code Review</h3>
+      <div class="claim">"Readability" means far more than readable code — it's a <b>company-wide, standardized mentorship process</b> for spreading a language's best practices (idioms, structure, API design, libraries, docs, tests).</div>
+      <figure class="fig">
+        <svg viewBox="0 0 760 350" role="img" aria-label="The scaling spectrum of knowledge sharing, built on a foundation of psychological safety">
+          <text x="380" y="26" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Knowledge sharing: rising by scalability, on a foundation of safety</text>
+          <text x="60" y="58" class="fig-mut" font-size="12">↑ High bandwidth · tailored (doesn't scale)</text>
+          <text x="700" y="300" class="fig-mut" font-size="12" text-anchor="end">Scale →</text>
+          <g text-anchor="middle">
+            <rect x="60" y="200" width="210" height="76" rx="10" fill="none" stroke="var(--theme-trade)" stroke-width="3"/>
+            <text x="165" y="228" class="fig-txt" font-size="14" font-weight="700">1-to-1</text>
+            <text x="165" y="250" class="fig-mut" font-size="12.5">mentor / office hours</text>
+            <text x="165" y="268" class="fig-mut" font-size="12.5">high bandwidth · least scalable</text>
+
+            <rect x="278" y="140" width="210" height="76" rx="10" fill="none" stroke="var(--accent)" stroke-width="3"/>
+            <text x="383" y="168" class="fig-txt" font-size="14" font-weight="700">Community</text>
+            <text x="383" y="190" class="fig-mut" font-size="12.5">chats / mailing lists / YAQS</text>
+            <text x="383" y="208" class="fig-mut" font-size="12.5">more scalable · scarier</text>
+
+            <rect x="496" y="80" width="210" height="76" rx="10" fill="none" stroke="var(--theme-scale)" stroke-width="3"/>
+            <text x="601" y="108" class="fig-txt" font-size="14" font-weight="700">Canonical</text>
+            <text x="601" y="130" class="fig-mut" font-size="12.5">guides / go/ / codelabs</text>
+            <text x="601" y="148" class="fig-mut" font-size="12.5">static analysis · sublinear</text>
+          </g>
+          <path d="M270 224 L278 200 M488 164 L496 140" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
+          <rect x="60" y="298" width="646" height="40" rx="8" fill="var(--card2)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="383" y="323" class="fig-txt" font-size="14" font-weight="700" text-anchor="middle">Foundation: Psychological Safety · a culture of learning</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — knowledge sharing is a scaling spectrum: higher = more scalable, less bandwidth and tailoring — all three tiers rest on psychological safety.</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Origin and scale:</b> started with one person — Craig Silverstein (employee <b>#3</b>) reviewed every new hire's first major commit line-by-line. Today <b>~20%</b> of engineers participate, <b>~1–2%</b> are reviewers (all volunteers).</li>
+        <li><b>The process:</b> code review is mandatory, and <b>every CL needs readability approval</b>. Reviewers are held to the highest bar: deep language expertise <b>plus teaching ability</b>, treating it as mentoring and cooperation, not gatekeeping.</li>
+        <li><b>Why (the trade-off):</b> <b>code is read far more than written</b>. Centralizing makes a major trade-off: it <b>scales only linearly</b> (human-driven), but makes consistency enforceable and avoids islands and drift. Corpus-wide consistency lets readers focus on <i>what code does</i>, eases large-scale changes (ch22) and team switches.</li>
+        <li><b>Costs &amp; controversy:</b> more friction for teams without a readability member, possible extra review rounds, linear-scaling disadvantage. Short-term costs and long-term benefits are <b>on different timescales</b> (premise: code lives for years/decades; short-lived code like <span class="mono">experimental/</span> and Area 120 is exempt). It is genuinely controversial.</li>
+        <li><b>The evidence:</b> the internal <b>EPR (Engineering Productivity Research) team</b> (see ch07) found readability <b>net-positive for velocity</b>: CLs by readability authors are reviewed/submitted significantly faster, self-rated quality is higher, and a strong majority find it worthwhile and changed their behavior.</li>
+      </ul>
+      <div class="impl"><b>Takeaway:</b> readability is a textbook case of <b>trading linear cost for sublinear gains in consistency</b>, validated with data, not intuition — ch01's "engineering is decisions made with reasons" in miniature.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Your organization understands your problem domain better than some random person on the internet; your organization should be able to answer most of its own questions."</span><span class="zh">The expertise already exists inside the company — the challenge is distribution, not invention.</span><div class="note">The opening line, defining the problem knowledge sharing solves — given both experts and distribution mechanisms.</div></blockquote>
+    <blockquote class="q"><span class="en">"Software engineering can be defined as the multiperson development of multiversion programs."</span><span class="zh">Engineering is about many people working on code that exists in many versions over time — not a solo, one-shot act.</span><div class="note">From Philosophy (citing David Parnas). "Multiperson" = Scale; "multiversion" = Time — the book's thesis.</div></blockquote>
+    <blockquote class="q"><span class="en">"If you take away only a single thing from this chapter, it is this: always be learning; always be asking questions."</span><span class="zh">Asking isn't weakness to minimize — it's the core habit the whole chapter is built on.</span><div class="note">The heart of Ask Questions; it puts "daring to ask" first among team-effectiveness factors.</div></blockquote>
+    <blockquote class="q"><span class="en">"Before removing or changing something, first understand why it's there."</span><span class="zh">Don't tear down what you don't understand — investigate its purpose first, then decide.</span><div class="note">Chesterton's fence distilled; a safety valve against the "I can't read it, let's rewrite it" reflex.</div></blockquote>
+    <blockquote class="q"><span class="en">"Any sufficiently undiscoverable or unsearchable documentation might as well not exist."</span><span class="zh">Discoverability is part of a doc's value — if people can't find it, content quality is moot.</span><div class="note">Exactly the problem go/ links and g3doc are built to solve.</div></blockquote>
+    <blockquote class="q"><span class="en">"Code is read far more than it is written."</span><span class="zh">Optimize code (and standards) for the reader, since reading is where most time goes.</span><div class="note">The foundational rationale for readability; why corpus-wide consistency is worth so much.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Psychological safety</span><br>An environment where people dare to take risks, err, and admit they don't know — without fear of punishment. The top predictor of an effective team and the foundation of the sharing culture.</div>
+      <div class="kw"><span class="term">Tribal knowledge</span><br>Unwritten knowledge in the gap between what individuals know and what's documented. Write it down and it goes from a single point to available to all.</div>
+      <div class="kw"><span class="term">SPOF (single point of failure)</span><br>A bottleneck where critical info lives in one person; same as Ch.2's bus factor, often born of "let me just handle that for you."</div>
+      <div class="kw"><span class="term">All-or-nothing expertise</span><br>A team split into total experts and novices with nothing between; experts doing everything self-reinforces it.</div>
+      <div class="kw"><span class="term">Haunted graveyard</span><br>Code nobody dares touch out of fear and superstition. Paired with "parroting" (mimicry without understanding).</div>
+      <div class="kw"><span class="term">Chesterton's fence</span><br>Understand why something exists before removing/changing it. A safety valve for refactoring and inheriting legacy code.</div>
+      <div class="kw"><span class="term">Canonical source of information</span><br>A centralized, expert-maintained corpus to standardize and propagate knowledge and counter islands; expensive to build, broad in benefit.</div>
+      <div class="kw"><span class="term">go/ links</span><br>Google's internal URL shortener (unrelated to the Go language). Short enough to say aloud and a stable permalink — key low-friction sharing infrastructure.</div>
+      <div class="kw"><span class="term">Readability</span><br>A company-wide mentorship program standardized through code review; every CL needs its approval. Trades linear scaling for consistency and growth; EPR research shows it's net-positive.</div>
+      <div class="kw"><span class="term">Asymmetrical trade-off</span><br>An investment where a few spend the time and many benefit long-term (e.g., docs). Good for the org overall, but needs good incentives to happen.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Inventory your team's critical systems. Which is closest to <b>all-or-nothing expertise</b> or a <b>SPOF</b>? If that expert took a long leave tomorrow, what breaks first? What minimal investment (office hours? one g3doc? one tech talk?) starts turning it into distributable knowledge?</li>
+      <li>Does your team channel look more cooperative or adversarial? What happened the last time a newcomer asked a "basic question"? Which of the Recurse Center's four rules do you break most?</li>
+      <li>Do you have a <b>haunted graveyard</b> — code that "works but nobody dares touch"? Apply Chesterton's fence: do you actually know <i>why</i> it's shaped that way? Who would you ask, which doc would you read?</li>
+      <li>The last time you learned a new process, <b>did you go back and fix the "Getting Started" doc</b> at the step that tripped you up? If not, what stopped you (no access? not my job? no feedback path?)?</li>
+      <li>Readability trades linear scaling for consistency. Is there a process in <i>your</i> org making a similar trade-off (mandatory review? a centralized platform team?)? On what timescales do its costs and benefits land? How would you validate it with <b>data</b>, EPR-style?</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— psychological safety and "ask humbly, answer respectfully" continue HRT; SPOF is the org-level bus factor.</span></div>
+      <div class="chip"><a href="ch04.html">ch04 Engineering for Equity</a> <span class="rel">— "expertise is a multidimensional vector" and "no subtle -isms" lead into equity.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— whether readability is worth it is a real case validated by the EPR team's research.</span></div>
+      <div class="chip"><a href="ch08.html">ch08 Style Guides and Rules</a> <span class="rel">— style guides with rationale, and the best-practice standards readability propagates, are this chapter's canonical sources made concrete.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— readability is a natural extension of code-review culture; this chapter's mentorship lands in review.</span></div>
+      <div class="chip"><a href="ch10.html">ch10 Documentation</a> <span class="rel">— this chapter's "update / create / promote docs" is the lead-in and motivation for Ch.10.</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— auto-propagating checkable best practices is the tooling apex of "sublinear" knowledge sharing.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch02.html">← Prev: How to Work Well on Teams</a><a class="idx" href="index.html">⌂ Index</a><a href="ch04.html">Next: Engineering for Equity →</a></nav>
+</div>
+</div>
+
+</body>
+</html>

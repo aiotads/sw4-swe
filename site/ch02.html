@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 2 章 How to Work Well on Teams ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture ｜ 文化</div>
+    <div class="ch-no">CHAPTER 02</div>
+    <h1 class="title">How to Work Well on Teams</h1>
+    <div class="title-zh">如何在團隊裡好好合作</div>
+    <div class="meta-row">
+      <span class="badge">作者 Brian Fitzpatrick</span>
+      <span class="badge">PDF p.55–70</span>
+      <span class="theme-tag t-culture">Culture 文化 · HRT</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Software engineering is a team endeavor."</span>
+      <span class="zh">軟體工程，是一項團隊事業。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>這是「文化」篇的開場，主題是你<b>唯一能完全掌控的變數——你自己</b>。工程師常想「把寫到一半的程式碼藏起來」，根源是<b>不安全感</b>：害怕別人看到未完成的作品而評判自己。這份不安全感餵養了<b>天才迷思（The Genius Myth）</b>——把團隊成就歸功於單一英雄（Linus、Guido、賈伯斯、Michael Jordan），但真相是「一個火花 + 一支英雄團隊」的集體勞動。</p>
+      <p>核心主張：<b>軟體開發是團隊事業，健康協作的地基是三支柱——謙遜（Humility）、尊重（Respect）、信任（Trust），簡稱 HRT</b>。幾乎任何社交衝突的根因都能追溯到 HRT 之一的缺席。作者把 HRT 落地為可操作行為：放下自我、學會給與受批評（你不是你的程式碼）、快速失敗並迭代、無究責事後檢討、學會耐心、對影響保持開放。最後 Google 把模糊的「Googley」明確定義成行為量表，避免它退化成「跟我一樣」的無意識偏見。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>技術很強卻在團隊卡關。</b> 殘酷事實：多數工作不需要天才級智力，但 <b>100% 的工作都需要最低限度的社交能力</b>。決定職涯成敗的，是你跟人協作得多好。</div>
+      <div class="why-card"><b>想把「孤狼工作法」的風險講清楚。</b> 「躲起來做到完美再公開」感覺安全，實則把時間豪賭在「可能做錯方向」上。bus factor、早期回饋、快速迭代給你說服自己也說服別人的論證。</div>
+      <div class="why-card"><b>帶人或做 code review 常踩人的地雷。</b> Joe 的故事示範「技術正確、社交災難」的審查；本章教你把「你錯了」改成「我有點困惑」——用謙遜把問題指向自己。</div>
+      <div class="why-card"><b>想建立能容錯、能學習的文化。</b> 無究責事後檢討、「Failure is an option」、示弱即力量，是讓團隊敢冒險、敢認錯的制度基礎。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Help Me Hide My Code <span class="en2">幫我把程式碼藏起來</span></h3>
+      <div class="claim">Google Code 收到大量「隱藏分支／先隱藏專案／清掉歷史」請求，共同主題是<b>不安全感</b>——害怕別人評判進行中的作品。</div>
+      <div class="impl"><b>工程意涵：</b>別把「想藏」當個人怪癖，它是團隊文化健康與否的訊號燈；不安全感是更大問題的「症狀」。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> The Genius Myth <span class="en2">天才迷思</span></h3>
+      <div class="claim">Linus 不是獨自寫出 Linux——他寫的是核心雛形，真正成就是<b>領導並協調數千人</b>。天才迷思 = 把團隊成功歸因於單一個人的傾向。</div>
+      <p>現實檢查：你大概不是天才；即使是，天才也會犯錯，且只解決分析問題、不解決「人」的問題，照樣是糟糕的隊友。</p>
+      <div class="impl"><b>工程意涵：</b>天才迷思是不安全感的變體——怕被看見草稿就露餡。但炫技解決不了協作問題。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> Hiding Considered Harmful <span class="en2">藏起來是有害的</span></h3>
+      <div class="claim">自行車變速器寓言：你閉門造車數月，鄰居找朋友一起做，更快做出更好成品、還一眼看出你早該修的缺陷。獨自工作本質上更<b>冒險</b>。</div>
+      <ul class="tight">
+        <li><b>Early Detection 早期偵測：</b>愈早求回饋愈能降低風險。奉行「Fail early, fail fast, fail often」。</li>
+        <li><b>Bus Factor 公車係數：</b>「需要多少人被公車撞到，專案才會徹底完蛋」。只有你懂 = 高風險；靠文件 + 主/副負責人提高它。</li>
+        <li><b>Pace of Progress 前進步調：</b>工程師在緊密回饋迴路裡最好（像逐步編譯）；團隊是專案層級的回饋迴路——「眾目睽睽，讓專案保持切題不偏航」。</li>
+        <li><b>辦公室案例：</b>獨立辦公室與開放大平面都走極端；<b>最佳解是 4–8 人小房間</b>，再用 token/耳機/「Breakpoint Mary」協定保留專注時間。</li>
+      </ul>
+      <div class="impl"><b>工程意涵：</b>在「專注獨處」與「高頻寬團隊連線」間找平衡是藝術，但「藏」永遠是錯的一端。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> It's All About the Team <span class="en2">一切都是團隊的事</span></h3>
+      <div class="claim">程式界的「獨行工匠」極罕見；改變世界的成就幾乎都是「靈感火花 + 英雄式團隊努力」。偉大團隊善用超級明星，但<b>整體永遠大於部分之和</b>。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> The Three Pillars · HRT <span class="en2">社交三支柱</span></h3>
+      <div class="claim">對幾乎任何社交衝突做根因分析，最後都能追溯到 <b>謙遜 / 尊重 / 信任</b> 之一的缺席。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 270" role="img" aria-label="HRT 三支柱撐起健康協作">
+          <rect x="70" y="36" width="580" height="40" rx="8" fill="var(--card2)" stroke="var(--border)"/>
+          <text x="360" y="62" class="fig-txt" font-size="16" font-weight="700" text-anchor="middle">健康協作 · 偉大團隊（整體 &gt; 部分之和）</text>
+          <g text-anchor="middle">
+            <rect x="120" y="92" width="120" height="120" rx="10" fill="none" stroke="var(--theme-time)" stroke-width="3"/><text x="180" y="146" class="fig-txt" font-size="17" font-weight="700">Humility</text><text x="180" y="172" class="fig-mut" font-size="14">謙遜</text>
+            <rect x="300" y="92" width="120" height="120" rx="10" fill="none" stroke="var(--theme-scale)" stroke-width="3"/><text x="360" y="146" class="fig-txt" font-size="17" font-weight="700">Respect</text><text x="360" y="172" class="fig-mut" font-size="14">尊重</text>
+            <rect x="480" y="92" width="120" height="120" rx="10" fill="none" stroke="var(--theme-trade)" stroke-width="3"/><text x="540" y="146" class="fig-txt" font-size="17" font-weight="700">Trust</text><text x="540" y="172" class="fig-mut" font-size="14">信任</text>
+          </g>
+          <rect x="70" y="226" width="580" height="34" rx="8" fill="var(--card2)" stroke="var(--border)"/>
+          <text x="360" y="248" class="fig-mut" font-size="13" text-anchor="middle">地基：所有社交衝突的根因分析，最終都指向缺了其中一根柱子</text>
+        </svg>
+        <figcaption><b>本章核心模型</b> HRT 三支柱：謙遜、尊重、信任共同撐起健康協作；任何一根缺席，協作就會塌陷。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Why Do These Pillars Matter? <span class="en2">為何這些支柱重要</span></h3>
+      <div class="claim">和可預測的編譯器相處的確比和人相處容易，但別低估「玩社交遊戲」的力量——這不是操弄，而是建立關係把事情做成。</div>
+      <div class="impl"><b>工程意涵：</b><b>關係的壽命永遠長過專案</b>；Hamming 的故事——對人友善換來關鍵時刻的全力相助。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> HRT in Practice <span class="en2">HRT 的實踐</span></h3>
+      <ul class="tight">
+        <li><b>放下自我：</b>追求<b>集體的自我（collective ego）</b>而非個人榮耀；堅持「照我的方式」會在整個職涯付出持續的小代價。</li>
+        <li><b>給與受批評：</b>區分「對作品的建設性批評」與「對人格的攻擊」。鐵則「<b>你不是你的程式碼</b>」。把「你寫錯了」改成「我被這段搞糊塗了，換 xyzzy 模式會不會更清楚？」</li>
+        <li><b>快速失敗並迭代：</b>CEO「我才剛花一千萬訓練你」的故事；Google「<b>Failure is an option</b>」，Google X 把失敗寫進激勵——比賽誰能推翻最多點子。</li>
+        <li><b>無究責事後檢討：</b>不是道歉/藉口/指責清單，而要寫「學到什麼、將改變什麼」。包含摘要、時間線、主因、影響、修復與預防行動項（含負責人）、教訓。</li>
+        <li><b>學會耐心：</b>作者與 Karl（由上而下 vs 由下而上）靠信任、尊重、耐心發明新協作法，救了專案也救了友誼。</li>
+        <li><b>對影響保持開放：</b>愈開放被影響愈能影響人；示弱（承認「我不知道」）是謙遜與當責的外顯，長期反而提升地位。隊友是協作者不是對手。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Being Googley <span class="en2">所謂的「Googley」</span></h3>
+      <div class="claim">「Googley」從未明確定義，導致它在招聘/考核中變成<b>無意識偏見</b>來源——可能悄悄等於「跟我一樣」。</div>
+      <p>Google 把它明確化成量表：<b>在模糊中茁壯、重視回饋、挑戰現狀、以使用者為先、在乎團隊、做對的事</b>，並逐漸不再用模糊的「Googley」。</p>
+      <div class="impl"><b>工程意涵：</b><b>對期待要具體</b>——模糊的文化詞彙是偏見的溫床。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Software engineering is a team endeavor."</span><span class="zh">軟體工程，是一項團隊事業。</span><div class="note">全章論點的一句話總結，直接反駁「天才程式設計師」的幻想。</div></blockquote>
+    <blockquote class="q"><span class="en">"Bus factor (noun): the number of people that need to get hit by a bus before your project is completely doomed."</span><span class="zh">公車係數（名詞）：需要有多少人被公車撞到，你的專案才會徹底完蛋的人數。</span><div class="note">衡量「知識集中風險」的經典工程術語；bus factor 為 1 是危險訊號。</div></blockquote>
+    <blockquote class="q"><span class="en">"You are not your code."</span><span class="zh">你不是你的程式碼。</span><div class="note">給與受批評的核心心法——把對作品的批評和對人格的攻擊切開。</div></blockquote>
+    <blockquote class="q"><span class="en">"Failure is an option."</span><span class="zh">失敗是一種選項。</span><div class="note">Google 愛用座右銘，反轉名句「Failure is not an option」——從不失敗代表不夠創新。</div></blockquote>
+    <blockquote class="q"><span class="en">"The more open you are to influence, the more you are able to influence; the more vulnerable you are, the stronger you appear."</span><span class="zh">你愈是對影響保持開放，就愈有能力去影響別人；你愈願意展現脆弱，看起來反而愈強大。</span><div class="note">示弱是謙遜與當責的外顯，長期累積信任與尊重。</div></blockquote>
+    <blockquote class="q"><span class="en">"Relationships always outlast projects."</span><span class="zh">關係的壽命，永遠長過專案。</span><div class="note">專案會結束，但同事關係會在下一個專案繼續發揮價值。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">HRT（謙遜、尊重、信任）</span><br>健康協作的三支柱。幾乎所有社交衝突的根因都是其中一項缺席；文化篇反覆援引的基礎模型。</div>
+      <div class="kw"><span class="term">The Genius Myth（天才迷思）</span><br>把團隊集體成就歸因於單一英雄的傾向。它是不安全感的變體，會讓人不敢分享未完成的作品。</div>
+      <div class="kw"><span class="term">Bus Factor（公車係數）</span><br>專案徹底失敗前需要「失去」的關鍵人數。靠文件、主/副負責人、知識分散提高，降低單點知識風險。</div>
+      <div class="kw"><span class="term">Fail early, fail fast, fail often</span><br>透過緊密回饋迴路盡早暴露錯誤，把修正成本壓到最低；對應第 1 章的 shifting left。</div>
+      <div class="kw"><span class="term">You are not your code（你不是你的程式碼）</span><br>把自我價值與創作產出脫鉤，才能健康地給與接受批評。</div>
+      <div class="kw"><span class="term">Blameless Post-Mortem（無究責事後檢討）</span><br>對事不對人的根因分析文件，重點是「學到什麼、將改變什麼」，而非道歉與指責。</div>
+      <div class="kw"><span class="term">Collective Ego（集體的自我）</span><br>把個人榮耀感轉化為團隊成就感與群體榮耀，避免破壞性的個人自我。</div>
+      <div class="kw"><span class="term">Constructive Criticism（建設性批評）</span><br>針對「作品如何改進」而非「人格如何不堪」的回饋；以尊重為底色，用謙遜措辭表達。</div>
+      <div class="kw"><span class="term">Googleyness（Google 特質）</span><br>明確化後的行為量表：在模糊中茁壯、重視回饋、挑戰現狀、使用者為先、在乎團隊、做對的事。</div>
+      <div class="kw"><span class="term">Pair Programming（結對程式設計）</span><br>兩人共用一台機器協作；風格衝突需靠 HRT 與耐心化解，必要時改良協作方式而非硬配。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>誠實面對：你最近一次「想做完美再給人看」是什麼時候？背後的不安全感是什麼？早一週給同事看，最壞與最好分別會怎樣？</li>
+      <li>算一下你負責的關鍵模組的 <b>bus factor</b>。如果是 1，你打算用什麼最小成本（文件？副負責人？結對？）把它變成 2？</li>
+      <li>回想最近給出或收到的一則 code review。它針對「作品」還是碰到了「人格」？用「把問題指向自己」的謙遜句式重寫一遍。</li>
+      <li>你的團隊有<b>無究責事後檢討</b>嗎？最近一次故障檢討，是「學到什麼、將改變什麼」，還是淪為找戰犯？</li>
+      <li>你的組織用哪些<b>模糊文化詞</b>（culture fit、夠不夠 senior）在招聘或考核？它們會不會正悄悄變成「跟我一樣」的偏見？該如何像 Googleyness 一樣明確化？</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 本章「快速失敗、認錯」呼應第 1 章「資料驅動文化必須能認錯」與 shifting left。</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— HRT 中「謙遜提問、尊重回答」是知識分享文化的行為基礎；心理安全感是本章延伸。</span></div>
+      <div class="chip"><a href="ch04.html">ch04 Engineering for Equity</a> <span class="rel">— 「Googley」的偏見風險直接通往「偏見是預設值」的公平議題。</span></div>
+      <div class="chip"><a href="ch05.html">ch05 How to Lead a Team</a> <span class="rel">— 領導者如何建立 HRT 文化、放下自我、當催化劑，是本章在管理層的展開。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 「給與受批評」的完整實務版；本章的人際心法在審查流程中落地。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch01.html">← 上一章：What Is Software Engineering?</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch03.html">下一章：Knowledge Sharing →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture</div>
+    <div class="ch-no">CHAPTER 02</div>
+    <h1 class="title">How to Work Well on Teams</h1>
+    <div class="title-zh">Great software is built by teams, not lone geniuses</div>
+    <div class="meta-row">
+      <span class="badge">by Brian Fitzpatrick</span>
+      <span class="badge">PDF p.55–70</span>
+      <span class="theme-tag t-culture">Culture · HRT</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Software engineering is a team endeavor."</span>
+      <span class="zh">In plain terms: great software is built by teams, not lone geniuses.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>This opens the "Culture" part, and its subject is the one variable you fully control — <b>yourself</b>. Engineers often want to <i>hide</i> work-in-progress code, and the root cause is <b>insecurity</b>: fear of being judged on unfinished work. That insecurity feeds the <b>Genius Myth</b> — crediting a team's success to a single hero (Linus, Guido, Jobs, Michael Jordan), when the truth is "a spark of inspiration followed by a heroic <i>team</i> effort."</p>
+      <p>The central claim: <b>software development is a team endeavor, and the foundation of healthy collaboration is three pillars — Humility, Respect, Trust (HRT)</b>. Root-cause almost any social conflict and you'll find a missing pillar. The author makes HRT operational: lose the ego, give and take criticism (you are not your code), fail fast and iterate, run blameless post-mortems, learn patience, and stay open to influence. Finally Google replaces the vague "Googley" with an explicit rubric so it can't degrade into "just like me" — an engine of unconscious bias.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>Strong technically, stuck on the team.</b> Blunt fact: most work needs no genius-level intellect, but <b>100% of it requires a minimal level of social skill</b>. What makes or breaks your career is how well you collaborate.</div>
+      <div class="why-card"><b>You need to articulate the lone-wolf risk.</b> "Hide until perfect" feels safe but bets your time on maybe building the wrong thing. Bus factor, early feedback, and fast iteration give you the argument.</div>
+      <div class="why-card"><b>You lead or review code and keep stepping on landmines.</b> Joe's story shows a technically-fine, socially-disastrous review; turn "you're wrong" into "I'm confused" — humility points the question at yourself.</div>
+      <div class="why-card"><b>You want a fault-tolerant, learning culture.</b> Blameless post-mortems, "Failure is an option," and vulnerability-as-strength are the institutional basis for daring to take risks and admit mistakes.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Help Me Hide My Code</h3>
+      <div class="claim">Around 2008, Google Code got a flood of "hide branches / start hidden / wipe history" requests, all rooted in <b>insecurity</b> — fear of being judged on work in progress.</div>
+      <div class="impl"><b>Takeaway:</b> don't treat "wanting to hide" as a quirk — it's a warning light about team-culture health; insecurity is a symptom of a bigger problem.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> The Genius Myth</h3>
+      <div class="claim">Linus didn't write Linux alone — he wrote a proof-of-concept kernel; his real achievement was <b>leading and coordinating thousands</b>. The Genius Myth = attributing a team's success to one individual.</div>
+      <p>Reality check: you're probably not a genius; even geniuses err, and elite analytical skill is worthless if you can't solve human problems — being a genius is no excuse for being a jerk.</p>
+      <div class="impl"><b>Takeaway:</b> the myth is another face of insecurity. Cleverness doesn't solve collaboration problems.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> Hiding Considered Harmful</h3>
+      <div class="claim">The bike-gear-shifter parable: you tinker alone for months; your neighbor builds it <i>with friends</i>, moves faster, and instantly spots the flaw you missed. Working alone is inherently <b>riskier</b>.</div>
+      <ul class="tight">
+        <li><b>Early Detection:</b> the more early feedback you solicit, the lower the risk. Live by "fail early, fail fast, fail often."</li>
+        <li><b>Bus Factor:</b> "people who must be hit by a bus before the project is doomed." Only-you-understand-it = 1 = dangerous; raise it with docs + primary/secondary owners.</li>
+        <li><b>Pace of Progress:</b> engineers thrive in tight feedback loops (like incremental compiling); a team is the project-level loop — "many eyes keep the project relevant and on track."</li>
+        <li><b>Offices:</b> private offices and giant open-plan are both extremes; the <b>best answer is small rooms of 4–8</b>, plus protocols (tokens, headphones, "Breakpoint Mary") to protect focus.</li>
+      </ul>
+      <div class="impl"><b>Takeaway:</b> balancing focus-time and high-bandwidth team connection is an art — but hiding is always the wrong end of it.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> It's All About the Team</h3>
+      <div class="claim">Lone craftspeople are extremely rare; world-changing results are almost always "inspiration + heroic team effort." Great teams use stars well, but <b>the whole is always greater than the sum of its parts</b>.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> The Three Pillars · HRT</h3>
+      <div class="claim">Root-cause almost any social conflict and you'll find a missing <b>Humility / Respect / Trust</b>.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 270" role="img" aria-label="HRT three pillars hold up healthy collaboration">
+          <rect x="70" y="36" width="580" height="40" rx="8" fill="var(--card2)" stroke="var(--border)"/>
+          <text x="360" y="62" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Healthy collaboration · great team (whole &gt; sum of parts)</text>
+          <g text-anchor="middle">
+            <rect x="120" y="92" width="120" height="120" rx="10" fill="none" stroke="var(--theme-time)" stroke-width="3"/><text x="180" y="156" class="fig-txt" font-size="17" font-weight="700">Humility</text>
+            <rect x="300" y="92" width="120" height="120" rx="10" fill="none" stroke="var(--theme-scale)" stroke-width="3"/><text x="360" y="156" class="fig-txt" font-size="17" font-weight="700">Respect</text>
+            <rect x="480" y="92" width="120" height="120" rx="10" fill="none" stroke="var(--theme-trade)" stroke-width="3"/><text x="540" y="156" class="fig-txt" font-size="17" font-weight="700">Trust</text>
+          </g>
+          <rect x="70" y="226" width="580" height="34" rx="8" fill="var(--card2)" stroke="var(--border)"/>
+          <text x="360" y="248" class="fig-mut" font-size="13" text-anchor="middle">Foundation: every social conflict traces back to a missing pillar</text>
+        </svg>
+        <figcaption><b>Core model of the chapter</b> — HRT: Humility, Respect, and Trust hold up healthy collaboration; remove one and it collapses.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Why Do These Pillars Matter?</h3>
+      <div class="claim">A predictable compiler is easier company than messy humans, but don't underestimate "playing the social game" — not manipulation, but building relationships to get things done.</div>
+      <div class="impl"><b>Takeaway:</b> <b>relationships always outlast projects</b>; Hamming's anecdote — being friendly to the secretaries earned superb help when he needed it.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> HRT in Practice</h3>
+      <ul class="tight">
+        <li><b>Lose the ego:</b> aim for a <b>collective ego</b> (team pride) over personal glory; insisting "my way" costs you a small, steady tax across your career.</li>
+        <li><b>Give and take criticism:</b> separate critique of the <i>work</i> from attacks on the <i>person</i>. The rule: "<b>you are not your code</b>." Rewrite "you got it wrong" as "I'm confused — would the xyzzy pattern be clearer?"</li>
+        <li><b>Fail fast and iterate:</b> the CEO who "just spent $10M training you"; Google's "<b>Failure is an option</b>," and Google X competing to disprove ideas fast.</li>
+        <li><b>Blameless post-mortem:</b> not apologies or scapegoats, but "what we learned and will change." Includes summary, timeline, primary cause, impact, fix &amp; prevention action items (with owners), lessons.</li>
+        <li><b>Learn patience:</b> the author and Karl (top-down vs bottom-up) used trust, respect, and patience to invent a new workflow — saving the project and the friendship.</li>
+        <li><b>Be open to influence:</b> the more open you are, the more you can influence; vulnerability ("I don't know") is humility and accountability, and raises your standing. Teammates are collaborators, not competitors.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Being Googley</h3>
+      <div class="claim">"Googley" was never defined, so it became a source of <b>unconscious bias</b> in hiring/reviews — quietly meaning "just like me."</div>
+      <p>Google made it explicit: <b>thrives in ambiguity, values feedback, challenges the status quo, puts the user first, cares about the team, does the right thing</b> — and moved away from the vague term.</p>
+      <div class="impl"><b>Takeaway:</b> <b>be specific about expectations</b> — vague culture words breed bias.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Software engineering is a team endeavor."</span><span class="zh">Building software is fundamentally collaborative work, not a solo act.</span><div class="note">The one-line thesis, refuting the genius-programmer fantasy.</div></blockquote>
+    <blockquote class="q"><span class="en">"Bus factor (noun): the number of people that need to get hit by a bus before your project is completely doomed."</span><span class="zh">A measure of how concentrated your project's knowledge is; a bus factor of 1 means one absence kills it.</span><div class="note">Classic term for single-point-of-knowledge risk.</div></blockquote>
+    <blockquote class="q"><span class="en">"You are not your code."</span><span class="zh">Criticism of your code is not an attack on you; decouple self-worth from output.</span><div class="note">The core mindset for giving and receiving criticism.</div></blockquote>
+    <blockquote class="q"><span class="en">"Failure is an option."</span><span class="zh">Some failure is expected and welcome — its absence signals too little risk-taking.</span><div class="note">A Google motto inverting "failure is not an option."</div></blockquote>
+    <blockquote class="q"><span class="en">"The more open you are to influence, the more you are able to influence; the more vulnerable you are, the stronger you appear."</span><span class="zh">Listening and admitting limits earns credibility and, paradoxically, makes you more persuasive and respected.</span><div class="note">Vulnerability as a show of humility and accountability.</div></blockquote>
+    <blockquote class="q"><span class="en">"Relationships always outlast projects."</span><span class="zh">Projects end, but coworker goodwill carries into the next one — so invest in it.</span><div class="note">Why "the social stuff" is worth the effort.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">HRT (Humility, Respect, Trust)</span><br>The three pillars of healthy collaboration; nearly every social conflict traces to a missing one. The base model the Culture part keeps invoking.</div>
+      <div class="kw"><span class="term">The Genius Myth</span><br>Attributing a team's collective success to a lone hero; a variant of insecurity that discourages sharing unfinished work.</div>
+      <div class="kw"><span class="term">Bus Factor</span><br>How many key people a project can lose before it's doomed; raise it via docs, primary/secondary owners, and knowledge spread.</div>
+      <div class="kw"><span class="term">Fail early, fail fast, fail often</span><br>Surface mistakes early via tight feedback loops to minimize fix cost; echoes Ch.1's shifting left.</div>
+      <div class="kw"><span class="term">You are not your code</span><br>Decouple self-worth from output so you can give and take criticism healthily.</div>
+      <div class="kw"><span class="term">Blameless post-mortem</span><br>A no-blame root-cause document focused on "what we learned and will change," not apologies or scapegoats.</div>
+      <div class="kw"><span class="term">Collective ego</span><br>Channel personal pride into team accomplishment instead of individual self-promotion.</div>
+      <div class="kw"><span class="term">Constructive criticism</span><br>Feedback about how the work can improve, delivered with respect and humble phrasing.</div>
+      <div class="kw"><span class="term">Googleyness</span><br>The explicit rubric replacing vague "Googley": thrives in ambiguity, values feedback, challenges status quo, user-first, cares about the team, does the right thing.</div>
+      <div class="kw"><span class="term">Pair programming</span><br>Two people, one machine; style clashes resolved with HRT and patience, adapting the workflow rather than forcing a bad fit.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Honestly: when did you last want to "perfect it before showing anyone"? What insecurity drove that? If you'd shared a week earlier, what's the worst — and best — that could happen?</li>
+      <li>Compute the <b>bus factor</b> of a key module you own. If it's 1, what minimal investment (docs? secondary owner? pairing?) raises it to 2?</li>
+      <li>Recall a code review you gave or got. Was it about the work or did it touch the person? Rewrite it with the "point the question at yourself" phrasing.</li>
+      <li>Does your team run <b>blameless post-mortems</b>? Was the last incident review about "what we learned and will change," or a hunt for a scapegoat?</li>
+      <li>Which <b>vague culture words</b> (culture fit, "senior enough") does your org use in hiring/reviews? Could they be turning into "just like me" bias? How would you make them explicit, like Googleyness?</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "fail fast, admit mistakes" echoes Ch.1's data-driven culture and shifting left.</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— HRT's "ask humbly, answer respectfully" is the basis of a sharing culture; psychological safety extends this.</span></div>
+      <div class="chip"><a href="ch04.html">ch04 Engineering for Equity</a> <span class="rel">— the bias risk in "Googley" leads straight to "bias is the default."</span></div>
+      <div class="chip"><a href="ch05.html">ch05 How to Lead a Team</a> <span class="rel">— how leaders build HRT culture and act as catalysts; this chapter at the management layer.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— the full practical version of "give and take criticism."</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch01.html">← Prev: What Is Software Engineering?</a><a class="idx" href="index.html">⌂ Index</a><a href="ch03.html">Next: Knowledge Sharing →</a></nav>
+</div>
+</div>
+
+</body>
+</html>

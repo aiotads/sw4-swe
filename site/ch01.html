@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 1 章 What Is Software Engineering? ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  /* language toggle (CSS-only) */
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden;
+    box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  /* header */
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-time{background:var(--theme-time)} .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-time{background:var(--theme-time)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-time); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  nav.foot .spacer{flex:1}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part I — Thesis ｜ 全書論題</div>
+    <div class="ch-no">CHAPTER 01</div>
+    <h1 class="title">What Is Software Engineering?</h1>
+    <div class="title-zh">什麼是軟體工程？</div>
+    <div class="meta-row">
+      <span class="badge">作者 Titus Winters</span>
+      <span class="badge">PDF p.31–52</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Software engineering is programming integrated over time."</span>
+      <span class="zh">軟體工程，是把時間維度整合進來的程式設計。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>本章是全書的<b>論題（thesis）</b>，回答一個看似基本卻長期被混淆的問題：軟體工程和寫程式（programming）差在哪？作者提出三條判準——<b style="color:var(--theme-time)">時間</b>、<b style="color:var(--theme-scale)">規模</b>、<b style="color:var(--theme-trade)">取捨</b>。程式設計是「當下產生程式碼」；軟體工程則是在「程式碼預期被使用、維護多久」的時間尺度上，加上「多少人協作、組織多大」的規模，再疊上「在不完美資訊下做高風險決策」的取捨後，形成的一整套政策、實務與工具。</p>
+      <p>核心是<b>可持續性（sustainability）</b>：只要在程式碼的預期壽命內，你「有能力」回應任何有價值的變化，專案就是可持續的——重點是能力，而非一定要改。短命程式碼幾乎不受時間影響，可以「夠用就好」；但壽命跨越數年到數十年的系統，幾乎所有依賴都會變，於是「能跑」與「可維護」的差距會被時間無限放大。這章奠定了後面 24 章共用的思考框架。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>把「會寫程式」升級成「會做工程」。</b> L4 最常見的盲點是把「在我機器上能跑」當完成；這章給你一把尺——<b>程式碼的預期壽命</b>——重新定義什麼叫「做完」。</div>
+      <div class="why-card"><b>替團隊做決策，卻說不清理由。</b> 本章把成本拆成六類，並給鐵律：決策只能因「非做不可」或「現有證據下最佳」，<b>絕不能因為「我說了算」</b>。這是向上溝通與帶人的共同語言。</div>
+      <div class="why-card"><b>預判哪些做法「現在沒事、長大就爆」。</b> Hyrum's Law、不可擴展的棄用政策、分支氾濫——用「組織放大 10×、100×」的思想實驗，提早辨識超線性成長的成本。</div>
+      <div class="why-card"><b>它是全書地圖。</b> Time／Scale／Trade-offs 三主軸貫穿後面每一章；先讀懂這章，後面所有章節都有了掛鉤點。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Time and Change <span class="en2">時間與變化</span></h3>
+      <div class="claim">關鍵提問：「<b>你的程式碼預期壽命有多長？</b>」合理答案跨度約 <b>10 萬倍</b>——從「跑一次、活幾分鐘」到「活幾十年」。</div>
+      <p>短命程式碼幾乎不受時間影響；隨壽命拉長，變化會從可忽略變成主宰因素。從一次性腳本到跨十年專案之間，存在一個「必須開始回應外部變化」的轉折點，沒有從一開始規劃升級的專案，第一次跨過去通常極度痛苦（隱藏假設多、缺經驗、一次補做好幾年升級）。</p>
+      <div class="impl"><b>工程意涵：</b>可持續性不是「永不改變」，而是「有能力且划算地改變」。熬過第一次大升級、並建立「能持續跟上」的能力，才是長期可持續的本質。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="壽命與升級重要性光譜">
+          <defs><linearGradient id="lifespan" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3bb8c4"/><stop offset="1" stop-color="#e0a23b"/></linearGradient></defs>
+          <path d="M60,170 C260,168 360,150 460,110 S640,40 660,36" fill="none" stroke="var(--theme-time)" stroke-width="3"/>
+          <text x="470" y="70" class="fig-mut" font-size="13">升級重要性 ↑</text>
+          <rect x="60" y="180" width="600" height="10" rx="5" fill="url(#lifespan)"/>
+          <text x="60" y="210" class="fig-txt" font-size="13" text-anchor="start">幾分鐘 / 小時</text>
+          <text x="360" y="210" class="fig-mut" font-size="13" text-anchor="middle">轉折區（約 5–10 年）</text>
+          <text x="660" y="210" class="fig-txt" font-size="13" text-anchor="end">數十年</text>
+          <line x1="360" y1="150" x2="360" y2="190" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 4"/>
+          <rect x="44" y="120" width="150" height="34" rx="8" fill="var(--card)" stroke="var(--border)"/><text x="119" y="142" class="fig-txt" font-size="12" text-anchor="middle">一次性 Python 腳本</text>
+          <rect x="520" y="120" width="170" height="34" rx="8" fill="var(--card)" stroke="var(--border)"/><text x="605" y="142" class="fig-txt" font-size="12" text-anchor="middle">Google Search / Linux 核心</text>
+        </svg>
+        <figcaption><b>Figure 1-1</b> 壽命與升級重要性：程式碼預期壽命愈長（左→右），回應外部變化、執行升級的重要性愈高；中段存在「必須開始回應變化」的轉折區。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Hyrum's Law <span class="en2">海勒姆定律</span></h3>
+      <div class="claim"><b>當一個 API 的使用者夠多，你在契約裡承諾什麼都不重要——系統所有可被觀察到的行為，都會有人依賴。</b></div>
+      <p>作者類比為熵：無法根除，只能緩解。即使最無害的改動，只要時間夠久、用戶夠多，都會弄壞某個東西。</p>
+      <div class="impl"><b>工程意涵：</b>把它從哲學變成日常風險評估——評估變更價值時，必須把「調查、定位、修復破壞」的難度算進去。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Example: Hash Ordering <span class="en2">雜湊排序範例</span></h3>
+      <div class="claim">雜湊容器迭代順序是 Hyrum's Law 活教材：短命且環境不變時可假設順序固定；不知壽命或不能保證依賴不變時，這假設就是錯的。</div>
+      <p>即使你不依賴順序，序列化進 RPC 回應後，呼叫端可能反而依賴它；甚至有人把雜湊順序當廉價亂數產生器，移除隨機性反而弄壞他們。這是「能跑」與「正確」的最小範例。</p>
+      <div class="impl"><b>金句總結：</b>「如果『clever』是稱讚，那是 programming；如果『clever』是指控，那是 software engineering。」</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Why Not Just Aim for "Nothing Changes"? <span class="en2">為何不追求「什麼都不變」</span></h3>
+      <div class="claim">「能不能不要改？」——看情況。純 C、零外部依賴或只依賴 POSIX 這類極穩定的東西，或許能避開重構；但多數專案暴露在會變動的底層技術下。</div>
+      <p>Heartbleed、Meltdown、Spectre 等安全問題，加上硬體演進帶來的效能機會（舊演算法在新硬體上反而低效），都讓「假設永不變」變成高風險豪賭。</p>
+      <div class="impl"><b>工程意涵：</b>「為改而改」不對，但「沒有能力改」更危險。變化本身不是好事，但「能否變化」是必須具備、且值得投資讓它變便宜的能力。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Scale and Efficiency <span class="en2">規模與效率</span></h3>
+      <div class="claim">組織賴以生產與維護程式碼的一切都必須在成本與資源上可擴展；尤其<b>每件「重複做」的事，都必須在人力投入上可擴展</b>。</div>
+      <p>不只程式本身要對 CPU／記憶體／儲存／頻寬擴展良好，連開發流程、測試叢集、版控與建置系統也要。許多問題像「溫水煮青蛙」，緩慢惡化卻從不爆成單一危機。</p>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Policies That Don't / Do Scale <span class="en2">不可擴展 vs 可擴展的政策</span></h3>
+      <div class="claim">辨識壞政策的方法：想像「組織放大 10×、100×」時單一工程師的負擔會不會等比增加。</div>
+      <p><b>不可擴展：</b>傳統棄用法（「8/15 砍舊 Widget，請大家自己遷移」）把成本推給下游；開發分支政策（「合併太亂就少合併」）導致分支爆炸。<br>
+      <b>可擴展對策：</b><b style="color:var(--theme-scale)">Churn Rule</b>——基礎設施團隊自己負責遷移內部用戶，由少數專家深入學一次、套到每個子問題；<b style="color:var(--theme-scale)">The Beyoncé Rule</b>——「喜歡它就該幫它寫 CI 測試」，沒進共用 CI 的測試不算數。</p>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Example: Compiler Upgrade <span class="en2">編譯器升級範例</span></h3>
+      <div class="claim">Google <b>2006 年</b>傳奇升級——五年沒升級、數千工程師多數沒經驗——極度痛苦。但關鍵不是難度，而是意識到任務必要後，用自動化、一致性、專家化讓升級能以「固定人數」完成，即使程式碼持續長大。</div>
+      <div class="impl"><b>工程意涵：</b>停滯（stagnation）是一個選項，但通常不明智——會多付約 25% 運算成本並承擔安全風險。影響升級難易的因素：專家、穩定度、一致性、熟悉度、政策。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Shifting Left <span class="en2">左移</span></h3>
+      <div class="claim">在開發時間軸上（構想→設計→實作→審查→測試→提交→金絲雀→上線），<b>愈早（往「左」）發現問題，修復愈便宜</b>。</div>
+      <p>源自資安界「shift left on security」。靜態分析與 code review 在提交前抓到的 bug 遠比上線後便宜。沒有單一工具完美，所以採<b>縱深防禦</b>，盡量在左側多攔截缺陷。</p>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="開發流程時間軸與左移">
+          <defs><linearGradient id="cost" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3bb8c4"/><stop offset="1" stop-color="#c45b9d"/></linearGradient>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--theme-scale)"/></marker></defs>
+          <g font-size="12" text-anchor="middle">
+            <rect x="20" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="63" y="90" class="fig-txt">構想/設計</text>
+            <rect x="116" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="159" y="90" class="fig-txt">實作</text>
+            <rect x="212" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="255" y="90" class="fig-txt">審查</text>
+            <rect x="308" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="351" y="90" class="fig-txt">測試</text>
+            <rect x="404" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="447" y="90" class="fig-txt">提交</text>
+            <rect x="500" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="543" y="90" class="fig-txt">金絲雀</text>
+            <rect x="596" y="70" width="100" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="646" y="90" class="fig-txt">上線</text>
+          </g>
+          <rect x="20" y="120" width="676" height="10" rx="5" fill="url(#cost)"/>
+          <text x="20" y="150" class="fig-mut" font-size="12" text-anchor="start">修復成本：低</text>
+          <text x="696" y="150" class="fig-txt" font-size="12" text-anchor="end">修復成本：高</text>
+          <line x1="500" y1="40" x2="120" y2="40" stroke="var(--theme-scale)" stroke-width="2.5" marker-end="url(#arrow)"/>
+          <text x="360" y="30" class="fig-txt" font-size="13" text-anchor="middle" font-weight="700">Shift Left：愈早發現愈便宜</text>
+        </svg>
+        <figcaption><b>Figure 1-2</b> 開發流程時間軸：問題愈往左（早）被發現，修復成本愈低。靜態分析與 code review 在提交前攔截，遠比上線後便宜。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE</span> Trade-offs and Costs <span class="en2">取捨與成本</span></h3>
+      <div class="claim">「成本」不只是錢，包含<b>財務、資源、人力、交易、機會、社會</b>六類。在高創造、高報酬的軟體工程裡，限制因素通常是<b>人力</b>而非錢——專注度差異輕易就有 10–20%。</div>
+      <div class="impl"><b>鐵律：</b>決策只能因「非做不可」或「現有證據下的最佳選擇」，不能是「我說了算」。追求共識（consensus）而非全體一致（unanimity）。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE</span> Examples: Markers / Distributed Builds <span class="en2">白板筆 / 分散式建置</span></h3>
+      <div class="claim"><b>白板筆：</b>Google 選擇開放補給，明確權衡「讓腦力激盪零阻礙，遠比防止有人順手拿走幾支筆重要」。</div>
+      <p><b>分散式建置：</b>自建系統整體效益遠大於成本，但故事沒有完美結局——當工程師不再直接感受建置變慢的痛，膨脹的依賴失去約束（呼應 <span class="mono">Jevons 悖論</span>：效率提升反而刺激消耗）。即使簡單取捨也有未預見的下游效應。</p>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE</span> Revisiting Decisions &amp; SWE vs Programming <span class="en2">重新檢視決策／兩者之別</span></h3>
+      <div class="claim">資料驅動文化的隱藏好處，是<b>有能力也有必要承認錯誤</b>。決策者必須有「認錯的權利」——勇於認錯的領導者更受尊敬。</div>
+      <p>最後澄清：軟體工程並非「優於」程式設計，而是<b>兩個不同問題領域</b>，各有約束與最佳實務。短命專案不需整合測試、CD、SemVer；長壽專案則離不開它們。用對工具才是重點。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Software engineering is programming integrated over time."</span><span class="zh">軟體工程，是把時間維度整合進來的程式設計。</span><div class="note">全書的定義性金句，奠定 time 這條主軸。</div></blockquote>
+    <blockquote class="q"><span class="en">"With a sufficient number of users of an API, it does not matter what you promise in the contract: all observable behaviors of your system will be depended on by somebody."</span><span class="zh">當一個 API 的使用者夠多，你在契約裡承諾了什麼都不再重要——系統所有可被觀察到的行為，總會有人去依賴它。</span><div class="note">Hyrum's Law，全書討論「變更」時反覆援引的公理。</div></blockquote>
+    <blockquote class="q"><span class="en">"It's programming if 'clever' is a compliment, but it's software engineering if 'clever' is an accusation."</span><span class="zh">如果說你「clever（聰明）」是在稱讚你，那是程式設計；如果「clever」是一種指控，那就是軟體工程了。</span><div class="note">以反諷點出兩者價值取向——長壽程式碼推崇「乾淨可維護」，而非「炫技」。</div></blockquote>
+    <blockquote class="q"><span class="en">"If you liked it, you should have put a CI test on it."</span><span class="zh">喜歡它，當初就該幫它寫個 CI 測試。</span><div class="note">The Beyoncé Rule，化用碧昂絲〈Single Ladies〉歌詞「put a ring on it」。沒進共用 CI 的測試不算數。</div></blockquote>
+    <blockquote class="q"><span class="en">"'Because I said so' is a terrible reason to do things."</span><span class="zh">「因為我說了算」是做一件事最糟糕的理由。</span><div class="note">Google 工程決策文化的底線——追求共識而非全體一致，但任何結論都要有理由。</div></blockquote>
+    <blockquote class="q"><span class="en">"Contrary to some people's instincts, leaders who admit mistakes are more respected, not less."</span><span class="zh">與某些人的直覺相反，勇於承認錯誤的領導者會更受尊敬，而不是更不受尊敬。</span><div class="note">資料驅動必然要求隨資料改變方向，因此「認錯的權利」是長壽組織的必需品。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Software Engineering vs Programming（軟體工程 vs 程式設計）</span><br>程式設計是「當下產生程式碼」；軟體工程是「在程式碼有用壽命內維護它、支援團隊協作」所需的政策、實務與工具總和。差別在維度：time、scale、trade-offs。</div>
+      <div class="kw"><span class="term">Sustainability（可持續性）</span><br>在程式碼預期壽命內，你「有能力」安全地回應一切該回應的變化。重點是能力，不是強制每次都升級。</div>
+      <div class="kw"><span class="term">Hyrum's Law（海勒姆定律 / 隱含依賴定律）</span><br>用戶夠多時，API 所有可觀察行為都會被某人依賴。是評估變更難度的核心風險因子，類比於熵：可緩解不可根除。</div>
+      <div class="kw"><span class="term">Expected Life Span（預期壽命）</span><br>程式碼預期被建置、執行、維護多久。合理跨度約 10 萬倍；壽命決定該用「夠用就好」還是「乾淨可維護」。</div>
+      <div class="kw"><span class="term">Sublinear Scaling（次線性擴展）</span><br>組織與程式碼長大時，重複性工作的人力成本必須次線性成長；超線性成長的政策遲早撐不住。</div>
+      <div class="kw"><span class="term">The Beyoncé Rule（碧昂絲法則）</span><br>「喜歡它就該幫它寫 CI 測試」。沒進共用 CI 的測試不算數，破壞責任歸於沒寫測試者。</div>
+      <div class="kw"><span class="term">Churn Rule（流失/翻騰規則）</span><br>基礎設施團隊自己負責把內部用戶遷移到新版，而非把成本推給每個下游；由專家集中處理，擴展性更好。</div>
+      <div class="kw"><span class="term">Shifting Left（左移）</span><br>在開發時間軸上愈早發現問題，修復成本愈低。配合縱深防禦，盡量在提交前攔截缺陷。</div>
+      <div class="kw"><span class="term">Cost（成本，六類）</span><br>財務、資源、人力、交易、機會、社會。軟體工程的限制因素通常是人力成本而非財務成本。</div>
+      <div class="kw"><span class="term">Boiled Frog Problem（溫水煮青蛙問題）</span><br>低效與成本緩慢惡化、從不爆成單一危機，因而被忽視；需靠全組織的擴展意識持續監看。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>拿你正在維護的一個系統，誠實估它的<b>預期壽命</b>。你的做法（測試、依賴管理、升級策略）和這壽命相稱嗎？哪裡用「夠用就好」反而埋了長期地雷？</li>
+      <li>套用 <b>Hyrum's Law</b>：你的服務有哪些「未承諾、卻已被下游依賴」的可觀察行為（輸出順序、時序、錯誤訊息格式、效能特性）？哪一個一旦改動最危險？</li>
+      <li>用「組織放大 10 倍」思想實驗檢視你團隊某條流程（發版、權限審批、依賴升級）。它是<b>次線性</b>還是<b>超線性</b>成長？能否用「專家集中處理」或「自動化」改造？</li>
+      <li>回想最近一個重大技術決策。它屬於「非做不可」「現有證據下最佳」哪一種？還是混入了「大家都這樣做／我說了算」？你能列出六類成本嗎？</li>
+      <li>你的團隊文化允許<b>公開承認決策錯誤</b>嗎？若不允許，是什麼制度或誘因在阻止它？對照下一章的無究責事後檢討。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— 本章「專家可擴展、知識具傳染性」在知識分享章展開為具體機制。</span></div>
+      <div class="chip"><a href="ch04.html">ch04 Engineering for Equity</a> <span class="rel">— 對應本章「社會成本」與大規模產品對邊緣群體的放大效應。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— 回應本章「難以量化的成本」與資料驅動決策的限制。</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— The Beyoncé Rule 與 CI 的源頭；可擴展政策在此落地。</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— Churn Rule 與棄用政策的完整版。</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control</a> <span class="rel">— 開發分支不可擴展問題的詳細解法（monorepo、單一版本）。</span></div>
+      <div class="chip"><a href="ch18.html">ch18 Build Systems</a> <span class="rel">— 分散式建置範例的完整技術與取捨討論。</span></div>
+      <div class="chip"><a href="ch21.html">ch21 Dependency Management</a> <span class="rel">— 「Nothing Changes」靜態依賴模型與 SemVer 的深入剖析。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><span class="spacer"></span><a class="idx" href="index.html">⌂ 總索引</a><a href="ch02.html">下一章：How to Work Well on Teams →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part I — Thesis</div>
+    <div class="ch-no">CHAPTER 01</div>
+    <h1 class="title">What Is Software Engineering?</h1>
+    <div class="title-zh">The book's thesis: programming + time</div>
+    <div class="meta-row">
+      <span class="badge">by Titus Winters</span>
+      <span class="badge">PDF p.31–52</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Software engineering is programming integrated over time."</span>
+      <span class="zh">In plain terms: software engineering = programming + the dimension of time.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>This chapter is the book's <b>thesis</b>. It answers a question that sounds basic but is constantly muddled: how does <i>software engineering</i> differ from <i>programming</i>? The author gives three discriminators — <b style="color:var(--theme-time)">time</b>, <b style="color:var(--theme-scale)">scale</b>, and <b style="color:var(--theme-trade)">trade-offs</b>. Programming is producing code right now; software engineering is what programming becomes once you add the time the code must live, the scale of people producing it, and the pressure of high-stakes decisions under imperfect information — yielding a whole apparatus of policies, practices, and tools.</p>
+      <p>The central idea is <b>sustainability</b>: your project is sustainable if, for the expected life span of your code, you are <i>able</i> to react to any valuable change. The key word is capability, not obligation. Short-lived code is essentially untouched by time and can be "good enough"; but for code that lives years or decades, almost every dependency eventually changes, and the gap between "it happens to work" and "it is maintainable" is magnified without bound. This installs the mental framework reused across the next 24 chapters.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You're upgrading from "can code" to "can engineer."</b> The classic L4 blind spot is treating "it runs on my machine" as done. This chapter hands you a ruler — <b>the expected life span of the code</b> — that redefines what done even means.</div>
+      <div class="why-card"><b>You decide for your team but can't articulate why.</b> The chapter splits "cost" into six kinds and gives one hard rule: a decision is justified only because it's <b>mandatory or the best option on current evidence — never "because I said so."</b></div>
+      <div class="why-card"><b>You want to predict what's "fine now, explodes at scale."</b> Hyrum's Law, non-scaling deprecation, branch proliferation — use the "imagine the org 10× / 100× bigger" thought experiment to spot super-linear costs early.</div>
+      <div class="why-card"><b>It is the map for the whole book.</b> Time / scale / trade-offs run through every later chapter; grasp this one and everything else has a hook.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Time and Change</h3>
+      <div class="claim">The clarifying question: "<b>What is the expected life span of your code?</b>" Reasonable answers span roughly <b>100,000×</b> — from "runs once, lives minutes" to "lives for decades."</div>
+      <p>Short-lived code is largely immune to time; as life span grows, change shifts from negligible to dominant. Between a one-off script and a decade-long project lies a transition point where the project must start reacting to external change — and projects that didn't plan for upgrades find that first crossing brutal (baked-in assumptions, inexperience, years of upgrades at once).</p>
+      <div class="impl"><b>Takeaway:</b> sustainability isn't "never change" — it's "able to change, affordably." Getting through that first upgrade and staying current is the essence of long-term sustainability.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="Life span vs importance of upgrades">
+          <defs><linearGradient id="lifespan2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3bb8c4"/><stop offset="1" stop-color="#e0a23b"/></linearGradient></defs>
+          <path d="M60,170 C260,168 360,150 460,110 S640,40 660,36" fill="none" stroke="var(--theme-time)" stroke-width="3"/>
+          <text x="455" y="70" class="fig-mut" font-size="13">importance of upgrades ↑</text>
+          <rect x="60" y="180" width="600" height="10" rx="5" fill="url(#lifespan2)"/>
+          <text x="60" y="210" class="fig-txt" font-size="13" text-anchor="start">minutes / hours</text>
+          <text x="360" y="210" class="fig-mut" font-size="13" text-anchor="middle">transition (~5–10 yrs)</text>
+          <text x="660" y="210" class="fig-txt" font-size="13" text-anchor="end">decades</text>
+          <line x1="360" y1="150" x2="360" y2="190" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 4"/>
+          <rect x="44" y="120" width="150" height="34" rx="8" fill="var(--card)" stroke="var(--border)"/><text x="119" y="142" class="fig-txt" font-size="12" text-anchor="middle">one-off Python script</text>
+          <rect x="520" y="120" width="170" height="34" rx="8" fill="var(--card)" stroke="var(--border)"/><text x="605" y="142" class="fig-txt" font-size="12" text-anchor="middle">Google Search / Linux kernel</text>
+        </svg>
+        <figcaption><b>Figure 1-1</b> Life span and the importance of upgrades: the longer the expected life span (left→right), the more important reacting to change becomes; a transition zone sits in the middle.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Hyrum's Law</h3>
+      <div class="claim"><b>With a sufficient number of users of an API, it does not matter what you promise in the contract — all observable behaviors of your system will be depended on by somebody.</b></div>
+      <p>Likened to entropy: mitigable, never eradicable. Given enough time and users, even the most innocuous change breaks something.</p>
+      <div class="impl"><b>Takeaway:</b> turn it into routine risk assessment — a change's value analysis must include the cost of investigating, locating, and fixing the breakages it causes.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Example: Hash Ordering</h3>
+      <div class="claim">Hash-container iteration order is the textbook Hyrum's Law case: fine to assume a fixed order if your code is short-lived and the environment is frozen; wrong if you don't know the life span or can't promise dependencies won't change.</div>
+      <p>Even if you don't depend on order, serializing into an RPC response can make the caller depend on it; some even use hash order as a cheap RNG, so removing the randomness breaks them. The smallest example of "it works" vs "it is correct."</p>
+      <div class="impl"><b>Mnemonic:</b> "It's programming if 'clever' is a compliment, but it's software engineering if 'clever' is an accusation."</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Why Not Just Aim for "Nothing Changes"?</h3>
+      <div class="claim">Can you simply avoid change? — it depends. Pure C with no external deps (or only ultra-stable ones like POSIX) might dodge refactors; most projects are exposed to shifting underlying technology.</div>
+      <p>Security disclosures (Heartbleed, Meltdown, Spectre) plus hardware evolution (old algorithms get inefficient on new CPUs) make "assume nothing ever changes" a high-risk bet.</p>
+      <div class="impl"><b>Takeaway:</b> changing for its own sake is wrong, but being <i>unable</i> to change is worse. Change isn't inherently good, but the capability to change is mandatory — and worth investing to make cheap.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Scale and Efficiency</h3>
+      <div class="claim">Everything the org relies on to produce and maintain code must scale in cost and resources; in particular, <b>everything done repeatedly must scale in human effort</b>.</div>
+      <p>Not just the software (CPU/memory/storage/bandwidth) but the dev workflow, test clusters, version control, and build systems. Many such problems are "boiled-frog": they worsen slowly and never spike into a single crisis.</p>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Policies That Don't / Do Scale</h3>
+      <div class="claim">Spot a bad policy by imagining the org 10× / 100× bigger and asking whether one engineer's burden grows proportionally.</div>
+      <p><b>Doesn't scale:</b> the classic deprecation move ("we delete the old Widget on Aug 15th, migrate yourselves") pushes cost downstream; the dev-branch reflex ("merge less") causes branch explosion.<br>
+      <b>Scales:</b> <b style="color:var(--theme-scale)">Churn Rule</b> — infra teams migrate their own internal users; a few experts learn it once and apply to every sub-problem. <b style="color:var(--theme-scale)">Beyoncé Rule</b> — "put a CI test on it"; tests outside shared CI don't count.</p>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Example: Compiler Upgrade</h3>
+      <div class="claim">Google's legendary <b>2006</b> upgrade — five years without upgrading, thousands of engineers, most inexperienced — was extremely painful. The lesson isn't the difficulty but that, once recognized as necessary, automation/consistency/expertise made upgrades doable with a constant headcount even as the codebase grew.</div>
+      <div class="impl"><b>Takeaway:</b> stagnation is an option, usually unwise (~25% extra compute cost plus security exposure). Ease factors: expertise, stability, conformity, familiarity, policy.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Shifting Left</h3>
+      <div class="claim">On the workflow timeline (conception → design → implementation → review → testing → commit → canary → production), <b>the earlier ("more to the left") you catch a problem, the cheaper to fix</b>.</div>
+      <p>From security ("shift left on security"). Bugs caught by static analysis and code review before commit are far cheaper than those reaching production. No single tool is perfect, so use <b>defense in depth</b>.</p>
+      <figure class="fig">
+        <svg viewBox="0 0 720 210" role="img" aria-label="Developer workflow timeline and shift left">
+          <defs><linearGradient id="cost2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3bb8c4"/><stop offset="1" stop-color="#c45b9d"/></linearGradient>
+          <marker id="arrow2" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--theme-scale)"/></marker></defs>
+          <g font-size="11" text-anchor="middle">
+            <rect x="20" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="63" y="90" class="fig-txt">conceive</text>
+            <rect x="116" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="159" y="90" class="fig-txt">implement</text>
+            <rect x="212" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="255" y="90" class="fig-txt">review</text>
+            <rect x="308" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="351" y="90" class="fig-txt">test</text>
+            <rect x="404" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="447" y="90" class="fig-txt">commit</text>
+            <rect x="500" y="70" width="86" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="543" y="90" class="fig-txt">canary</text>
+            <rect x="596" y="70" width="100" height="32" rx="7" fill="var(--card)" stroke="var(--border)"/><text x="646" y="90" class="fig-txt">production</text>
+          </g>
+          <rect x="20" y="120" width="676" height="10" rx="5" fill="url(#cost2)"/>
+          <text x="20" y="150" class="fig-mut" font-size="12" text-anchor="start">fix cost: low</text>
+          <text x="696" y="150" class="fig-txt" font-size="12" text-anchor="end">fix cost: high</text>
+          <line x1="500" y1="40" x2="120" y2="40" stroke="var(--theme-scale)" stroke-width="2.5" marker-end="url(#arrow2)"/>
+          <text x="360" y="30" class="fig-txt" font-size="13" text-anchor="middle" font-weight="700">Shift Left: earlier = cheaper</text>
+        </svg>
+        <figcaption><b>Figure 1-2</b> The developer-workflow timeline: the earlier (further left) a problem is caught, the cheaper to fix.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE</span> Trade-offs and Costs</h3>
+      <div class="claim">"Cost" is more than money: <b>financial, resource, personnel, transaction, opportunity, societal</b>. In a high-creativity field the limiting factor is usually <b>personnel</b>, not money — a 10–20% focus swing is easy.</div>
+      <div class="impl"><b>Hard rule:</b> a decision is legitimate only when mandatory or the best option on current evidence — not "because I said so." Aim for consensus, not unanimity.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE</span> Examples: Markers / Distributed Builds</h3>
+      <div class="claim"><b>Markers:</b> Google stocks open supply closets — an explicit trade-off: frictionless brainstorming matters far more than guarding a few markers.</div>
+      <p><b>Distributed builds:</b> net savings vastly outweighed cost, but no fairy-tale ending — once engineers stopped feeling slow builds, dependency bloat lost its constraint (an echo of <span class="mono">Jevons' paradox</span>: efficiency can increase consumption). Even simple trades have unforeseen downstream effects.</p>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE</span> Revisiting Decisions &amp; SWE vs Programming</h3>
+      <div class="claim">A hidden benefit of a data-driven culture is the ability — and necessity — of admitting mistakes. Deciders must have the right to be wrong: <b>leaders who admit mistakes are respected more, not less</b>.</div>
+      <p>Finally: software engineering isn't "better" than programming — they're <b>two different problem domains</b> with distinct best practices. A few-day project needs no integration tests, CD, or SemVer; a decades-long one can't live without them. Using the right tool is the point.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Software engineering is programming integrated over time."</span><span class="zh">Stretch programming across the whole life of the code — that added time dimension is software engineering.</span><div class="note">The book's defining one-liner; establishes the "time" theme.</div></blockquote>
+    <blockquote class="q"><span class="en">"With a sufficient number of users of an API ... all observable behaviors of your system will be depended on by somebody."</span><span class="zh">Once enough people use your API, every detail they can observe — not just what you documented — becomes something someone relies on.</span><div class="note">Hyrum's Law, invoked throughout whenever change is discussed.</div></blockquote>
+    <blockquote class="q"><span class="en">"It's programming if 'clever' is a compliment, but it's software engineering if 'clever' is an accusation."</span><span class="zh">In short-lived code a clever trick is praise; in long-lived code "clever" means fragile and hard to maintain.</span><div class="note">Contrasts the value systems of the two domains.</div></blockquote>
+    <blockquote class="q"><span class="en">"If you liked it, you should have put a CI test on it."</span><span class="zh">If a behavior matters, protect it with a test in shared CI; otherwise infra changes that break it aren't the infra team's fault.</span><div class="note">The Beyoncé Rule, riffing on "put a ring on it."</div></blockquote>
+    <blockquote class="q"><span class="en">"'Because I said so' is a terrible reason to do things."</span><span class="zh">Authority alone isn't a justification — decisions need an actual reason (evidence, requirement, argued best option).</span><div class="note">Google seeks consensus, not unanimity, but always reasons.</div></blockquote>
+    <blockquote class="q"><span class="en">"Contrary to some people's instincts, leaders who admit mistakes are more respected, not less."</span><span class="zh">Owning an error raises your standing over time; pretending you're never wrong erodes trust.</span><div class="note">A data-driven culture must change course as data changes.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Software Engineering vs Programming</span><br>Programming = producing code now. Software engineering = the policies, practices, and tools to keep code useful as long as needed and to enable team collaboration. Difference = dimensionality: time, scale, trade-offs.</div>
+      <div class="kw"><span class="term">Sustainability</span><br>Being able, for the code's expected life span, to safely respond to every change you ought to. About capability, not forcing upgrades.</div>
+      <div class="kw"><span class="term">Hyrum's Law (Law of Implicit Dependencies)</span><br>With enough users, all observable API behaviors get depended on. The core risk factor in assessing change difficulty; entropy-like.</div>
+      <div class="kw"><span class="term">Expected Life Span</span><br>How long code is expected to be built, run, maintained. Spans ~100,000×; decides "good enough" vs "clean and maintainable."</div>
+      <div class="kw"><span class="term">Sublinear Scaling</span><br>As org and codebase grow, the human cost of repeated work must grow sub-linearly; super-linear policies eventually fail.</div>
+      <div class="kw"><span class="term">The Beyoncé Rule</span><br>"Put a CI test on it." Tests outside shared CI don't count; breakage blame falls on whoever didn't write the test.</div>
+      <div class="kw"><span class="term">Churn Rule</span><br>Infra teams migrate their own internal users instead of pushing cost downstream; centralized expertise scales better.</div>
+      <div class="kw"><span class="term">Shifting Left</span><br>Catch problems earlier in the workflow to lower fix cost; pair with defense in depth.</div>
+      <div class="kw"><span class="term">Cost (six kinds)</span><br>Financial, resource, personnel, transaction, opportunity, societal. The limiting factor is usually personnel, not money.</div>
+      <div class="kw"><span class="term">Boiled Frog Problem</span><br>Inefficiency worsens slowly and never spikes into a crisis, so it's ignored; only org-wide scaling awareness keeps it in check.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Take a system you maintain and honestly estimate its <b>expected life span</b>. Do your testing, dependency-management, and upgrade strategies match it? Where has "good enough" planted a long-term landmine?</li>
+      <li>Apply <b>Hyrum's Law</b>: which "unpromised but already-depended-on" behaviors does your service have (output order, timing, error format, performance)? Which is most dangerous to change?</li>
+      <li>Run the "org 10× bigger" thought experiment on a process (releases, approvals, dependency upgrades). Does it grow <b>sub-</b> or <b>super-linearly</b>? Can centralized expertise or automation fix it?</li>
+      <li>Recall a recent major decision. Was it "mandatory" or "best option on current evidence" — or did "everyone does it / because I said so" sneak in? Can you list the six costs?</li>
+      <li>Does your culture allow <b>publicly admitting a wrong decision</b>? If not, what incentive blocks it? Compare with the blameless post-mortem in the next chapter.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— "expertise scales, knowledge is viral" becomes concrete mechanisms there.</span></div>
+      <div class="chip"><a href="ch04.html">ch04 Engineering for Equity</a> <span class="rel">— picks up "societal cost" and how scale magnifies harm.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— addresses "hard-to-quantify costs" and the limits of data.</span></div>
+      <div class="chip"><a href="ch11.html">ch11 Testing Overview</a> <span class="rel">— origin of the Beyoncé Rule and CI.</span></div>
+      <div class="chip"><a href="ch15.html">ch15 Deprecation</a> <span class="rel">— the full version of the Churn Rule.</span></div>
+      <div class="chip"><a href="ch16.html">ch16 Version Control</a> <span class="rel">— the detailed fix for non-scaling dev branches (monorepo, one-version).</span></div>
+      <div class="chip"><a href="ch18.html">ch18 Build Systems</a> <span class="rel">— the full discussion behind the distributed-build example.</span></div>
+      <div class="chip"><a href="ch21.html">ch21 Dependency Management</a> <span class="rel">— deep dive on "Nothing Changes" and SemVer.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><span class="spacer"></span><a class="idx" href="index.html">⌂ Index</a><a href="ch02.html">Next: How to Work Well on Teams →</a></nav>
+</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 6 章 Leading at Scale ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture ｜ 文化</div>
+    <div class="ch-no">CHAPTER 06</div>
+    <h1 class="title">Leading at Scale</h1>
+    <div class="title-zh">規模化的領導</div>
+    <div class="meta-row">
+      <span class="badge">作者 Ben Collins-Sussman</span>
+      <span class="badge">PDF p.135–150</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+      <span class="theme-tag t-time">Time 時間</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"The urgent are not important, and the important are never urgent."</span>
+      <span class="zh">緊急的事不重要，重要的事從不緊急。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>第 5 章談「從 IC 變成一個團隊的領導者」；這章談下一步——<b>從領導一個團隊，到領導「一群相關的團隊」</b>。所有最佳實務仍適用，你還是「僕人式領導者」，只是服務對象更大；但你解的問題變得<b>更大、更抽象</b>，你被推著「往廣而非往深」，愈來愈無法深入技術細節。這過程一路沮喪——直到某天你發現：你身為領導者的影響力，遠超過你當 IC 時。</p>
+      <p>全章用「<b>領導的三個 Always</b>」貫穿：<b>Always Be Deciding（永遠在做決定）、Always Be Leaving（永遠在準備離開）、Always Be Scaling（永遠在擴展）</b>。分別對應：在更高層持續找<b>當下最對的取捨</b>並迭代；打造一個<b>沒有你也能自己解問題的「自駕團隊」</b>（別把自己變成 SPOF）；以及從<b>防守、保護自己</b>的角度，守護你最稀缺的資源——時間、注意力與精力。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你從「帶一個團隊」變成「帶好幾個團隊」，覺得自己愈來愈廢。</b> 你的價值已換軌——從「砍樹」變成「看穿整片森林、指出該砍哪些樹」，而且影響力其實大得多。</div>
+      <div class="why-card"><b>你是團隊的英雄，所有難題最後都丟到你桌上。</b> 那是危險訊號：你把自己變成了 SPOF。試紙——「你上次休假超過一週時，還一直收公務信嗎？」教你打造「自駕團隊」。</div>
+      <div class="why-card"><b>你每天都在救火，忙到沒空想策略。</b> 緊急的 email 永遠比重要的長期策略容易回。用 Eisenhower 的「重要 vs 緊急」與「刻意丟球」心法，只專注在「只有你能做」的關鍵 20%。</div>
+      <div class="why-card"><b>你開始 burnout，卻不知怎麼喊停。</b> 這章把「保護精力」當領導技能談：三天才忘得掉工作、一週才真正充電、一鍵關掉公務 app、需要時請個心理健康假。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> Always Be Deciding <span class="en2">永遠在做決定</span></h3>
+      <div class="claim">管理「團隊的團隊」＝在更高層做更多決定，而這些決定<b>幾乎都是在找正確的取捨</b>。寫 code 像砍樹，領導者的工作是<b>見林（see the forest through the trees）</b>。</div>
+      <ul class="tight">
+        <li><b>飛機的寓言：</b>暴躁乘客花 800 美元讓 20 人下機，結果飛機故障、那 20 人剛好補進更早的班機坐走最後的位子——取捨有時會有<b>不可預見、回頭咬你一口</b>的後果。</li>
+        <li><b>① 辨識盲點 Blinders：</b>久陷問題的人「我們一直都這樣做」，失去批判現狀的能力；<b>你的新鮮眼睛是優勢</b>。</li>
+        <li><b>② 點出關鍵取捨：</b>重要而模糊的問題沒有銀彈，只有<b>此刻最好的答案</b>。</li>
+        <li><b>③ 決定後迭代：</b>做「這個月最好的決定」，下月再平衡。不這樣框定就會掉進「找完美解」的<b>分析癱瘓</b>。</li>
+      </ul>
+      <figure class="fig">
+        <svg viewBox="0 0 600 380" role="img" aria-label="品質、延遲、容量的取捨三角：挑兩個">
+          <polygon points="300,46 78,330 522,330" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+          <circle cx="300" cy="46" r="7" fill="var(--accent)"/>
+          <circle cx="78" cy="330" r="7" fill="var(--theme-time)"/>
+          <circle cx="522" cy="330" r="7" fill="var(--theme-trade)"/>
+          <text x="300" y="30" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Good · 品質 Quality</text>
+          <text x="78" y="356" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Fast · 延遲 Latency</text>
+          <text x="522" y="356" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Cheap · 容量 Capacity</text>
+          <text x="300" y="195" class="fig-txt" font-size="20" font-weight="700" text-anchor="middle">挑兩個</text>
+          <text x="300" y="220" class="fig-mut" font-size="13" text-anchor="middle">pick two — 改善一項，至少犧牲另一項</text>
+        </svg>
+        <figcaption><b>Figure 6-1</b> Web Search 的取捨三角：品質、延遲、容量三者張力，「Good, Fast, Cheap——挑兩個」。把延遲提升為「一等目標」後，才能資料驅動地平衡。</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Always Be Leaving <span class="en2">永遠在準備離開</span></h3>
+      <div class="claim">出自前工程總監 Bharat Mediratta。真意：你的工作不是親自解問題，而是<b>讓組織在「沒有你」時也能自己解它</b>。反模式是把自己變成 <b>SPOF</b>（即 ch02 的 bus factor）。</div>
+      <div class="impl"><b>試紙：</b>你上次超過一週的休假，還一直查公務信嗎？若不盯著就會散掉，你很可能已是 SPOF。打造「<b>自駕團隊</b>」三部分：</div>
+      <ul class="tight">
+        <li><b>切分問題空間：</b>用較鬆散的結構（子團隊能改變大小、人能流動、問題能變形）；讓團隊<b>認領「問題」而非特定解法</b>。</li>
+        <li><b>委派子問題：</b>動手前先問「<b>這真的只有我能做嗎？</b>」；每天上班問「<b>有什麼是只有我能做的？</b>」——最重要的答案常是「我能見林、定義高層策略」。</li>
+        <li><b>微調與迭代：</b>退休大師的粉筆故事——「粉筆 1 美元，知道畫在哪 9,999 美元」。好管理＝<b>95% 觀察聆聽 + 5% 在對的位置出手</b>。Always Be Leaving 是對<b>宏觀管理</b>的召喚。</li>
+        <li><b>小心錨定團隊身分：</b>讓團隊認領「問題」（提供版本控制）而非「產品」（管 Git repo）——<b>問題可長青，解法會被取代</b>。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">時間</span> Always Be Scaling <span class="en2">永遠在擴展（防守式）</span></h3>
+      <div class="claim">這裡談的是<b>防守、個人面向</b>的擴展——你最寶貴的資源是<b>有限的時間、注意力與精力</b>。只猛擴責任卻不保護自己，擴展注定失敗。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 600 420" role="img" aria-label="成功的螺旋：分析、掙扎、牽引、獎賞，每圈壓縮再接新難題">
+          <defs>
+            <marker id="ah6z" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker>
+          </defs>
+          <polyline points="318,210 321,231 300,252 262,248 234,210 245,155 300,120 372,138 414,210 389,299 300,348" fill="none" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#ah6z)"/>
+          <circle cx="234" cy="210" r="6" fill="var(--theme-scale)"/>
+          <circle cx="300" cy="120" r="6" fill="var(--theme-time)"/>
+          <circle cx="414" cy="210" r="6" fill="var(--theme-scale)"/>
+          <circle cx="389" cy="299" r="6" fill="var(--theme-trade)"/>
+          <text x="186" y="214" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="end">① 分析 Analysis</text>
+          <text x="300" y="104" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle">② 掙扎 Struggle</text>
+          <text x="430" y="206" class="fig-txt" font-size="13.5" font-weight="700">③ 牽引 Traction</text>
+          <text x="410" y="320" class="fig-txt" font-size="13.5" font-weight="700">④ 獎賞＝新難題</text>
+          <text x="300" y="372" class="fig-mut" font-size="12.5" text-anchor="middle">壓縮成 ½（沒給更多人）→ 下一圈、更大範圍</text>
+        </svg>
+        <figcaption><b>Figure 6-2</b> 成功的螺旋：分析→掙扎→牽引→獎賞，而獎賞是<b>一個全新的難題</b>且通常沒給更多人，於是進入「壓縮階段」、用一半的人接下一個平行難題。Larry Page 稱之「uncomfortably exciting」。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>重要 vs 緊急：</b>Eisenhower 1954：「緊急的不重要，重要的從不緊急。」對抗反應式救火——<b>委派、排專屬時間（每週 2 小時只做重要不緊急）、找到適合的追蹤系統</b>（如 GTD）。</li>
+        <li><b>學會放掉一些球：</b>Marie Kondo 式——辨識最關鍵的 <b>20%</b>、刻意放掉其餘 <b>80%</b>。中間 60% 常被下屬自動接手，真正關鍵的會自己冒回來。</li>
+        <li><b>保護精力：</b>真正的休假（三天才忘掉、一週才充飽，但查一次信就毀了）、一鍵關掉公務 app、真正的週末、白天 90 分鐘週期的小休、需要時請<b>心理健康假</b>（壞心情的領導者會替全隊定調）。</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Always Be Deciding, Always Be Leaving, Always Be Scaling."</span><span class="zh">永遠在做決定、永遠在準備離開、永遠在擴展。</span><div class="note">全章骨架的「領導三 Always」。分別對應：找取捨、打造自駕組織、保護稀缺資源。</div></blockquote>
+    <blockquote class="q"><span class="en">"Good, Fast, Cheap—pick two."</span><span class="zh">又好、又快、又便宜——挑兩個。</span><div class="note">Web Search 案例核心，對應品質／延遲／容量的張力三角（Fig 6-1）。</div></blockquote>
+    <blockquote class="q"><span class="en">"I have two kinds of problems, the urgent and the important. The urgent are not important, and the important are never urgent."</span><span class="zh">我有兩種問題：緊急的和重要的。緊急的不重要，重要的從不緊急。</span><div class="note">Eisenhower 1954 名言。領導者最大的危險是滑進純反應模式，把人生花在緊急卻不重要的事上。</div></blockquote>
+    <blockquote class="q"><span class="en">"$1 for the chalk, $9,999 for knowing where to put it."</span><span class="zh">粉筆 1 美元；知道該把記號畫在哪裡，9,999 美元。</span><div class="note">退休大師寓言。一個深思熟慮的微小調整能有巨大效果——好管理是 95% 觀察 + 5% 在對的位置出手。</div></blockquote>
+    <blockquote class="q"><span class="en">"The reward for success is more work … and more responsibility!"</span><span class="zh">成功的獎賞，是更多工作……和更多責任！</span><div class="note">成功螺旋（Fig 6-2）的關鍵轉折——獎賞是新難題且通常沒給更多人，於是進入「壓縮階段」。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">The Three Always（領導三 Always）</span><br>Always Be Deciding（找取捨並迭代）、Always Be Leaving（打造自駕組織）、Always Be Scaling（保護時間/注意力/精力）。本章總綱。</div>
+      <div class="kw"><span class="term">Blinders（盲點／眼罩）</span><br>久陷某問題的人發展出的「我們一直都這樣做」式假設，失去批判現狀的能力。新來者的新鮮眼睛正是優勢。</div>
+      <div class="kw"><span class="term">Good, Fast, Cheap—Pick Two（品質／延遲／容量三角）</span><br>任何一項變好都得犧牲另外至少一項。把延遲提升為「一等目標」後才能資料驅動地平衡（Fig 6-1）。</div>
+      <div class="kw"><span class="term">Analysis Paralysis（分析癱瘓）</span><br>因追求「完美解」而卡住不前。解方是把決策框定成「持續再平衡取捨」、降低賭注、鼓勵迭代。</div>
+      <div class="kw"><span class="term">SPOF / Bus Factor（單點失效／公車係數）</span><br>領導者把自己變成不可或缺的瓶頸。「Always Be Leaving」就是要消除它（見 ch02）。</div>
+      <div class="kw"><span class="term">Self-Driving Team（自駕團隊）</span><br>沒有你在場也能自己解一類模糊問題的組織；靠切分問題、委派、輕觸式微調打造。</div>
+      <div class="kw"><span class="term">Own the Problem, Not the Solution（認領問題而非解法）</span><br>把團隊身分錨在「問題」（提供版本控制）而非「產品」（管 Git repo），才能隨時間自由換解法。</div>
+      <div class="kw"><span class="term">Macromanagement（宏觀管理）</span><br>與微管理相對；95% 觀察聆聽 + 5% 在精準位置做關鍵調整（粉筆記號／飛船比喻）。</div>
+      <div class="kw"><span class="term">Important vs Urgent（重要 vs 緊急）</span><br>Eisenhower 框架。對抗反應式救火：委派、排專屬時間、用追蹤系統，把時間留給「重要但不緊急」。</div>
+      <div class="kw"><span class="term">Drop Balls Deliberately（刻意丟球）</span><br>Marie Kondo 式：辨識最關鍵的 20%、刻意放掉其餘 80%；中間 60% 常被下屬接手，真正關鍵的會自己冒回來。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>用本章的試紙測自己：你上次超過一週的休假，<b>還一直查公務信嗎</b>？如果你明天消失一個月，你帶的團隊還能順利推進嗎？那個「只有你能做」的環節是什麼？</li>
+      <li>你的團隊認領的是「<b>問題</b>」還是「<b>產品／解法</b>」？若有更好的新方案出現，你的團隊會擁抱它，還是會死守現有解、因為它已是團隊身分的一部分？</li>
+      <li>把你這週的待辦清單套上 Marie Kondo 的三堆：哪 20% 是「只有你能做的關鍵」？你敢不敢明確地給自己許可，<b>刻意放掉</b>其餘 80%？放掉後哪些真的會自己冒回來？</li>
+      <li>你的團隊裡有沒有一個像 Web Search「延遲」那樣、<b>被當成不可避免的副作用、長期集體毒害公共財</b>的指標（建置時間？技術債？on-call 負擔？）？把它畫成你的「Good/Fast/Cheap 三角」。</li>
+      <li>誠實盤點上週：多少 % 花在「緊急」、多少 % 花在「重要但不緊急」？你能不能固定<b>排出兩小時專屬時間</b>只做後者？對照 ch05「委派但弄髒手」與 ch07 用指標衡量。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch05.html">ch05 How to Lead a Team</a> <span class="rel">— 本章是第 5 章的直接續篇：從「領導一個團隊」擴展到「領導團隊的團隊」；委派、replace yourself 在此放大。</span></div>
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— 「Always Be Leaving」要消除的 SPOF 就是第 2 章的 bus factor；自駕團隊是其組織級解。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「認領問題而非解法」「延遲隨時間爬升」「決策每月迭代」全回扣「軟體工程＝整合時間」與「工程是取捨」。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— Web Search 把延遲量化、用資料平衡品質與互動，正是第 7 章「用指標驅動決策」的實例。</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— 「處理延遲的成因而非只處理症狀」呼應「把問題往左移、從源頭預防」的精神。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch05.html">← 上一章：How to Lead a Team</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch07.html">下一章：Measuring Engineering Productivity →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture</div>
+    <div class="ch-no">CHAPTER 06</div>
+    <h1 class="title">Leading at Scale</h1>
+    <div class="title-zh">From leading one team to leading a team of teams</div>
+    <div class="meta-row">
+      <span class="badge">by Ben Collins-Sussman</span>
+      <span class="badge">PDF p.135–150</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+      <span class="theme-tag t-time">Time</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"The urgent are not important, and the important are never urgent."</span>
+      <span class="zh">In plain terms: the things screaming for your attention are rarely the things that actually matter.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>Chapter 5 was about going from an IC to leading one team; this is the next step — <b>from leading one team to leading a set of related teams</b>. The best practices still apply (you're still a "servant leader," just serving a larger group), but the problems become <b>bigger and more abstract</b>; you're pushed to go *broad* rather than *deep*, less able to touch technical details. It's frustrating — until you notice you're having far more impact as a leader than you ever did as an IC.</p>
+      <p>The chapter runs on "<b>the three Always of leadership</b>": <b>Always Be Deciding, Always Be Leaving, Always Be Scaling</b> — respectively: keep finding the <b>right trade-offs of the moment</b> and iterating; build a <b>"self-driving team" that solves problems without you</b> (don't be a SPOF); and approach scaling <b>defensively</b>, protecting your scarcest resources — time, attention, and energy.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You went from "leading a team" to "leading several" and feel useless.</b> Your value switched tracks — from "chopping trees" to "seeing the whole forest and pointing at which to cut" — and your impact is far bigger.</div>
+      <div class="why-card"><b>You're the team hero; every hard problem lands on your desk.</b> That's a danger signal: you're a SPOF. The litmus test — "did you keep checking work email on your last week-plus vacation?" — leads into building a self-driving team.</div>
+      <div class="why-card"><b>You firefight all day, no time for strategy.</b> The urgent email beats the important plan. Use Eisenhower's "important vs urgent" and the "drop balls" mindset — focus only on the critical 20% that only you can do.</div>
+      <div class="why-card"><b>You're burning out and can't stop.</b> The chapter treats "protecting energy" as a skill: three days to forget work, a week to recharge, one-button work-app disable, a mental-health day when needed.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> Always Be Deciding</h3>
+      <div class="claim">Managing a team of teams = more decisions at higher levels, almost all about <b>finding the right trade-offs</b>. If writing code is chopping trees, leading is <b>seeing the forest through the trees</b>.</div>
+      <ul class="tight">
+        <li><b>Parable of the airplane:</b> an irate passenger pays $800 to get 20 people off the plane — then it breaks down and those 20 grab the last seats on an earlier flight. Trade-offs can have <b>unforeseeable consequences that bite you</b>.</li>
+        <li><b>① Identify the blinders:</b> "this is how we've always done it" — your <b>fresh eyes are the advantage</b>.</li>
+        <li><b>② Identify the key trade-offs:</b> no silver bullet, only the <b>best answer for the moment</b>.</li>
+        <li><b>③ Decide, then iterate:</b> make this month's best decision, rebalance next month. Not framing it this way leads to <b>analysis paralysis</b>.</li>
+      </ul>
+      <figure class="fig">
+        <svg viewBox="0 0 600 380" role="img" aria-label="Trade-off triangle of quality, latency, capacity: pick two">
+          <polygon points="300,46 78,330 522,330" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+          <circle cx="300" cy="46" r="7" fill="var(--accent)"/>
+          <circle cx="78" cy="330" r="7" fill="var(--theme-time)"/>
+          <circle cx="522" cy="330" r="7" fill="var(--theme-trade)"/>
+          <text x="300" y="30" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Good · Quality</text>
+          <text x="78" y="356" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Fast · Latency</text>
+          <text x="522" y="356" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Cheap · Capacity</text>
+          <text x="300" y="195" class="fig-txt" font-size="20" font-weight="700" text-anchor="middle">pick two</text>
+          <text x="300" y="220" class="fig-mut" font-size="13" text-anchor="middle">improve one, sacrifice at least one other</text>
+        </svg>
+        <figcaption><b>Figure 6-1</b> Web Search's trade-off triangle: tension among quality, latency, and capacity — "Good, Fast, Cheap — pick two." Only after treating latency as a first-class goal could they balance it with data.</figcaption>
+      </figure>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Always Be Leaving</h3>
+      <div class="claim">From former director Bharat Mediratta. Its real meaning: your job isn't to solve the problem yourself, but to <b>get your organization to solve it without you present</b>. The antipattern is making yourself a <b>SPOF</b> (Ch.2's bus factor).</div>
+      <div class="impl"><b>Litmus test:</b> on your last week-plus vacation, did you keep checking work email? If things fall apart without you, you're likely a SPOF. Build a "<b>self-driving team</b>" in three parts:</div>
+      <ul class="tight">
+        <li><b>Divide the problem space:</b> a looser structure (subteams resize, people migrate, problems morph); have teams <b>own the *problem*, not a specific solution</b>.</li>
+        <li><b>Delegate subproblems:</b> before acting, ask "<b>Am I really the only one who can do this?</b>"; each day ask "<b>What can only I do?</b>" — the key answer is usually "I can see the forest — define strategy."</li>
+        <li><b>Adjust &amp; iterate:</b> the retired master's chalk story — "$1 for the chalk, $9,999 for knowing where." Good management = <b>95% observation, 5% precise intervention</b>. "Always Be Leaving" is a call to <b>macromanagement</b>.</li>
+        <li><b>Anchor identity carefully:</b> own a "problem" (provide version control), not a "product" (manage the Git repos) — <b>problems can be evergreen; solutions get replaced</b>.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">TIME</span> Always Be Scaling (defensive)</h3>
+      <div class="claim">The <b>defensive, personal</b> kind of scaling — your most precious resource is your <b>limited time, attention, and energy</b>. Expand responsibilities without protecting yourself and the scaling is doomed.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 600 420" role="img" aria-label="The spiral of success: analysis, struggle, traction, reward; each loop compresses and takes on a new problem">
+          <defs>
+            <marker id="ah6e" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker>
+          </defs>
+          <polyline points="318,210 321,231 300,252 262,248 234,210 245,155 300,120 372,138 414,210 389,299 300,348" fill="none" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#ah6e)"/>
+          <circle cx="234" cy="210" r="6" fill="var(--theme-scale)"/>
+          <circle cx="300" cy="120" r="6" fill="var(--theme-time)"/>
+          <circle cx="414" cy="210" r="6" fill="var(--theme-scale)"/>
+          <circle cx="389" cy="299" r="6" fill="var(--theme-trade)"/>
+          <text x="186" y="214" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="end">① Analysis</text>
+          <text x="300" y="104" class="fig-txt" font-size="13.5" font-weight="700" text-anchor="middle">② Struggle</text>
+          <text x="430" y="206" class="fig-txt" font-size="13.5" font-weight="700">③ Traction</text>
+          <text x="410" y="320" class="fig-txt" font-size="13.5" font-weight="700">④ Reward = new problem</text>
+          <text x="300" y="372" class="fig-mut" font-size="12.5" text-anchor="middle">compress to ½ (no more people) → next, larger loop</text>
+        </svg>
+        <figcaption><b>Figure 6-2</b> The spiral of success: Analysis → Struggle → Traction → Reward — but the reward is <b>a whole new problem</b>, usually with no extra people, so you enter the "compression stage" and take on a parallel problem with half the people. Larry Page would call it "uncomfortably exciting."</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Important vs urgent:</b> Eisenhower 1954: "the urgent are not important, the important are never urgent." Fight reactive firefighting — <b>delegate, schedule 2 dedicated hours/week for important-not-urgent, find a tracking system</b> (e.g., GTD).</li>
+        <li><b>Learn to drop balls:</b> Marie-Kondo style — identify the critical <b>20%</b>, deliberately drop the other <b>80%</b>. The middle 60% is often picked up by subleaders; truly critical items migrate back up.</li>
+        <li><b>Protect your energy:</b> real vacations (three days to forget, a week to recharge — ruined by one email check), one-button work-app disable, real weekends, ~90-minute (BRAC) breaks, and a <b>mental-health day</b> when needed (a leader's bad mood sets the tone for everyone).</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Always Be Deciding, Always Be Leaving, Always Be Scaling."</span><span class="zh">The leader's three ongoing jobs: find the trade-offs, build a team that runs without you, protect your scarce resources.</span><div class="note">The chapter's organizing framework.</div></blockquote>
+    <blockquote class="q"><span class="en">"Good, Fast, Cheap—pick two."</span><span class="zh">Improving any one of quality/latency/capacity costs you at least one of the others.</span><div class="note">The heart of the Web Search case — the triangle of tension in Fig 6-1.</div></blockquote>
+    <blockquote class="q"><span class="en">"I have two kinds of problems, the urgent and the important. The urgent are not important, and the important are never urgent."</span><span class="zh">What screams for attention is rarely what actually matters; default reactive mode wastes your life on urgent trivia.</span><div class="note">Eisenhower, 1954; the central danger to a leader's effectiveness.</div></blockquote>
+    <blockquote class="q"><span class="en">"$1 for the chalk, $9,999 for knowing where to put it."</span><span class="zh">One carefully-placed adjustment can have enormous effect — good management is mostly watching, rarely acting.</span><div class="note">The retired-master parable from Debugging Teams; 95% observation, 5% precise intervention.</div></blockquote>
+    <blockquote class="q"><span class="en">"The reward for success is more work … and more responsibility!"</span><span class="zh">Succeed and you get a new, equally hard problem — usually with no extra people — forcing you to compress.</span><div class="note">The turn in the cycle of success (the spiral, Fig 6-2).</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">The Three Always</span><br>Always Be Deciding (find trade-offs, iterate), Always Be Leaving (build a self-driving org), Always Be Scaling (protect time/attention/energy). The chapter's spine.</div>
+      <div class="kw"><span class="term">Blinders</span><br>The "this is how we've always done it" assumptions people develop after being steeped in a problem. A newcomer's fresh eyes are an advantage.</div>
+      <div class="kw"><span class="term">Good, Fast, Cheap — pick two</span><br>Improving one of quality/latency/capacity costs at least one other. Web Search could only balance it once latency became a first-class goal (Fig 6-1).</div>
+      <div class="kw"><span class="term">Analysis paralysis</span><br>Getting stuck chasing the "perfect solution." Cured by framing decisions as "continuous rebalancing," lowering stakes, and iterating.</div>
+      <div class="kw"><span class="term">SPOF / bus factor</span><br>Making yourself an indispensable bottleneck. "Always Be Leaving" exists to eliminate it (see ch02).</div>
+      <div class="kw"><span class="term">Self-driving team</span><br>An org that solves a class of ambiguous problems without you present; built via dividing problems, delegating, and gentle iteration.</div>
+      <div class="kw"><span class="term">Own the problem, not the solution</span><br>Anchor team identity to a *problem* ("provide version control"), not a *product* ("manage the Git repos"), so it can switch solutions over time.</div>
+      <div class="kw"><span class="term">Macromanagement</span><br>The opposite of micromanagement; 95% observation/listening + 5% precise critical adjustments (the chalk-mark / blimp metaphor).</div>
+      <div class="kw"><span class="term">Important vs urgent</span><br>Eisenhower's framework. To fight reactive firefighting: delegate, schedule dedicated time, use a tracking system; reserve time for important-but-not-urgent.</div>
+      <div class="kw"><span class="term">Drop balls deliberately</span><br>Marie-Kondo style: identify the critical top 20% and let the other 80% go; the middle 60% is often picked up by subleaders, and truly critical items migrate back up.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Apply the litmus test: on your last week-plus vacation, <b>did you keep checking work email</b>? If you vanished for a month, would your team keep progressing? What's the "only-I-can-do-it" link?</li>
+      <li>Does your team own a <b>problem</b> or a <b>product/solution</b>? If a better approach appeared, would your team embrace it, or "dig in" and defend the current solution because it's part of its identity?</li>
+      <li>Run your to-do list through Marie Kondo's three piles: which 20% is "critical, only you"? Will you give yourself permission to <b>deliberately drop</b> the other 80%? Which come back on their own?</li>
+      <li>Is there a metric in your team that, like Web Search "latency," is treated as an unavoidable side effect — a <b>long, collective poisoning of the commons</b> (build times? tech debt? on-call load?)? Draw it as your own "Good/Fast/Cheap triangle."</li>
+      <li>Audit last week: what % went to "urgent" vs "important-but-not-urgent"? Could you <b>block two dedicated hours</b> for the latter? Per ch05's "delegate but get your hands dirty" and ch07's metrics.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch05.html">ch05 How to Lead a Team</a> <span class="rel">— the direct sequel: from "leading one team" to "leading a team of teams"; delegation and "replace yourself" scale up here.</span></div>
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— the SPOF "Always Be Leaving" eliminates *is* Ch.2's bus factor; a self-driving team is the org-level answer.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "own the problem not the solution," "latency creeping over time," "decisions iterate monthly" tie back to "programming integrated over time" and "engineering is trade-offs."</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— Web Search quantifying latency and balancing quality vs engagement with data is a live example of Ch.7's metric-driven decisions.</span></div>
+      <div class="chip"><a href="ch23.html">ch23 Continuous Integration</a> <span class="rel">— "treat the causes of latency, not just the symptoms" echoes "shift left, prevent at the source."</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch05.html">← Prev: How to Lead a Team</a><a class="idx" href="index.html">⌂ Index</a><a href="ch07.html">Next: Measuring Engineering Productivity →</a></nav>
+</div>
+</div>
+
+</body>
+</html>

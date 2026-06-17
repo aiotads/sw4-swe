@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 5 章 How to Lead a Team ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  .twocol{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:10px 0}
+  .pcol{border:1px solid var(--border); border-radius:10px; padding:12px 14px}
+  .pcol.anti{border-left:3px solid var(--theme-trade)}
+  .pcol.pos{border-left:3px solid var(--theme-scale)}
+  .pcol h4{margin:0 0 6px; font-size:.95rem}
+  .pcol.anti h4{color:var(--theme-trade)} .pcol.pos h4{color:var(--theme-scale)}
+  .pcol ul{margin:0; padding-left:18px} .pcol li{margin:5px 0; font-size:.92rem}
+  @media(max-width:560px){ .twocol{grid-template-columns:1fr} }
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture ｜ 文化</div>
+    <div class="ch-no">CHAPTER 05</div>
+    <h1 class="title">How to Lead a Team</h1>
+    <div class="title-zh">如何領導團隊</div>
+    <div class="meta-row">
+      <span class="badge">作者 Brian Fitzpatrick</span>
+      <span class="badge">PDF p.109–134</span>
+      <span class="theme-tag t-culture">Culture 文化</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Traditional managers worry about how to get things done, whereas great managers worry about what things get done."</span>
+      <span class="zh">傳統經理人煩惱「事情要怎麼做」；偉大的領導者煩惱「該做哪些事」。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>前幾章談團隊的文化與組成，這章把鏡頭轉向<b>那個最終讓一切運轉起來的人——領導者</b>。Google 區分兩種角色：<b>Manager 領導「人」、Tech Lead（TL）領導「技術」</b>，小團隊由同一人兼任即 <b>TLM</b>。沒有船長的船只是一間漂流的候診室；軟體專案也一樣，沒人掌舵，工程師就只是在燒掉寶貴時間。</p>
+      <p>核心心法是<b>僕人式領導（Servant Leadership）</b>：新手經理最大的誘惑是「去管理」，但最好的建議是「<b>首先，抵抗想去管理的衝動</b>」。領導者的工作是服務團隊——移障礙、建共識、用 HRT 營造心理安全感，而非源自工業革命、對創造性工作有害的「胡蘿蔔加棒子」。作者用一長串<b>反模式</b>對照<b>正向模式</b>，最後用「<b>人就像植物</b>」收束：每個成員需要的「水（激勵）」與「光（方向）」不同，領導者要分辨並給對。激勵核心是內在動機三要素——<b>自主、精熟、目的</b>。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你是 IC，卻莫名被吸進領導位子（manageritis）。</b> 不論你想不想，只要做得夠好，職涯某刻你很可能就站到掌舵位置。這章讓你知道「真的發生時該怎麼辦」，也順便讓你更懂自己的主管。</div>
+      <div class="why-card"><b>你剛升 TL／TLM，每天結束都覺得「我今天什麼都沒做」。</b> 它直球面對轉職失落——你不再能指著一堆 code 說「這是我今天做的」。別再「種香蕉卻數蘋果」：管理的產出是「讓團隊快樂且有產能」。</div>
+      <div class="why-card"><b>你手上有低績效者，你一直在「希望他會變好」。</b> 用 SRE 格言「<b>希望不是策略</b>」戳破拖延，給你兩個月、可量測的「help up or out」流程，並解釋為何放著不管會逼走高績效者。</div>
+      <div class="why-card"><b>你想當讓人願意留下、願意冒險的領導者。</b> 從「放下自我並真誠道歉」、齒輪放大的「leader is always on stage」、到「人就像植物」的差異化激勵——把抽象的領導力翻成你下次 1:1 就能用的動作。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">角色</span> Managers, Tech Leads (and Both) <span class="en2">管理者、技術主管與兼任</span></h3>
+      <div class="claim">兩種角色<b>規劃技能相似，但「人的技能」天差地遠</b>。</div>
+      <ul class="tight">
+        <li><b>Engineering Manager：</b>Google 要求其工程經理<b>有工程背景</b>。對團隊每人（含 TL）的<b>績效、產能與快樂</b>負責，同時滿足業務需求——兩者不總對齊，常陷兩難。</li>
+        <li><b>Tech Lead（TL）：</b>負責技術面（決策、架構、優先序、velocity）。多為 IC，常要在「自己快快做」與「委派（更慢）」間抉擇——<b>團隊成長時委派才對</b>。</li>
+        <li><b>TLM：</b>小團隊預設（一人兼兩面）；大團隊傾向拆成<b>一對搭檔</b>避免 burnout，並需資深 TLM 的 mentoring。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">規模</span> Influencing Without Authority <span class="en2">沒有職權的影響力</span></h3>
+      <div class="claim">讓組織外的人做該做的事，是你能培養的最強領導特質之一。</div>
+      <div class="impl"><b>案例：</b>Jeff Dean 只領導一小部分團隊，影響力卻遍及全公司。作者的 <b>Data Liberation Front</b> 用不到半打工程師，讓 <b>50+ 個產品</b>透過 <b>Google Takeout</b> 匯出資料、且無高層指令——做法是<b>辨識策略需求、連結公司使命、做一個讓人易整合的工具</b>。影響力不靠頭銜，靠「對齊使命＋降低摩擦」。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">心態</span> IC → Leadership &amp; The Fear <span class="en2">從 IC 到領導，與恐懼</span></h3>
+      <div class="claim">產品要前進總得有人坐上駕駛座；你可能不知不覺被吸進去（manageritis）。</div>
+      <ul class="tight">
+        <li><b>寫更少 code、產出難量化：</b>別「種香蕉卻數蘋果」——讓團隊快樂且有產能本身就是度量。</li>
+        <li><b>Peter Principle（彼得原理）：</b>人傾向升到不能勝任的層級；Google 用「<b>晉升前先在更高層級『超出期待』</b>」防範。</li>
+        <li><b>值得當領導的理由：</b>① <b>擴展你自己</b>（一支好團隊能寫多少 code）；② 你可能真的很擅長。</li>
+      </ul>
+      <div class="impl"><b>警示：</b>別硬推沒意願的人進管理職——你會失去一個好工程師、得到一個爛經理。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">文化</span> Servant Leadership <span class="en2">僕人式領導</span></h3>
+      <div class="claim">許多經理染上「病」——對下屬做當年主管對他做的爛事（微管理、無視低績效者、雇軟柿子）。解藥是大量施用僕人式領導：<b>像管家一樣服務團隊</b>。</div>
+      <div class="impl">最佳建議（工程總監 Steve Vinter）：「<b>最重要的是，抵抗想去管理的衝動。</b>」僕人式領導者營造 HRT、移除障礙、必要時建議，但不怕弄髒手。<b>他唯一要「管」的是團隊的技術健康與社交健康——後者更難管，卻同等重要。</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">取捨</span> The Engineering Manager: 歷史與今日 <span class="en2">經理：從趕騾子到信任</span></h3>
+      <div class="claim">「經理」概念承襲軍隊與工業革命的監工——「<b>胡蘿蔔加棒子</b>」式趕騾子管理。但研究一再顯示它對創造性工作者<b>無效且有害</b>：流水線工人能幾天換掉，工程師卻要數月才上手，需要滋養與空間。</div>
+      <ul class="tight">
+        <li><b>信任產生正向壓力：</b>經理明確表現信任，員工會感到「不辜負信任」的壓力。Jerry 早走 15 分鐘的故事——「只要你把事做完，我不在乎你幾點走」。需要看小孩才肯工作，那才是真問題。</li>
+        <li><b>Failure Is an Option：</b>用心理安全感讓人敢冒更大的險。「<b>追求不可能而失敗，通常比成功於你本就會做的事成就更多</b>」。<b>成功當眾表揚、失敗私下給建設性批評</b>；重大故障做 postmortem（學習而非究責）。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">模式</span> Antipatterns ↔ Positive Patterns <span class="en2">反模式 vs 正向模式</span></h3>
+      <div class="twocol">
+        <div class="pcol anti">
+          <h4>✗ 反模式（別做）</h4>
+          <ul>
+            <li><b>雇軟柿子：</b>團隊離了你就動不了。反之要雇比你聰明、能取代你的人。</li>
+            <li><b>無視低績效者：</b>「希望不是策略」；設兩個月可量測目標，help up or out。</li>
+            <li><b>忽視人的問題：</b>Jake 在家帶新生兒卻被 Pablo 逼回辦公室——少了同理心。</li>
+            <li><b>當大家的好朋友：</b>別把友誼和溫和領導搞混；握有職權時對方會被迫假裝回報。</li>
+            <li><b>降低招聘門檻：</b>「A 級雇 A 級，B 級雇 C 級」；趕時間最易中招。</li>
+            <li><b>把團隊當小孩：</b>永久微管理＝招聘失敗；連文具自取都體現信任。</li>
+          </ul>
+        </div>
+        <div class="pcol pos">
+          <h4>✓ 正向模式（要做）</h4>
+          <ul>
+            <li><b>放下自我：</b>培養集體團隊自我；<b>犯錯就真心道歉</b>（贏得尊重，不會讓你脆弱）。</li>
+            <li><b>當禪師：</b>保持冷靜（齒輪鏈放大）、leader is always on stage；用<b>問問題</b>引導對方找到自己的答案。</li>
+            <li><b>當催化劑：</b>建立共識（無職權也能領導；不必追求 100%）。</li>
+            <li><b>移除路障：</b>「知道對的人，往往比知道對的答案更有價值」。</li>
+            <li><b>當老師與導師：</b>最重要是判斷 mentee 需要多少幫助。</li>
+            <li><b>設清楚目標：</b>全員往同一個「北方」拉；寫一份精煉使命宣言。</li>
+            <li><b>誠實：</b>反對「<b>讚美三明治</b>」；仁慈但直接（Tim 與 Dean「攔火車」的故事）。</li>
+            <li><b>追蹤幸福感：</b>1:1 結尾問「<b>你需要什麼？</b>」；把隱性職涯目標明確化。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">訣竅</span> Other Tips and Tricks <span class="en2">其他訣竅</span></h3>
+      <ul class="tight">
+        <li><b>委派，但也弄髒手：</b>新領導要努力委派（即使更慢）；接手新團隊就主動扛沒人想做的髒活。</li>
+        <li><b>設法取代自己：</b>雇比你聰明的人、給他們責任與偶爾領導的機會。</li>
+        <li><b>知道何時興風作浪：</b>難題別騙自己「等一下就好」——拖愈久傷害愈大，立刻處理。</li>
+        <li><b>擋住混亂、提供空中掩護：</b>混亂一直都在，是你前一個主管替你擋住的。</li>
+        <li><b>做得好時要說：</b>別只忙著處理缺點而忘了正向回饋。</li>
+        <li><b>對「容易撤銷」的事容易說好：</b>兩天的實驗 vs 要支援十年的產品，審慎度完全不同（見 ch22）。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">總結</span> People Are Like Plants <span class="en2">人就像植物</span></h3>
+      <div class="claim">小孩像植物：仙人掌要少水多陽光、番茄給點肥料就超棒。給六個小孩一樣的水光肥是<b>平等，卻可能沒有一個得到他真正需要的</b>。團隊成員也一樣——差別在<b>激勵（motivation）與方向（direction）的配比</b>。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 470" role="img" aria-label="激勵 × 方向 2×2 矩陣：判斷每個團隊成員需要什麼">
+          <!-- 象限 -->
+          <rect x="95" y="60" width="270" height="160" rx="10" fill="var(--card2)" stroke="var(--border)"/>
+          <rect x="375" y="60" width="270" height="160" rx="10" fill="var(--card2)" stroke="var(--theme-scale)" stroke-width="2"/>
+          <rect x="95" y="230" width="270" height="160" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+          <rect x="375" y="230" width="270" height="160" rx="10" fill="var(--card2)" stroke="var(--border)"/>
+          <g text-anchor="middle">
+            <!-- 左上：高激勵低方向 -->
+            <text x="230" y="125" class="fig-txt" font-size="14" font-weight="700">分心／不確定</text>
+            <text x="230" y="148" class="fig-mut" font-size="12.5">有幹勁，但方向不明</text>
+            <text x="230" y="178" class="fig-txt" font-size="14" font-weight="700" fill="var(--theme-scale)">→ 給「方向」</text>
+            <!-- 右上：高激勵高方向 -->
+            <text x="510" y="125" class="fig-txt" font-size="14" font-weight="700">茁壯</text>
+            <text x="510" y="148" class="fig-mut" font-size="12.5">兩者都夠</text>
+            <text x="510" y="178" class="fig-txt" font-size="13.5" font-weight="700">別給過量（會惹惱他）</text>
+            <!-- 左下：低激勵低方向 -->
+            <text x="230" y="295" class="fig-txt" font-size="14" font-weight="700">漂流 adrift</text>
+            <text x="230" y="318" class="fig-mut" font-size="12.5">沒勁也沒方向</text>
+            <text x="230" y="348" class="fig-txt" font-size="14" font-weight="700" fill="var(--theme-trade)">→ 兩者都給</text>
+            <!-- 右下：低激勵高方向 -->
+            <text x="510" y="295" class="fig-txt" font-size="14" font-weight="700">低潮 in a rut</text>
+            <text x="510" y="318" class="fig-mut" font-size="12.5">知道做什麼，但提不起勁</text>
+            <text x="510" y="348" class="fig-txt" font-size="14" font-weight="700" fill="var(--theme-time)">→ 給「激勵」</text>
+          </g>
+          <!-- 軸標 -->
+          <text x="40" y="145" class="fig-mut" font-size="12.5" text-anchor="middle" transform="rotate(-90 40 145)">激勵高 ↑</text>
+          <text x="40" y="310" class="fig-mut" font-size="12.5" text-anchor="middle" transform="rotate(-90 40 310)">激勵低 ↓</text>
+          <text x="230" y="430" class="fig-mut" font-size="12.5" text-anchor="middle">← 方向不明</text>
+          <text x="510" y="430" class="fig-mut" font-size="12.5" text-anchor="middle">方向清楚 →</text>
+          <text x="370" y="452" class="fig-txt" font-size="12.5" text-anchor="middle" font-weight="700">方向 Direction（清晰度）</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 激勵 × 方向 2×2：先判斷每個成員「現在有的」，再給他「缺的」——別齊頭式一視同仁，也別給過量。激勵的內核＝自主／精熟／目的（Dan Pink《Drive》）。</figcaption>
+      </figure>
+      <div class="impl"><b>Intrinsic vs Extrinsic：</b>提升內在動機比砸錢更有效，靠三要素——<b>Autonomy 自主</b>（給方向、讓他決定怎麼到）、<b>Mastery 精熟</b>（技能像刀刃，不磨會鈍）、<b>Purpose 目的</b>（讓工作有意義，例如轉發客戶感謝信給團隊）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Above all, resist the urge to manage."</span><span class="zh">最重要的是，抵抗那股想去「管理」的衝動。</span><div class="note">工程總監 Steve Vinter 給新手經理的最佳建議，僕人式領導的精神核心——服務團隊，不是控制它。</div></blockquote>
+    <blockquote class="q"><span class="en">"Traditional managers worry about how to get things done, whereas great managers worry about what things get done (and trust their team to figure out how to do it)."</span><span class="zh">傳統經理人煩惱「事情要怎麼做」；偉大領導者煩惱「該做哪些事」（並信任團隊去想出怎麼做）。</span><div class="note">作者說「若這章只記一句，就記這句」。區分控制（how）與賦能（what）。</div></blockquote>
+    <blockquote class="q"><span class="en">"A people hire other A people; B people hire C people."</span><span class="zh">A 級的人雇用 A 級的人；B 級的人雇用 C 級的人。</span><div class="note">賈伯斯名言，用於「別降低招聘門檻」——平庸會自我繁殖，趕時間時最易中招。</div></blockquote>
+    <blockquote class="q"><span class="en">"Hope is not a strategy."</span><span class="zh">希望，不是一種策略。</span><div class="note">Google SRE 格言，用於低績效者——「希望他自己變好或離開」幾乎從不會發生。</div></blockquote>
+    <blockquote class="q"><span class="en">"It's easy to say 'yes' to something that's easy to undo."</span><span class="zh">對一件容易撤銷的事，說「好」很容易。</span><div class="note">決策可逆性的判準，回扣全書 Time 主軸——十年的決定與兩天的實驗該用不同審慎度。</div></blockquote>
+    <blockquote class="q"><span class="en">"People are like plants ... It's your job as their leader to determine who needs what and then give it to them."</span><span class="zh">人就像植物……身為領導者，你的工作是判斷誰需要什麼，然後給他。</span><div class="note">全章對「領導」的總結比喻——差異化的激勵與方向，而非齊頭式平等。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Servant Leadership（僕人式領導）</span><br>領導者最重要的事是服務團隊（移障礙、建共識、營造 HRT），而非控制。口訣：「抵抗想去管理的衝動」。</div>
+      <div class="kw"><span class="term">Manager vs Tech Lead vs TLM</span><br>Manager 領導「人」、TL 領導「技術」、TLM 一人兼任（小團隊預設；大團隊傾向拆成一對搭檔以免 burnout）。</div>
+      <div class="kw"><span class="term">Influence Without Authority（沒有職權的影響力）</span><br>讓組織外的人去做該做的事；靠對齊公司使命＋降低配合摩擦（如 Data Liberation Front／Takeout）。</div>
+      <div class="kw"><span class="term">Counting Apples While Growing Bananas（種香蕉卻數蘋果）</span><br>用 IC 的產出標準衡量管理工作的謬誤。管理的產出是「團隊的快樂與產能」。</div>
+      <div class="kw"><span class="term">Peter Principle（彼得原理）</span><br>員工傾向被晉升到不能勝任的層級。Google 以「晉升前先在更高層級『超出期待』」來防範。</div>
+      <div class="kw"><span class="term">Carrot and Stick（胡蘿蔔加棒子）</span><br>源自工廠時代的趕騾子式管理；對需要創造力、需數月才能上手的工程師無效且有害。</div>
+      <div class="kw"><span class="term">Hope Is Not a Strategy（希望不是策略）</span><br>SRE 格言；用於低績效者：別「希望」他自己變好，要設可量測目標、儘快 help up or out。</div>
+      <div class="kw"><span class="term">Compliment Sandwich（讚美三明治）</span><br>把批評夾在兩句讚美中的回饋法。本章強烈反對：關鍵訊息會被讚美淹沒；改用「仁慈但直接」。</div>
+      <div class="kw"><span class="term">The Leader Is Always on Stage（領導者永遠在台上）</span><br>領導位置被持續觀看；你對小事的可見態度會經「齒輪鏈」放大、感染團隊。</div>
+      <div class="kw"><span class="term">Autonomy / Mastery / Purpose（自主／精熟／目的）</span><br>Dan Pink《Drive》的內在動機三要素；提升內在動機比外在砸錢更能帶來快樂與產能。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>回想你最近一次忙完一天卻覺得「今天什麼都沒做」。你是不是在「種香蕉卻數蘋果」？若改用「我的團隊今天有沒有更快樂、更有產能」計分，答案會不會不同？</li>
+      <li>你的團隊裡有沒有一個你正在「希望他會變好」的低績效者？把 SRE 那句話套上去——你願不願意給他一個兩個月、小而可量測、每週 check 的「up or out」計畫？拖下去，你的高績效者會付出什麼代價？</li>
+      <li>你上次給出的「硬回饋」，是不是包了一層讚美三明治？對方真的聽到「要改的是什麼」了嗎？用「仁慈但直接」重寫一遍。對照 ch02「你不是你的程式碼」。</li>
+      <li>把你的直屬團隊每個人想成一株植物：誰缺「水（激勵）」、誰缺「光（方向）」、誰兩者都缺（adrift）？你最近一次是給了他們真正需要的，還是齊頭式一視同仁？</li>
+      <li>列出團隊近期最在意的一個目標。每個成員真的都往「同一個北方」拉嗎？你們有沒有一句能寫下來的使命宣言？對照 ch06 規模化領導與 ch07 用指標衡量方向。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— 本章把第 2 章的 HRT、放下自我、blameless post-mortem 從「隊友之間」升級到「領導者對團隊」。</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— 「當老師與導師」「問問題引導對方自己解」延續第 3 章師徒制與心理安全感。</span></div>
+      <div class="chip"><a href="ch04.html">ch04 Engineering for Equity</a> <span class="rel">— 「每位主管都有增進團隊公平的手段」是本章領導責任的倫理面；差異化對待呼應「為最不像你的人設計」。</span></div>
+      <div class="chip"><a href="ch06.html">ch06 Leading at Scale</a> <span class="rel">— 本章是「領導一個團隊」，第 6 章擴展到「領導多個團隊、領導領導者」的規模。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— 「追蹤幸福感」「把隱性職涯目標明確化」呼應第 7 章用指標而非直覺衡量人與產能。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— 「對容易撤銷的事容易說好」的決策可逆性，在大規模變更章有完整技術展開。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch04.html">← 上一章：Engineering for Equity</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch06.html">下一章：Leading at Scale →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part II — Culture</div>
+    <div class="ch-no">CHAPTER 05</div>
+    <h1 class="title">How to Lead a Team</h1>
+    <div class="title-zh">A great leader picks the what and trusts the team with the how</div>
+    <div class="meta-row">
+      <span class="badge">by Brian Fitzpatrick</span>
+      <span class="badge">PDF p.109–134</span>
+      <span class="theme-tag t-culture">Culture</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"Traditional managers worry about how to get things done, whereas great managers worry about what things get done."</span>
+      <span class="zh">In plain terms: a weak manager controls the how; a great leader picks the what and trusts the team with the how.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>Earlier chapters covered the culture and composition of teams; this one turns to <b>the person ultimately responsible for making it all work — the leader</b>. Google recognizes two roles: a <b>Manager leads *people*, a Tech Lead (TL) leads *technology*</b>; on small teams one person does both — a <b>TLM</b>. A boat without a captain is just a floating waiting room; a software project is the same — without a pilot, engineers burn valuable time.</p>
+      <p>The core philosophy is <b>servant leadership</b>: the new manager's biggest urge is to "manage," but the best advice is "<b>above all, resist the urge to manage</b>." A leader's job is to serve the team — remove obstacles, build consensus, create psychological safety via HRT — not apply the industrial-era "carrot and stick" that's harmful to creative work. The author runs through <b>antipatterns</b> against <b>positive patterns</b>, closing with "<b>people are like plants</b>": each member needs a different amount of "water" (motivation) and "light" (direction). Motivation comes down to the three drivers of intrinsic motivation — <b>autonomy, mastery, and purpose</b>.</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>You're an IC sucked into leadership (manageritis).</b> Want it or not, if you're good you'll likely steer at some point. This is about what to do when it happens — and it helps you understand your own leaders.</div>
+      <div class="why-card"><b>You just became a TL/TLM and feel "I did nothing today."</b> It confronts the loss — you can't point at a pile of code anymore. Stop "counting apples while growing bananas": management's output is a happy, productive team.</div>
+      <div class="why-card"><b>You have a low performer you keep "hoping will improve."</b> The SRE motto "<b>hope is not a strategy</b>" punctures it, with a two-month, measurable "up or out" process — and why ignoring it drives high performers away.</div>
+      <div class="why-card"><b>You want a leader people stay for and take risks for.</b> From "lose the ego and apologize," through the gear-chain "always on stage," to "people are like plants" — abstract leadership turned into things you'll use in your next 1:1.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">ROLES</span> Managers, Tech Leads (and Both)</h3>
+      <div class="claim">Two roles with <b>similar planning skills but wildly different *people* skills</b>.</div>
+      <ul class="tight">
+        <li><b>Engineering Manager:</b> Google requires an <b>engineering background</b>. Responsible for the <b>performance, productivity, and happiness</b> of everyone (incl. the TL) while meeting business needs — which don't always align, so it's a hard spot.</li>
+        <li><b>Tech Lead (TL):</b> owns the technical side (decisions, architecture, priorities, velocity). Usually an IC too, choosing between doing it fast or delegating (slower) — <b>delegating is right as the team grows</b>.</li>
+        <li><b>TLM:</b> default on small teams (both at once); large teams prefer a <b>pair of leaders</b> to avoid burnout, with senior-TLM mentoring.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">SCALE</span> Influencing Without Authority</h3>
+      <div class="claim">Getting people *outside* your org to do what needs doing is one of the most powerful leadership traits you can develop.</div>
+      <div class="impl"><b>Case:</b> Jeff Dean led only a fraction of the team yet influenced the whole company. The author's <b>Data Liberation Front</b> got <b>50+ products</b> to export data via <b>Google Takeout</b> with no executive directive — by <b>identifying a strategic need, linking it to the mission, and building a tool that made integration easy</b>. Influence comes from alignment + lowering friction, not a title.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">MINDSET</span> IC → Leadership &amp; The Fear</h3>
+      <div class="claim">Someone has to get in the driver's seat; you may be sucked in (manageritis).</div>
+      <ul class="tight">
+        <li><b>Less code, hard-to-quantify output:</b> don't "count apples while growing bananas" — a happy, productive team is itself the measure.</li>
+        <li><b>Peter Principle:</b> people rise to their level of incompetence; Google guards against it by requiring you to "<b>exceed expectations</b>" at the higher level *before* promotion.</li>
+        <li><b>Good reasons to lead:</b> ① <b>scale yourself</b> (what could a great team write under you?); ② you might just be good at it.</li>
+      </ul>
+      <div class="impl"><b>Warning:</b> don't force the unwilling into management — you lose a great engineer and gain a crappy manager.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CULTURE</span> Servant Leadership</h3>
+      <div class="claim">Many managers catch a "disease" — doing to reports the awful things their managers did to them (micromanaging, ignoring low performers, hiring pushovers). The cure: serve the team <b>like a butler tends a household</b>.</div>
+      <div class="impl">Best advice (director Steve Vinter): "<b>Above all, resist the urge to manage.</b>" A servant leader creates HRT, removes obstacles, advises, but isn't afraid to get their hands dirty. <b>The only thing they "manage" is the team's technical *and* social health — the latter is harder but just as important.</b></div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">TRADE-OFF</span> The Engineering Manager: history &amp; today</h3>
+      <div class="claim">"Manager" carries over from military/industrial supervisors — the "<b>carrot and stick</b>" mule-driver style. But studies repeatedly show it's <b>ineffective and harmful for creative workers</b>: assembly-line workers were replaceable in days; engineers take months to ramp up and need nurturing and space.</div>
+      <ul class="tight">
+        <li><b>Trust creates positive pressure:</b> show you trust an employee and they live up to it. The Jerry story — "as long as you get your job done, I don't care what time you leave." Needing babysitting to work is the real problem.</li>
+        <li><b>Failure Is an Option:</b> psychological safety lets people take bigger risks. "<b>Failing at the impossible usually achieves more than succeeding at what you already could.</b>" <b>Praise success in public, criticize in private</b>; postmortems for learning, not blame.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">PATTERNS</span> Antipatterns ↔ Positive Patterns</h3>
+      <div class="twocol">
+        <div class="pcol anti">
+          <h4>✗ Antipatterns (avoid)</h4>
+          <ul>
+            <li><b>Hire pushovers:</b> the team can't move without you. Instead hire people smarter than you who can replace you.</li>
+            <li><b>Ignore low performers:</b> "hope is not a strategy"; set a two-month measurable plan, help up or out.</li>
+            <li><b>Ignore human issues:</b> Jake, a new dad working from home, forced back by Pablo — no empathy.</li>
+            <li><b>Be everyone's friend:</b> don't confuse friendship with a soft touch; power makes reciprocity feel forced.</li>
+            <li><b>Compromise the hiring bar:</b> "A people hire A people; B people hire C people"; worst under time pressure.</li>
+            <li><b>Treat the team like children:</b> permanent micromanagement = a hiring failure; even self-serve supplies show trust.</li>
+          </ul>
+        </div>
+        <div class="pcol pos">
+          <h4>✓ Positive patterns (do)</h4>
+          <ul>
+            <li><b>Lose the ego:</b> cultivate a collective team ego; <b>apologize sincerely</b> when wrong (earns respect).</li>
+            <li><b>Be a Zen master:</b> stay calm (the gear chain amplifies you), always on stage; <b>ask questions</b> to lead them to their own answer.</li>
+            <li><b>Be a catalyst:</b> build consensus (lead without authority; don't chase 100%).</li>
+            <li><b>Remove roadblocks:</b> "knowing the right person beats knowing the right answer."</li>
+            <li><b>Be a teacher/mentor:</b> the key skill is gauging how much help they need.</li>
+            <li><b>Set clear goals:</b> everyone pulling the same "north"; write a concise mission statement.</li>
+            <li><b>Be honest:</b> avoid the <b>compliment sandwich</b>; kind but direct (the Tim and Dean "train" stories).</li>
+            <li><b>Track happiness:</b> end 1:1s with "<b>What do you need?</b>"; make implicit career goals explicit.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">TIPS</span> Other Tips and Tricks</h3>
+      <ul class="tight">
+        <li><b>Delegate, but get your hands dirty:</b> new leaders must work to delegate (even if slower); on a new team, take a grungy task to earn respect.</li>
+        <li><b>Seek to replace yourself:</b> hire people smarter than you, give them responsibility and occasional leadership.</li>
+        <li><b>Know when to make waves:</b> don't tell yourself "it'll work itself out" — act now, waiting causes more damage.</li>
+        <li><b>Shield from chaos / give air cover:</b> the chaos was always there; your previous manager shielded you.</li>
+        <li><b>Say when they do well:</b> don't get so caught up in shortcomings you forget positive feedback.</li>
+        <li><b>Easy to say yes to what's easy to undo:</b> a two-day experiment vs a ten-year product deserve different scrutiny (see ch22).</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">SUMMARY</span> People Are Like Plants</h3>
+      <div class="claim">Kids are like plants: cacti need little water but lots of sun; tomatoes excel with a little fertilizer. Give six kids identical water/light/fertilizer and that's <b>equal — but none gets what it actually needs</b>. Team members are the same — the variables are <b>motivation and direction</b>.</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 470" role="img" aria-label="Motivation × Direction 2×2 matrix: figure out what each team member needs">
+          <rect x="95" y="60" width="270" height="160" rx="10" fill="var(--card2)" stroke="var(--border)"/>
+          <rect x="375" y="60" width="270" height="160" rx="10" fill="var(--card2)" stroke="var(--theme-scale)" stroke-width="2"/>
+          <rect x="95" y="230" width="270" height="160" rx="10" fill="var(--card2)" stroke="var(--theme-trade)" stroke-width="2"/>
+          <rect x="375" y="230" width="270" height="160" rx="10" fill="var(--card2)" stroke="var(--border)"/>
+          <g text-anchor="middle">
+            <text x="230" y="125" class="fig-txt" font-size="14" font-weight="700">Distracted / uncertain</text>
+            <text x="230" y="148" class="fig-mut" font-size="12.5">motivated, but unclear</text>
+            <text x="230" y="178" class="fig-txt" font-size="14" font-weight="700" fill="var(--theme-scale)">→ give DIRECTION</text>
+            <text x="510" y="125" class="fig-txt" font-size="14" font-weight="700">Thriving</text>
+            <text x="510" y="148" class="fig-mut" font-size="12.5">has enough of both</text>
+            <text x="510" y="178" class="fig-txt" font-size="13.5" font-weight="700">don't over-give (annoying)</text>
+            <text x="230" y="295" class="fig-txt" font-size="14" font-weight="700">Adrift</text>
+            <text x="230" y="318" class="fig-mut" font-size="12.5">no drive, no direction</text>
+            <text x="230" y="348" class="fig-txt" font-size="14" font-weight="700" fill="var(--theme-trade)">→ give BOTH</text>
+            <text x="510" y="295" class="fig-txt" font-size="14" font-weight="700">In a rut</text>
+            <text x="510" y="318" class="fig-mut" font-size="12.5">knows what, but low energy</text>
+            <text x="510" y="348" class="fig-txt" font-size="14" font-weight="700" fill="var(--theme-time)">→ give MOTIVATION</text>
+          </g>
+          <text x="40" y="145" class="fig-mut" font-size="12.5" text-anchor="middle" transform="rotate(-90 40 145)">high motivation ↑</text>
+          <text x="40" y="310" class="fig-mut" font-size="12.5" text-anchor="middle" transform="rotate(-90 40 310)">low motivation ↓</text>
+          <text x="230" y="430" class="fig-mut" font-size="12.5" text-anchor="middle">← unclear</text>
+          <text x="510" y="430" class="fig-mut" font-size="12.5" text-anchor="middle">clear →</text>
+          <text x="370" y="452" class="fig-txt" font-size="12.5" text-anchor="middle" font-weight="700">Direction (clarity)</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — Motivation × Direction 2×2: read what each member already has, then give what's missing — don't treat everyone identically, and don't over-give. Motivation's core = autonomy / mastery / purpose (Dan Pink's <i>Drive</i>).</figcaption>
+      </figure>
+      <div class="impl"><b>Intrinsic vs Extrinsic:</b> raising intrinsic motivation beats cash, via three things — <b>Autonomy</b> (give direction, let them choose the how), <b>Mastery</b> (skills are a blade that dulls without sharpening), <b>Purpose</b> (make work meaningful, e.g., forward customer thank-yous to the team).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Above all, resist the urge to manage."</span><span class="zh">A new leader's instinct to control is the very thing to suppress — your job is to serve, not steer everyone's hands.</span><div class="note">Director Steve Vinter's advice, the heart of servant leadership.</div></blockquote>
+    <blockquote class="q"><span class="en">"Traditional managers worry about how to get things done, whereas great managers worry about what things get done (and trust their team to figure out how to do it)."</span><span class="zh">Pick the right what and delegate the how; control vs. enablement is the whole difference.</span><div class="note">The author says "if you remember one thing from this chapter, make it this."</div></blockquote>
+    <blockquote class="q"><span class="en">"A people hire other A people; B people hire C people."</span><span class="zh">Mediocrity self-replicates downward; one below-bar hire seeds a worse next generation.</span><div class="note">Steve Jobs, on never compromising the hiring bar — especially under time pressure.</div></blockquote>
+    <blockquote class="q"><span class="en">"Hope is not a strategy."</span><span class="zh">Wishing a low performer will improve or leave isn't a plan — set measurable goals and act.</span><div class="note">A Google SRE motto, applied to ignoring low performers.</div></blockquote>
+    <blockquote class="q"><span class="en">"It's easy to say 'yes' to something that's easy to undo."</span><span class="zh">Calibrate scrutiny to reversibility — a two-day experiment and a ten-year commitment deserve different caution.</span><div class="note">Ties back to the book's Time thesis — decisions have different lifespans.</div></blockquote>
+    <blockquote class="q"><span class="en">"People are like plants ... It's your job as their leader to determine who needs what and then give it to them."</span><span class="zh">Leadership is tailoring motivation and direction to each person, not treating everyone identically.</span><div class="note">The chapter's summarizing metaphor for leading a team.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Servant leadership</span><br>The leader's most important job is to serve the team (remove obstacles, build consensus, create HRT), not control it. Mnemonic: "resist the urge to manage."</div>
+      <div class="kw"><span class="term">Manager vs Tech Lead vs TLM</span><br>A Manager leads *people*, a TL leads *technology*, a TLM does both (default on small teams; large teams split into a pair to avoid burnout).</div>
+      <div class="kw"><span class="term">Influence without authority</span><br>Getting people outside your org to do what needs doing; via alignment to the mission + lowering friction (e.g., the Data Liberation Front / Takeout).</div>
+      <div class="kw"><span class="term">Counting apples while growing bananas</span><br>Measuring management work by an IC's output. Management's output is the team's happiness and productivity.</div>
+      <div class="kw"><span class="term">Peter Principle</span><br>Employees tend to rise to their level of incompetence. Google guards against it by requiring you to "exceed expectations" at the higher level before promotion.</div>
+      <div class="kw"><span class="term">Carrot and stick</span><br>The factory-era mule-driver style; ineffective and harmful for creative engineers who take months to ramp up.</div>
+      <div class="kw"><span class="term">Hope is not a strategy</span><br>SRE motto, applied to low performers: don't *hope* they improve — set measurable goals and help them up or out.</div>
+      <div class="kw"><span class="term">Compliment sandwich</span><br>Criticism wrapped in two compliments. Strongly discouraged: the key message gets drowned out; use "kind but direct."</div>
+      <div class="kw"><span class="term">The leader is always on stage</span><br>A leadership position is constantly watched; your visible attitude is amplified through the "gear chain" and spreads to the team.</div>
+      <div class="kw"><span class="term">Autonomy / Mastery / Purpose</span><br>Dan Pink's three drivers of intrinsic motivation (from <i>Drive</i>); raising intrinsic motivation beats throwing money.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Recall a day you finished feeling "I did nothing today." Were you "counting apples while growing bananas"? If you scored "did my team get happier and more productive?", would the answer change?</li>
+      <li>Is there a low performer you're "hoping will improve"? Apply the SRE line — will you give a two-month, small, measurable, weekly-checked "up or out" plan? What's the cost to your *high* performers of waiting?</li>
+      <li>Was your last hard feedback wrapped in a compliment sandwich? Did they hear *what needs to change*? Rewrite it "kind but direct." Per ch02's "you are not your code."</li>
+      <li>Picture each direct report as a plant: who lacks "water" (motivation), who lacks "light" (direction), who lacks both (adrift)? Did you give what they needed, or treat everyone identically?</li>
+      <li>Name a goal your team cares about. Is everyone really pulling the same "north"? Do you have a writable mission statement? Per ch06 (leading at scale) and ch07 (measuring direction).</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch02.html">ch02 How to Work Well on Teams</a> <span class="rel">— this chapter elevates Ch.2's HRT, "lose the ego," and blameless post-mortems from "between teammates" to "leader-to-team."</span></div>
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— "be a teacher and mentor" and "ask questions" continue Ch.3's mentorship and psychological safety.</span></div>
+      <div class="chip"><a href="ch04.html">ch04 Engineering for Equity</a> <span class="rel">— "every manager has the means to augment equity" is this chapter's responsibility; differentiated treatment echoes "design for the least-like-you user."</span></div>
+      <div class="chip"><a href="ch06.html">ch06 Leading at Scale</a> <span class="rel">— this is "leading one team"; Ch.6 extends to leading many teams and leading leaders.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— "track happiness" and "make implicit career goals explicit" echo Ch.7's metrics over intuition.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— "easy to say yes to what's easy to undo" (reversibility) gets a full technical treatment there.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch04.html">← Prev: Engineering for Equity</a><a class="idx" href="index.html">⌂ Index</a><a href="ch06.html">Next: Leading at Scale →</a></nav>
+</div>
+</div>
+
+</body>
+</html>

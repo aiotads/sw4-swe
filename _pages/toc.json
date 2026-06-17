@@ -1,0 +1,2567 @@
+[
+ [
+  1,
+  "Cover",
+  1
+ ],
+ [
+  1,
+  "Copyright",
+  4
+ ],
+ [
+  1,
+  "Table of Contents",
+  5
+ ],
+ [
+  1,
+  "Foreword",
+  19
+ ],
+ [
+  1,
+  "Preface",
+  21
+ ],
+ [
+  2,
+  "Programming Over Time",
+  21
+ ],
+ [
+  2,
+  "Google’s Perspective",
+  22
+ ],
+ [
+  2,
+  "What This Book Isn’t",
+  23
+ ],
+ [
+  2,
+  "Parting Remarks",
+  24
+ ],
+ [
+  2,
+  "Conventions Used in This Book",
+  24
+ ],
+ [
+  2,
+  "O’Reilly Online Learning",
+  25
+ ],
+ [
+  2,
+  "How to Contact Us",
+  25
+ ],
+ [
+  2,
+  "Acknowledgments",
+  26
+ ],
+ [
+  1,
+  "Part I. Thesis",
+  29
+ ],
+ [
+  2,
+  "Chapter 1. What Is Software Engineering?",
+  31
+ ],
+ [
+  3,
+  "Time and Change",
+  34
+ ],
+ [
+  4,
+  "Hyrum’s Law",
+  36
+ ],
+ [
+  4,
+  "Example: Hash Ordering",
+  37
+ ],
+ [
+  4,
+  "Why Not Just Aim for “Nothing Changes”?",
+  38
+ ],
+ [
+  3,
+  "Scale and Efficiency",
+  39
+ ],
+ [
+  4,
+  "Policies That Don’t Scale",
+  40
+ ],
+ [
+  4,
+  "Policies That Scale Well",
+  42
+ ],
+ [
+  4,
+  "Example: Compiler Upgrade",
+  42
+ ],
+ [
+  4,
+  "Shifting Left",
+  45
+ ],
+ [
+  3,
+  "Trade-offs and Costs",
+  46
+ ],
+ [
+  4,
+  "Example: Markers",
+  47
+ ],
+ [
+  4,
+  "Inputs to Decision Making",
+  48
+ ],
+ [
+  4,
+  "Example: Distributed Builds",
+  48
+ ],
+ [
+  4,
+  "Example: Deciding Between Time and Scale",
+  50
+ ],
+ [
+  4,
+  "Revisiting Decisions, Making Mistakes",
+  50
+ ],
+ [
+  3,
+  "Software Engineering Versus Programming",
+  51
+ ],
+ [
+  3,
+  "Conclusion",
+  52
+ ],
+ [
+  3,
+  "TL;DRs",
+  52
+ ],
+ [
+  1,
+  "Part II. Culture",
+  53
+ ],
+ [
+  2,
+  "Chapter 2. How to Work Well on Teams",
+  55
+ ],
+ [
+  3,
+  "Help Me Hide My Code",
+  55
+ ],
+ [
+  3,
+  "The Genius Myth",
+  56
+ ],
+ [
+  3,
+  "Hiding Considered Harmful",
+  58
+ ],
+ [
+  4,
+  "Early Detection",
+  59
+ ],
+ [
+  4,
+  "The Bus Factor",
+  59
+ ],
+ [
+  4,
+  "Pace of Progress",
+  60
+ ],
+ [
+  4,
+  "In Short, Don’t Hide",
+  62
+ ],
+ [
+  3,
+  "It’s All About the Team",
+  62
+ ],
+ [
+  4,
+  "The Three Pillars of Social Interaction",
+  62
+ ],
+ [
+  4,
+  "Why Do These Pillars Matter?",
+  63
+ ],
+ [
+  4,
+  "Humility, Respect, and Trust in Practice",
+  64
+ ],
+ [
+  4,
+  "Blameless Post-Mortem Culture",
+  67
+ ],
+ [
+  4,
+  "Being Googley",
+  69
+ ],
+ [
+  3,
+  "Conclusion",
+  70
+ ],
+ [
+  3,
+  "TL;DRs",
+  70
+ ],
+ [
+  2,
+  "Chapter 3. Knowledge Sharing",
+  71
+ ],
+ [
+  3,
+  "Challenges to Learning",
+  71
+ ],
+ [
+  3,
+  "Philosophy",
+  73
+ ],
+ [
+  3,
+  "Setting the Stage: Psychological Safety",
+  74
+ ],
+ [
+  4,
+  "Mentorship",
+  74
+ ],
+ [
+  4,
+  "Psychological Safety in Large Groups",
+  75
+ ],
+ [
+  3,
+  "Growing Your Knowledge",
+  76
+ ],
+ [
+  4,
+  "Ask Questions",
+  76
+ ],
+ [
+  4,
+  "Understand Context",
+  77
+ ],
+ [
+  3,
+  "Scaling Your Questions: Ask the Community",
+  78
+ ],
+ [
+  4,
+  "Group Chats",
+  78
+ ],
+ [
+  4,
+  "Mailing Lists",
+  78
+ ],
+ [
+  4,
+  "YAQS: Question-and-Answer Platform",
+  79
+ ],
+ [
+  3,
+  "Scaling Your Knowledge: You Always Have Something to Teach",
+  80
+ ],
+ [
+  4,
+  "Office Hours",
+  80
+ ],
+ [
+  4,
+  "Tech Talks and Classes",
+  80
+ ],
+ [
+  4,
+  "Documentation",
+  81
+ ],
+ [
+  4,
+  "Code",
+  84
+ ],
+ [
+  3,
+  "Scaling Your Organization’s Knowledge",
+  84
+ ],
+ [
+  4,
+  "Cultivating a Knowledge-Sharing Culture",
+  84
+ ],
+ [
+  4,
+  "Establishing Canonical Sources of Information",
+  86
+ ],
+ [
+  4,
+  "Staying in the Loop",
+  89
+ ],
+ [
+  3,
+  "Readability: Standardized Mentorship Through Code Review",
+  90
+ ],
+ [
+  4,
+  "What Is the Readability Process?",
+  91
+ ],
+ [
+  4,
+  "Why Have This Process?",
+  92
+ ],
+ [
+  3,
+  "Conclusion",
+  94
+ ],
+ [
+  3,
+  "TL;DRs",
+  95
+ ],
+ [
+  2,
+  "Chapter 4. Engineering for Equity",
+  97
+ ],
+ [
+  3,
+  "Bias Is the Default",
+  98
+ ],
+ [
+  3,
+  "Understanding the Need for Diversity",
+  100
+ ],
+ [
+  3,
+  "Building Multicultural Capacity",
+  100
+ ],
+ [
+  3,
+  "Making Diversity Actionable",
+  102
+ ],
+ [
+  3,
+  "Reject Singular Approaches",
+  103
+ ],
+ [
+  3,
+  "Challenge Established Processes",
+  104
+ ],
+ [
+  3,
+  "Values Versus Outcomes",
+  105
+ ],
+ [
+  3,
+  "Stay Curious, Push Forward",
+  106
+ ],
+ [
+  3,
+  "Conclusion",
+  107
+ ],
+ [
+  3,
+  "TL;DRs",
+  107
+ ],
+ [
+  2,
+  "Chapter 5. How to Lead a Team",
+  109
+ ],
+ [
+  3,
+  "Managers and Tech Leads (and Both)",
+  109
+ ],
+ [
+  4,
+  "The Engineering Manager",
+  110
+ ],
+ [
+  4,
+  "The Tech Lead",
+  110
+ ],
+ [
+  4,
+  "The Tech Lead Manager",
+  110
+ ],
+ [
+  3,
+  "Moving from an Individual Contributor Role to a Leadership Role",
+  111
+ ],
+ [
+  4,
+  "The Only Thing to Fear Is…Well, Everything",
+  112
+ ],
+ [
+  4,
+  "Servant Leadership",
+  113
+ ],
+ [
+  3,
+  "The Engineering Manager",
+  114
+ ],
+ [
+  4,
+  "Manager Is a Four-Letter Word",
+  114
+ ],
+ [
+  4,
+  "Today’s Engineering Manager",
+  115
+ ],
+ [
+  3,
+  "Antipatterns",
+  116
+ ],
+ [
+  4,
+  "Antipattern: Hire Pushovers",
+  117
+ ],
+ [
+  4,
+  "Antipattern: Ignore Low Performers",
+  117
+ ],
+ [
+  4,
+  "Antipattern: Ignore Human Issues",
+  118
+ ],
+ [
+  4,
+  "Antipattern: Be Everyone’s Friend",
+  119
+ ],
+ [
+  4,
+  "Antipattern: Compromise the Hiring Bar",
+  120
+ ],
+ [
+  4,
+  "Antipattern: Treat Your Team Like Children",
+  120
+ ],
+ [
+  3,
+  "Positive Patterns",
+  121
+ ],
+ [
+  4,
+  "Lose the Ego",
+  121
+ ],
+ [
+  4,
+  "Be a Zen Master",
+  122
+ ],
+ [
+  4,
+  "Be a Catalyst",
+  124
+ ],
+ [
+  4,
+  "Remove Roadblocks",
+  124
+ ],
+ [
+  4,
+  "Be a Teacher and a Mentor",
+  125
+ ],
+ [
+  4,
+  "Set Clear Goals",
+  125
+ ],
+ [
+  4,
+  "Be Honest",
+  126
+ ],
+ [
+  4,
+  "Track Happiness",
+  127
+ ],
+ [
+  3,
+  "The Unexpected Question",
+  128
+ ],
+ [
+  3,
+  "Other Tips and Tricks",
+  129
+ ],
+ [
+  3,
+  "People Are Like Plants",
+  131
+ ],
+ [
+  4,
+  "Intrinsic Versus Extrinsic Motivation",
+  132
+ ],
+ [
+  3,
+  "Conclusion",
+  133
+ ],
+ [
+  3,
+  "TL;DRs",
+  133
+ ],
+ [
+  2,
+  "Chapter 6. Leading at Scale",
+  135
+ ],
+ [
+  3,
+  "Always Be Deciding",
+  136
+ ],
+ [
+  4,
+  "The Parable of the Airplane",
+  136
+ ],
+ [
+  4,
+  "Identify the Blinders",
+  137
+ ],
+ [
+  4,
+  "Identify the Key Trade-Offs",
+  137
+ ],
+ [
+  4,
+  "Decide, Then Iterate",
+  138
+ ],
+ [
+  3,
+  "Always Be Leaving",
+  140
+ ],
+ [
+  4,
+  "Your Mission: Build a “Self-Driving” Team",
+  140
+ ],
+ [
+  4,
+  "Dividing the Problem Space",
+  141
+ ],
+ [
+  3,
+  "Always Be Scaling",
+  144
+ ],
+ [
+  4,
+  "The Cycle of Success",
+  144
+ ],
+ [
+  4,
+  "Important Versus Urgent",
+  146
+ ],
+ [
+  4,
+  "Learn to Drop Balls",
+  147
+ ],
+ [
+  4,
+  "Protecting Your Energy",
+  148
+ ],
+ [
+  3,
+  "Conclusion",
+  150
+ ],
+ [
+  3,
+  "TL;DRs",
+  150
+ ],
+ [
+  2,
+  "Chapter 7. Measuring Engineering Productivity",
+  151
+ ],
+ [
+  3,
+  "Why Should We Measure Engineering Productivity?",
+  151
+ ],
+ [
+  3,
+  "Triage: Is It Even Worth Measuring?",
+  153
+ ],
+ [
+  3,
+  "Selecting Meaningful Metrics with Goals and Signals",
+  157
+ ],
+ [
+  3,
+  "Goals",
+  158
+ ],
+ [
+  3,
+  "Signals",
+  160
+ ],
+ [
+  3,
+  "Metrics",
+  160
+ ],
+ [
+  3,
+  "Using Data to Validate Metrics",
+  161
+ ],
+ [
+  3,
+  "Taking Action and Tracking Results",
+  165
+ ],
+ [
+  3,
+  "Conclusion",
+  165
+ ],
+ [
+  3,
+  "TL;DRs",
+  165
+ ],
+ [
+  1,
+  "Part III. Processes",
+  167
+ ],
+ [
+  2,
+  "Chapter 8. Style Guides and Rules",
+  169
+ ],
+ [
+  3,
+  "Why Have Rules?",
+  170
+ ],
+ [
+  3,
+  "Creating the Rules",
+  171
+ ],
+ [
+  4,
+  "Guiding Principles",
+  171
+ ],
+ [
+  4,
+  "The Style Guide",
+  179
+ ],
+ [
+  3,
+  "Changing the Rules",
+  182
+ ],
+ [
+  4,
+  "The Process",
+  183
+ ],
+ [
+  4,
+  "The Style Arbiters",
+  184
+ ],
+ [
+  4,
+  "Exceptions",
+  184
+ ],
+ [
+  3,
+  "Guidance",
+  185
+ ],
+ [
+  3,
+  "Applying the Rules",
+  186
+ ],
+ [
+  4,
+  "Error Checkers",
+  188
+ ],
+ [
+  4,
+  "Code Formatters",
+  189
+ ],
+ [
+  3,
+  "Conclusion",
+  191
+ ],
+ [
+  3,
+  "TL;DRs",
+  191
+ ],
+ [
+  2,
+  "Chapter 9. Code Review",
+  193
+ ],
+ [
+  3,
+  "Code Review Flow",
+  194
+ ],
+ [
+  3,
+  "How Code Review Works at Google",
+  195
+ ],
+ [
+  3,
+  "Code Review Benefits",
+  198
+ ],
+ [
+  4,
+  "Code Correctness",
+  199
+ ],
+ [
+  4,
+  "Comprehension of Code",
+  200
+ ],
+ [
+  4,
+  "Code Consistency",
+  201
+ ],
+ [
+  4,
+  "Psychological and Cultural Benefits",
+  202
+ ],
+ [
+  4,
+  "Knowledge Sharing",
+  203
+ ],
+ [
+  3,
+  "Code Review Best Practices",
+  204
+ ],
+ [
+  4,
+  "Be Polite and Professional",
+  204
+ ],
+ [
+  4,
+  "Write Small Changes",
+  205
+ ],
+ [
+  4,
+  "Write Good Change Descriptions",
+  206
+ ],
+ [
+  4,
+  "Keep Reviewers to a Minimum",
+  207
+ ],
+ [
+  4,
+  "Automate Where Possible",
+  207
+ ],
+ [
+  3,
+  "Types of Code Reviews",
+  208
+ ],
+ [
+  4,
+  "Greenfield Code Reviews",
+  208
+ ],
+ [
+  4,
+  "Behavioral Changes, Improvements, and Optimizations",
+  209
+ ],
+ [
+  4,
+  "Bug Fixes and Rollbacks",
+  209
+ ],
+ [
+  4,
+  "Refactorings and Large-Scale Changes",
+  210
+ ],
+ [
+  3,
+  "Conclusion",
+  210
+ ],
+ [
+  3,
+  "TL;DRs",
+  211
+ ],
+ [
+  2,
+  "Chapter 10. Documentation",
+  213
+ ],
+ [
+  3,
+  "What Qualifies as Documentation?",
+  213
+ ],
+ [
+  3,
+  "Why Is Documentation Needed?",
+  214
+ ],
+ [
+  3,
+  "Documentation Is Like Code",
+  216
+ ],
+ [
+  3,
+  "Know Your Audience",
+  218
+ ],
+ [
+  4,
+  "Types of Audiences",
+  219
+ ],
+ [
+  3,
+  "Documentation Types",
+  220
+ ],
+ [
+  4,
+  "Reference Documentation",
+  221
+ ],
+ [
+  4,
+  "Design Docs",
+  223
+ ],
+ [
+  4,
+  "Tutorials",
+  224
+ ],
+ [
+  4,
+  "Conceptual Documentation",
+  226
+ ],
+ [
+  4,
+  "Landing Pages",
+  226
+ ],
+ [
+  3,
+  "Documentation Reviews",
+  227
+ ],
+ [
+  3,
+  "Documentation Philosophy",
+  229
+ ],
+ [
+  4,
+  "WHO, WHAT, WHEN, WHERE, and WHY",
+  229
+ ],
+ [
+  4,
+  "The Beginning, Middle, and End",
+  230
+ ],
+ [
+  4,
+  "The Parameters of Good Documentation",
+  230
+ ],
+ [
+  4,
+  "Deprecating Documents",
+  231
+ ],
+ [
+  3,
+  "When Do You Need Technical Writers?",
+  232
+ ],
+ [
+  3,
+  "Conclusion",
+  232
+ ],
+ [
+  3,
+  "TL;DRs",
+  233
+ ],
+ [
+  2,
+  "Chapter 11. Testing Overview",
+  235
+ ],
+ [
+  3,
+  "Why Do We Write Tests?",
+  236
+ ],
+ [
+  4,
+  "The Story of Google Web Server",
+  237
+ ],
+ [
+  4,
+  "Testing at the Speed of Modern Development",
+  238
+ ],
+ [
+  4,
+  "Write, Run, React",
+  240
+ ],
+ [
+  4,
+  "Benefits of Testing Code",
+  241
+ ],
+ [
+  3,
+  "Designing a Test Suite",
+  242
+ ],
+ [
+  4,
+  "Test Size",
+  243
+ ],
+ [
+  4,
+  "Test Scope",
+  247
+ ],
+ [
+  4,
+  "The Beyoncé Rule",
+  249
+ ],
+ [
+  4,
+  "A Note on Code Coverage",
+  250
+ ],
+ [
+  3,
+  "Testing at Google Scale",
+  251
+ ],
+ [
+  4,
+  "The Pitfalls of a Large Test Suite",
+  252
+ ],
+ [
+  3,
+  "History of Testing at Google",
+  253
+ ],
+ [
+  4,
+  "Orientation Classes",
+  254
+ ],
+ [
+  4,
+  "Test Certified",
+  255
+ ],
+ [
+  4,
+  "Testing on the Toilet",
+  255
+ ],
+ [
+  4,
+  "Testing Culture Today",
+  256
+ ],
+ [
+  3,
+  "The Limits of Automated Testing",
+  257
+ ],
+ [
+  3,
+  "Conclusion",
+  258
+ ],
+ [
+  3,
+  "TL;DRs",
+  258
+ ],
+ [
+  2,
+  "Chapter 12. Unit Testing",
+  259
+ ],
+ [
+  3,
+  "The Importance of Maintainability",
+  260
+ ],
+ [
+  3,
+  "Preventing Brittle Tests",
+  261
+ ],
+ [
+  4,
+  "Strive for Unchanging Tests",
+  261
+ ],
+ [
+  4,
+  "Test via Public APIs",
+  262
+ ],
+ [
+  4,
+  "Test State, Not Interactions",
+  266
+ ],
+ [
+  3,
+  "Writing Clear Tests",
+  267
+ ],
+ [
+  4,
+  "Make Your Tests Complete and Concise",
+  268
+ ],
+ [
+  4,
+  "Test Behaviors, Not Methods",
+  269
+ ],
+ [
+  4,
+  "Don’t Put Logic in Tests",
+  274
+ ],
+ [
+  4,
+  "Write Clear Failure Messages",
+  275
+ ],
+ [
+  3,
+  "Tests and Code Sharing: DAMP, Not DRY",
+  276
+ ],
+ [
+  4,
+  "Shared Values",
+  279
+ ],
+ [
+  4,
+  "Shared Setup",
+  281
+ ],
+ [
+  4,
+  "Shared Helpers and Validation",
+  282
+ ],
+ [
+  4,
+  "Defining Test Infrastructure",
+  283
+ ],
+ [
+  3,
+  "Conclusion",
+  284
+ ],
+ [
+  3,
+  "TL;DRs",
+  284
+ ],
+ [
+  2,
+  "Chapter 13. Test Doubles",
+  285
+ ],
+ [
+  3,
+  "The Impact of Test Doubles on Software Development",
+  286
+ ],
+ [
+  3,
+  "Test Doubles at Google",
+  286
+ ],
+ [
+  3,
+  "Basic Concepts",
+  287
+ ],
+ [
+  4,
+  "An Example Test Double",
+  287
+ ],
+ [
+  4,
+  "Seams",
+  288
+ ],
+ [
+  4,
+  "Mocking Frameworks",
+  289
+ ],
+ [
+  3,
+  "Techniques for Using Test Doubles",
+  290
+ ],
+ [
+  4,
+  "Faking",
+  291
+ ],
+ [
+  4,
+  "Stubbing",
+  291
+ ],
+ [
+  4,
+  "Interaction Testing",
+  292
+ ],
+ [
+  3,
+  "Real Implementations",
+  292
+ ],
+ [
+  4,
+  "Prefer Realism Over Isolation",
+  293
+ ],
+ [
+  4,
+  "How to Decide When to Use a Real Implementation",
+  294
+ ],
+ [
+  3,
+  "Faking",
+  297
+ ],
+ [
+  4,
+  "Why Are Fakes Important?",
+  298
+ ],
+ [
+  4,
+  "When Should Fakes Be Written?",
+  298
+ ],
+ [
+  4,
+  "The Fidelity of Fakes",
+  299
+ ],
+ [
+  4,
+  "Fakes Should Be Tested",
+  300
+ ],
+ [
+  4,
+  "What to Do If a Fake Is Not Available",
+  300
+ ],
+ [
+  3,
+  "Stubbing",
+  300
+ ],
+ [
+  4,
+  "The Dangers of Overusing Stubbing",
+  301
+ ],
+ [
+  4,
+  "When Is Stubbing Appropriate?",
+  303
+ ],
+ [
+  3,
+  "Interaction Testing",
+  303
+ ],
+ [
+  4,
+  "Prefer State Testing Over Interaction Testing",
+  303
+ ],
+ [
+  4,
+  "When Is Interaction Testing Appropriate?",
+  305
+ ],
+ [
+  4,
+  "Best Practices for Interaction Testing",
+  305
+ ],
+ [
+  3,
+  "Conclusion",
+  308
+ ],
+ [
+  3,
+  "TL;DRs",
+  308
+ ],
+ [
+  2,
+  "Chapter 14. Larger Testing",
+  309
+ ],
+ [
+  3,
+  "What Are Larger Tests?",
+  309
+ ],
+ [
+  4,
+  "Fidelity",
+  310
+ ],
+ [
+  4,
+  "Common Gaps in Unit Tests",
+  311
+ ],
+ [
+  4,
+  "Why Not Have Larger Tests?",
+  313
+ ],
+ [
+  3,
+  "Larger Tests at Google",
+  314
+ ],
+ [
+  4,
+  "Larger Tests and Time",
+  314
+ ],
+ [
+  4,
+  "Larger Tests at Google Scale",
+  316
+ ],
+ [
+  3,
+  "Structure of a Large Test",
+  317
+ ],
+ [
+  4,
+  "The System Under Test",
+  318
+ ],
+ [
+  4,
+  "Test Data",
+  322
+ ],
+ [
+  4,
+  "Verification",
+  323
+ ],
+ [
+  3,
+  "Types of Larger Tests",
+  324
+ ],
+ [
+  4,
+  "Functional Testing of One or More Interacting Binaries",
+  325
+ ],
+ [
+  4,
+  "Browser and Device Testing",
+  325
+ ],
+ [
+  4,
+  "Performance, Load, and Stress testing",
+  325
+ ],
+ [
+  4,
+  "Deployment Configuration Testing",
+  326
+ ],
+ [
+  4,
+  "Exploratory Testing",
+  326
+ ],
+ [
+  4,
+  "A/B Diff Regression Testing",
+  327
+ ],
+ [
+  4,
+  "UAT",
+  329
+ ],
+ [
+  4,
+  "Probers and Canary Analysis",
+  329
+ ],
+ [
+  4,
+  "Disaster Recovery and Chaos Engineering",
+  330
+ ],
+ [
+  4,
+  "User Evaluation",
+  331
+ ],
+ [
+  3,
+  "Large Tests and the Developer Workflow",
+  332
+ ],
+ [
+  4,
+  "Authoring Large Tests",
+  333
+ ],
+ [
+  4,
+  "Running Large Tests",
+  333
+ ],
+ [
+  4,
+  "Owning Large Tests",
+  336
+ ],
+ [
+  3,
+  "Conclusion",
+  337
+ ],
+ [
+  3,
+  "TL;DRs",
+  337
+ ],
+ [
+  2,
+  "Chapter 15. Deprecation",
+  339
+ ],
+ [
+  3,
+  "Why Deprecate?",
+  340
+ ],
+ [
+  3,
+  "Why Is Deprecation So Hard?",
+  341
+ ],
+ [
+  4,
+  "Deprecation During Design",
+  343
+ ],
+ [
+  3,
+  "Types of Deprecation",
+  344
+ ],
+ [
+  4,
+  "Advisory Deprecation",
+  344
+ ],
+ [
+  4,
+  "Compulsory Deprecation",
+  345
+ ],
+ [
+  4,
+  "Deprecation Warnings",
+  346
+ ],
+ [
+  3,
+  "Managing the Deprecation Process",
+  347
+ ],
+ [
+  4,
+  "Process Owners",
+  348
+ ],
+ [
+  4,
+  "Milestones",
+  348
+ ],
+ [
+  4,
+  "Deprecation Tooling",
+  349
+ ],
+ [
+  3,
+  "Conclusion",
+  350
+ ],
+ [
+  3,
+  "TL;DRs",
+  351
+ ],
+ [
+  1,
+  "Part IV. Tools",
+  353
+ ],
+ [
+  2,
+  "Chapter 16. Version Control and Branch Management",
+  355
+ ],
+ [
+  3,
+  "What Is Version Control?",
+  355
+ ],
+ [
+  4,
+  "Why Is Version Control Important?",
+  357
+ ],
+ [
+  4,
+  "Centralized VCS Versus Distributed VCS",
+  359
+ ],
+ [
+  4,
+  "Source of Truth",
+  362
+ ],
+ [
+  4,
+  "Version Control Versus Dependency Management",
+  364
+ ],
+ [
+  3,
+  "Branch Management",
+  364
+ ],
+ [
+  4,
+  "Work in Progress Is Akin to a Branch",
+  364
+ ],
+ [
+  4,
+  "Dev Branches",
+  365
+ ],
+ [
+  4,
+  "Release Branches",
+  367
+ ],
+ [
+  3,
+  "Version Control at Google",
+  368
+ ],
+ [
+  4,
+  "One Version",
+  368
+ ],
+ [
+  4,
+  "Scenario: Multiple Available Versions",
+  369
+ ],
+ [
+  4,
+  "The “One-Version” Rule",
+  370
+ ],
+ [
+  4,
+  "(Nearly) No Long-Lived Branches",
+  371
+ ],
+ [
+  4,
+  "What About Release Branches?",
+  372
+ ],
+ [
+  3,
+  "Monorepos",
+  373
+ ],
+ [
+  3,
+  "Future of Version Control",
+  374
+ ],
+ [
+  3,
+  "Conclusion",
+  376
+ ],
+ [
+  3,
+  "TL;DRs",
+  377
+ ],
+ [
+  2,
+  "Chapter 17. Code Search",
+  379
+ ],
+ [
+  3,
+  "The Code Search UI",
+  380
+ ],
+ [
+  3,
+  "How Do Googlers Use Code Search?",
+  381
+ ],
+ [
+  4,
+  "Where?",
+  381
+ ],
+ [
+  4,
+  "What?",
+  382
+ ],
+ [
+  4,
+  "How?",
+  382
+ ],
+ [
+  4,
+  "Why?",
+  382
+ ],
+ [
+  4,
+  "Who and When?",
+  383
+ ],
+ [
+  3,
+  "Why a Separate Web Tool?",
+  383
+ ],
+ [
+  4,
+  "Scale",
+  383
+ ],
+ [
+  4,
+  "Zero Setup Global Code View",
+  384
+ ],
+ [
+  4,
+  "Specialization",
+  384
+ ],
+ [
+  4,
+  "Integration with Other Developer Tools",
+  384
+ ],
+ [
+  4,
+  "API Exposure",
+  387
+ ],
+ [
+  3,
+  "Impact of Scale on Design",
+  387
+ ],
+ [
+  4,
+  "Search Query Latency",
+  387
+ ],
+ [
+  4,
+  "Index Latency",
+  388
+ ],
+ [
+  3,
+  "Google’s Implementation",
+  389
+ ],
+ [
+  4,
+  "Search Index",
+  389
+ ],
+ [
+  4,
+  "Ranking",
+  391
+ ],
+ [
+  3,
+  "Selected Trade-Offs",
+  394
+ ],
+ [
+  4,
+  "Completeness: Repository at Head",
+  394
+ ],
+ [
+  4,
+  "Completeness: All Versus Most-Relevant Results",
+  394
+ ],
+ [
+  4,
+  "Completeness: Head Versus Branches Versus All History Versus Workspaces",
+  395
+ ],
+ [
+  4,
+  "Expressiveness: Token Versus Substring Versus Regex",
+  396
+ ],
+ [
+  3,
+  "Conclusion",
+  397
+ ],
+ [
+  3,
+  "TL;DRs",
+  398
+ ],
+ [
+  2,
+  "Chapter 18. Build Systems and Build Philosophy",
+  399
+ ],
+ [
+  3,
+  "Purpose of a Build System",
+  399
+ ],
+ [
+  3,
+  "What Happens Without a Build System?",
+  400
+ ],
+ [
+  4,
+  "But All I Need Is a Compiler!",
+  401
+ ],
+ [
+  4,
+  "Shell Scripts to the Rescue?",
+  401
+ ],
+ [
+  3,
+  "Modern Build Systems",
+  403
+ ],
+ [
+  4,
+  "It’s All About Dependencies",
+  403
+ ],
+ [
+  4,
+  "Task-Based Build Systems",
+  404
+ ],
+ [
+  4,
+  "Artifact-Based Build Systems",
+  408
+ ],
+ [
+  4,
+  "Distributed Builds",
+  414
+ ],
+ [
+  4,
+  "Time, Scale, Trade-Offs",
+  418
+ ],
+ [
+  3,
+  "Dealing with Modules and Dependencies",
+  418
+ ],
+ [
+  4,
+  "Using Fine-Grained Modules and the 1:1:1 Rule",
+  419
+ ],
+ [
+  4,
+  "Minimizing Module Visibility",
+  420
+ ],
+ [
+  4,
+  "Managing Dependencies",
+  420
+ ],
+ [
+  3,
+  "Conclusion",
+  425
+ ],
+ [
+  3,
+  "TL;DRs",
+  425
+ ],
+ [
+  2,
+  "Chapter 19. Critique: Google’s Code Review Tool",
+  427
+ ],
+ [
+  3,
+  "Code Review Tooling Principles",
+  427
+ ],
+ [
+  3,
+  "Code Review Flow",
+  428
+ ],
+ [
+  4,
+  "Notifications",
+  430
+ ],
+ [
+  3,
+  "Stage 1: Create a Change",
+  430
+ ],
+ [
+  4,
+  "Diffing",
+  431
+ ],
+ [
+  4,
+  "Analysis Results",
+  432
+ ],
+ [
+  4,
+  "Tight Tool Integration",
+  434
+ ],
+ [
+  3,
+  "Stage 2: Request Review",
+  434
+ ],
+ [
+  3,
+  "Stages 3 and 4: Understanding and Commenting on a Change",
+  436
+ ],
+ [
+  4,
+  "Commenting",
+  436
+ ],
+ [
+  4,
+  "Understanding the State of a Change",
+  438
+ ],
+ [
+  3,
+  "Stage 5: Change Approvals (Scoring a Change)",
+  440
+ ],
+ [
+  3,
+  "Stage 6: Commiting a Change",
+  441
+ ],
+ [
+  4,
+  "After Commit: Tracking History",
+  442
+ ],
+ [
+  3,
+  "Conclusion",
+  443
+ ],
+ [
+  3,
+  "TL;DRs",
+  444
+ ],
+ [
+  2,
+  "Chapter 20. Static Analysis",
+  445
+ ],
+ [
+  3,
+  "Characteristics of Effective Static Analysis",
+  446
+ ],
+ [
+  4,
+  "Scalability",
+  446
+ ],
+ [
+  4,
+  "Usability",
+  446
+ ],
+ [
+  3,
+  "Key Lessons in Making Static Analysis Work",
+  447
+ ],
+ [
+  4,
+  "Focus on Developer Happiness",
+  447
+ ],
+ [
+  4,
+  "Make Static Analysis a Part of the Core Developer Workflow",
+  448
+ ],
+ [
+  4,
+  "Empower Users to Contribute",
+  448
+ ],
+ [
+  3,
+  "Tricorder: Google’s Static Analysis Platform",
+  449
+ ],
+ [
+  4,
+  "Integrated Tools",
+  450
+ ],
+ [
+  4,
+  "Integrated Feedback Channels",
+  451
+ ],
+ [
+  4,
+  "Suggested Fixes",
+  452
+ ],
+ [
+  4,
+  "Per-Project Customization",
+  452
+ ],
+ [
+  4,
+  "Presubmits",
+  453
+ ],
+ [
+  4,
+  "Compiler Integration",
+  454
+ ],
+ [
+  4,
+  "Analysis While Editing and Browsing Code",
+  455
+ ],
+ [
+  3,
+  "Conclusion",
+  456
+ ],
+ [
+  3,
+  "TL;DRs",
+  456
+ ],
+ [
+  2,
+  "Chapter 21. Dependency Management",
+  457
+ ],
+ [
+  3,
+  "Why Is Dependency Management So Difficult?",
+  459
+ ],
+ [
+  4,
+  "Conflicting Requirements and Diamond Dependencies",
+  459
+ ],
+ [
+  3,
+  "Importing Dependencies",
+  461
+ ],
+ [
+  4,
+  "Compatibility Promises",
+  461
+ ],
+ [
+  4,
+  "Considerations When Importing",
+  464
+ ],
+ [
+  4,
+  "How Google Handles Importing Dependencies",
+  465
+ ],
+ [
+  3,
+  "Dependency Management, In Theory",
+  467
+ ],
+ [
+  4,
+  "Nothing Changes (aka The Static Dependency Model)",
+  467
+ ],
+ [
+  4,
+  "Semantic Versioning",
+  468
+ ],
+ [
+  4,
+  "Bundled Distribution Models",
+  469
+ ],
+ [
+  4,
+  "Live at Head",
+  470
+ ],
+ [
+  3,
+  "The Limitations of SemVer",
+  471
+ ],
+ [
+  4,
+  "SemVer Might Overconstrain",
+  472
+ ],
+ [
+  4,
+  "SemVer Might Overpromise",
+  473
+ ],
+ [
+  4,
+  "Motivations",
+  474
+ ],
+ [
+  4,
+  "Minimum Version Selection",
+  475
+ ],
+ [
+  4,
+  "So, Does SemVer Work?",
+  476
+ ],
+ [
+  3,
+  "Dependency Management with Infinite Resources",
+  477
+ ],
+ [
+  4,
+  "Exporting Dependencies",
+  480
+ ],
+ [
+  3,
+  "Conclusion",
+  484
+ ],
+ [
+  3,
+  "TL;DRs",
+  484
+ ],
+ [
+  2,
+  "Chapter 22. Large-Scale Changes",
+  487
+ ],
+ [
+  3,
+  "What Is a Large-Scale Change?",
+  488
+ ],
+ [
+  3,
+  "Who Deals with LSCs?",
+  489
+ ],
+ [
+  3,
+  "Barriers to Atomic Changes",
+  491
+ ],
+ [
+  4,
+  "Technical Limitations",
+  491
+ ],
+ [
+  4,
+  "Merge Conflicts",
+  491
+ ],
+ [
+  4,
+  "No Haunted Graveyards",
+  492
+ ],
+ [
+  4,
+  "Heterogeneity",
+  492
+ ],
+ [
+  4,
+  "Testing",
+  493
+ ],
+ [
+  4,
+  "Code Review",
+  495
+ ],
+ [
+  3,
+  "LSC Infrastructure",
+  496
+ ],
+ [
+  4,
+  "Policies and Culture",
+  497
+ ],
+ [
+  4,
+  "Codebase Insight",
+  498
+ ],
+ [
+  4,
+  "Change Management",
+  498
+ ],
+ [
+  4,
+  "Testing",
+  499
+ ],
+ [
+  4,
+  "Language Support",
+  499
+ ],
+ [
+  3,
+  "The LSC Process",
+  500
+ ],
+ [
+  4,
+  "Authorization",
+  501
+ ],
+ [
+  4,
+  "Change Creation",
+  501
+ ],
+ [
+  4,
+  "Sharding and Submitting",
+  502
+ ],
+ [
+  4,
+  "Cleanup",
+  505
+ ],
+ [
+  3,
+  "Conclusion",
+  505
+ ],
+ [
+  3,
+  "TL;DRs",
+  506
+ ],
+ [
+  2,
+  "Chapter 23. Continuous Integration",
+  507
+ ],
+ [
+  3,
+  "CI Concepts",
+  509
+ ],
+ [
+  4,
+  "Fast Feedback Loops",
+  509
+ ],
+ [
+  4,
+  "Automation",
+  511
+ ],
+ [
+  4,
+  "Continuous Testing",
+  513
+ ],
+ [
+  4,
+  "CI Challenges",
+  518
+ ],
+ [
+  4,
+  "Hermetic Testing",
+  519
+ ],
+ [
+  3,
+  "CI at Google",
+  521
+ ],
+ [
+  4,
+  "CI Case Study: Google Takeout",
+  524
+ ],
+ [
+  4,
+  "But I Can’t Afford CI",
+  531
+ ],
+ [
+  3,
+  "Conclusion",
+  531
+ ],
+ [
+  3,
+  "TL;DRs",
+  531
+ ],
+ [
+  2,
+  "Chapter 24. Continuous Delivery",
+  533
+ ],
+ [
+  3,
+  "Idioms of Continuous Delivery at Google",
+  534
+ ],
+ [
+  3,
+  "Velocity Is a Team Sport: How to Break Up a Deployment into Manageable Pieces",
+  535
+ ],
+ [
+  3,
+  "Evaluating Changes in Isolation: Flag-Guarding Features",
+  536
+ ],
+ [
+  3,
+  "Striving for Agility: Setting Up a Release Train",
+  537
+ ],
+ [
+  4,
+  "No Binary Is Perfect",
+  537
+ ],
+ [
+  4,
+  "Meet Your Release Deadline",
+  538
+ ],
+ [
+  3,
+  "Quality and User-Focus: Ship Only What Gets Used",
+  539
+ ],
+ [
+  3,
+  "Shifting Left: Making Data-Driven Decisions Earlier",
+  540
+ ],
+ [
+  3,
+  "Changing Team Culture: Building Discipline into Deployment",
+  541
+ ],
+ [
+  3,
+  "Conclusion",
+  542
+ ],
+ [
+  3,
+  "TL;DRs",
+  542
+ ],
+ [
+  2,
+  "Chapter 25. Compute as a Service",
+  545
+ ],
+ [
+  3,
+  "Taming the Compute Environment",
+  546
+ ],
+ [
+  4,
+  "Automation of Toil",
+  546
+ ],
+ [
+  4,
+  "Containerization and Multitenancy",
+  548
+ ],
+ [
+  4,
+  "Summary",
+  551
+ ],
+ [
+  3,
+  "Writing Software for Managed Compute",
+  551
+ ],
+ [
+  4,
+  "Architecting for Failure",
+  551
+ ],
+ [
+  4,
+  "Batch Versus Serving",
+  553
+ ],
+ [
+  4,
+  "Managing State",
+  555
+ ],
+ [
+  4,
+  "Connecting to a Service",
+  556
+ ],
+ [
+  4,
+  "One-Off Code",
+  557
+ ],
+ [
+  3,
+  "CaaS Over Time and Scale",
+  558
+ ],
+ [
+  4,
+  "Containers as an Abstraction",
+  558
+ ],
+ [
+  4,
+  "One Service to Rule Them All",
+  561
+ ],
+ [
+  4,
+  "Submitted Configuration",
+  563
+ ],
+ [
+  3,
+  "Choosing a Compute Service",
+  563
+ ],
+ [
+  4,
+  "Centralization Versus Customization",
+  565
+ ],
+ [
+  4,
+  "Level of Abstraction: Serverless",
+  567
+ ],
+ [
+  4,
+  "Public Versus Private",
+  571
+ ],
+ [
+  3,
+  "Conclusion",
+  572
+ ],
+ [
+  3,
+  "TL;DRs",
+  573
+ ],
+ [
+  1,
+  "Part V. Conclusion",
+  575
+ ],
+ [
+  1,
+  "Afterword",
+  577
+ ],
+ [
+  1,
+  "Index",
+  579
+ ],
+ [
+  1,
+  "About the Authors",
+  600
+ ],
+ [
+  1,
+  "Colophon",
+  601
+ ]
+]

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 8 章 Style Guides and Rules ｜ SWE@Google 研究筆記</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    line-height:1.75; font-size:16.5px}
+  code,.mono{font-family:"SF Mono",Consolas,"Cascadia Code",monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 80px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.top{background:linear-gradient(135deg,#141826,#0f1117); border-bottom:1px solid var(--border); padding:46px 0 34px}
+  .crumb{color:var(--muted); font-size:.85rem; letter-spacing:.04em}
+  .ch-no{color:var(--accent); font-weight:700; font-size:.9rem; letter-spacing:.12em}
+  h1.title{margin:.25em 0 .15em; font-size:2.1rem; line-height:1.25}
+  .title-zh{color:var(--muted); font-size:1.15rem; font-weight:500}
+  .meta-row{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .badge{font-size:.78rem; padding:3px 11px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--muted)}
+  .theme-tag{font-size:.74rem; padding:3px 11px; border-radius:999px; font-weight:600; color:#0f1117}
+  .t-scale{background:var(--theme-scale)} .t-trade{background:var(--theme-trade)} .t-culture{background:var(--accent)} .t-time{background:var(--theme-time)}
+  .epigraph{margin-top:22px; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.92rem}
+  .epigraph .zh{margin-top:4px; font-size:1.05rem}
+  section{margin-top:42px}
+  h2.sec{font-size:1.4rem; padding-bottom:8px; border-bottom:2px solid var(--border); position:relative}
+  h2.sec::before{content:""; position:absolute; bottom:-2px; left:0; width:64px; height:2px; background:var(--accent)}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0}
+  .why-grid{display:grid; gap:12px}
+  .why-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:14px 18px}
+  .why-card b{color:var(--accent)}
+  .sub{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:14px 0}
+  .sub h3{margin:.1em 0 .5em; font-size:1.08rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .sub h3 .en2{color:var(--muted); font-weight:500; font-size:.92rem}
+  .pill{font-size:.68rem; padding:2px 9px; border-radius:999px; font-weight:700; color:#0f1117}
+  .pill-core{background:var(--accent)} .pill-scale{background:var(--theme-scale)} .pill-trade{background:var(--theme-trade)} .pill-time{background:var(--theme-time)}
+  .claim{border-left:3px solid var(--accent); padding:6px 14px; margin:10px 0; background:#12151f; border-radius:0 8px 8px 0}
+  .impl{color:var(--muted); font-size:.95rem; margin-top:6px}
+  .impl b{color:var(--theme-scale)}
+  ul.tight{margin:8px 0 2px; padding-left:20px}
+  ul.tight li{margin:6px 0}
+  ol.pr{margin:8px 0 2px; padding-left:22px}
+  ol.pr li{margin:7px 0}
+  ol.pr li b{color:var(--accent)}
+  figure.fig{margin:16px 0; background:#0c0e15; border:1px solid var(--border); border-radius:12px; padding:18px 18px 12px}
+  figure.fig svg{width:100%; height:auto; display:block}
+  figure.fig figcaption{margin-top:10px; color:var(--muted); font-size:.84rem; text-align:center}
+  figure.fig figcaption b{color:var(--accent); font-weight:700}
+  .fig-txt{fill:var(--fg); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  .fig-mut{fill:var(--muted); font-family:-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+  blockquote.q{margin:16px 0; background:var(--card); border:1px solid var(--border); border-left:3px solid var(--theme-trade); border-radius:0 10px 10px 0; padding:14px 18px}
+  blockquote.q .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem; display:block}
+  blockquote.q .zh{font-size:1.06rem; margin-top:7px}
+  blockquote.q .note{font-size:.82rem; color:var(--muted); margin-top:8px; font-style:italic}
+  .kw{padding:12px 0; border-bottom:1px solid var(--border)}
+  .kw:last-child{border-bottom:none}
+  .kw .term{color:var(--accent); font-weight:700}
+  ol.q-list{counter-reset:q; list-style:none; padding:0}
+  ol.q-list li{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px 18px 14px 52px; margin:10px 0; position:relative}
+  ol.q-list li::before{counter-increment:q; content:counter(q); position:absolute; left:16px; top:14px; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#0f1117; font-weight:700; font-size:.85rem; display:flex; align-items:center; justify-content:center}
+  .chips{display:flex; flex-direction:column; gap:10px}
+  .chip{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 16px}
+  .chip a{color:var(--accent); text-decoration:none; font-weight:600}
+  .chip a:hover{text-decoration:underline}
+  .chip .rel{color:var(--muted); font-size:.92rem}
+  nav.foot{margin-top:54px; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  nav.foot a{color:var(--fg); text-decoration:none; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 16px; font-size:.92rem; transition:.15s}
+  nav.foot a:hover{border-color:var(--accent); color:var(--accent)}
+  nav.foot a.idx{background:var(--accent); color:#0f1117; font-weight:700; border-color:var(--accent)}
+  @media(max-width:560px){ h1.title{font-size:1.6rem} }
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes ｜ 流程（開場）</div>
+    <div class="ch-no">CHAPTER 08</div>
+    <h1 class="title">Style Guides and Rules</h1>
+    <div class="title-zh">風格規範與規則</div>
+    <div class="meta-row">
+      <span class="badge">作者 Shaindel Schwartz</span>
+      <span class="badge">PDF p.169–192</span>
+      <span class="theme-tag t-scale">Scale 規模</span>
+      <span class="theme-tag t-time">Time 時間</span>
+      <span class="theme-tag t-trade">Trade-offs 取捨</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"It's the consistency of having one answer rather than the answer itself that is the valuable part."</span>
+      <span class="zh">真正有價值的，是「只有一個答案」這件事本身，而不是那個答案是什麼。</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">摘要</h2>
+    <div class="card">
+      <p>這是「流程」篇的開場。Google 用<b>各語言獨立的風格指南</b>治理超過 <b>20 億行、每天約 6 萬次提交、3 萬多名工程師、存活數十年</b>的程式碼。先釐清關鍵區分：<b>規則（rules）是法律</b>——強制、可普遍執行、除非核准否則不得違反；<b>指引（guidance）是建議</b>。一句話：<b>規則是「musts」，指引是「shoulds」</b>。</p>
+      <p>定規則時要問的不是「該有哪些規則」，而是「<b>要推進什麼目標</b>」——Google 的目標是在規模與時間壓力下<b>管理複雜度</b>。由此導出五原則：規則必須①<b>值回票價</b>、②<b>為讀者最佳化</b>（簡單讀勝過簡單寫）、③<b>保持一致</b>、④<b>避開易錯/意外的構造</b>、⑤<b>必要時向現實妥協</b>。規則分三類（避開危險、強制最佳實務、確保一致），由 style arbiters 以<b>共識</b>拍板、附理由。最後談執行：<b>能技術性自動化就盡量自動化</b>（error checker、formatter＋presubmit），因為「機器平均明顯比人類好」、消除偏誤、可擴展（C++ 約 <b>90%</b> 規則可自動驗證）。</p>
+    </div>
+  </section>
+  <section><h2 class="sec">為什麼要讀這一篇</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>你的團隊還在 review 裡為「兩空格還是四空格」吵。</b> 終結這類爭論的根本論點：<b>重點不是選哪個答案，而是「只選一個」</b>；再用 formatter＋presubmit 自動化，讓它「不再有趣」。</div>
+      <div class="why-card"><b>你想引進一條規範卻不確定該不該存在。</b> 「規則必須值回票價」給你判準：若只有一兩人會弄錯，加一條全員都要記的規則並不划算——別把所有最佳實務都升格成強制規則。</div>
+      <div class="why-card"><b>你在寫給「未來的讀者」還是「現在的自己」？</b> 「為讀者最佳化、簡單讀勝過簡單寫」最可立即套用——<span class="mono">unique_ptr</span> 所有權、<span class="mono">override</span> 標註、local reasoning 都是把意圖留在現場。</div>
+      <div class="why-card"><b>你想把「靠人盯」升級成「靠工具擋」。</b> 本章說清為何技術執行優於社會執行，以及哪些規則<b>該</b>留給人判斷（社會性的，如 CL 大小）——別用技術方案解社會問題。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">細節重點</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">為何</span> Why Have Rules? <span class="en2">為什麼要有規則</span></h3>
+      <div class="claim">規則的目的是鼓勵「好」、勸阻「壞」——而「好/壞」<b>因組織而異、是主觀的</b>。先認清組織重視什麼，再用規則去鼓勵/勸阻。</div>
+      <div class="impl"><b>工程意涵：</b>規則塑造<b>共同的程式詞彙</b>，讓工程師專注「程式要說什麼」而非「怎麼說」，並下意識地做對的事。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">原則</span> 五條指導原則 <span class="en2">Guiding Principles</span></h3>
+      <div class="claim">關鍵問題不是「該有哪些規則」，而是「<b>要推進什麼目標</b>」。脈絡：3 萬+ 工程師、6 萬次/日提交、20 億行、數十年——目標是讓程式碼庫對<b>規模與時間</b>有韌性。這是取捨：限制選擇換取一致性與減少衝突。</div>
+      <ol class="pr">
+        <li><b>值回票價：</b>不收不證自明的規則（C++ 沒有禁 <span class="mono">goto</span>）；只有一兩人會錯就別加。</li>
+        <li><b>為讀者最佳化：</b>程式被讀多於被寫，「簡單讀」勝過「簡單寫」；用 <span class="mono">override</span>、<span class="mono">unique_ptr</span> 把意圖留在現場，追求 <b>local reasoning</b>。</li>
+        <li><b>保持一致：</b>像辦公室——識別證到處能刷、視訊介面到處一樣；讓專家 chunking、讓工具化擴展、對時間有韌性。</li>
+        <li><b>避開易錯/意外的構造：</b>限制 Python 反射（<span class="mono">hasattr/getattr</span>）；要全部工程師都能工作，不只專家。</li>
+        <li><b>向現實妥協：</b>Emerson「愚蠢的一致性是小心靈的妖怪」——效能（<span class="mono">noexcept</span>）、互通性（<span class="mono">snake_case</span>、Windows 多重繼承、產生碼豁免）可破例。</li>
+      </ol>
+      <figure class="fig">
+        <svg viewBox="0 0 720 384" role="img" aria-label="一致性的階層：檔案、團隊、專案、整體程式碼庫，外加外部社群">
+          <rect x="110" y="36" width="500" height="250" rx="12" fill="none" stroke="var(--theme-time)" stroke-width="2"/>
+          <rect x="165" y="78" width="390" height="166" rx="11" fill="none" stroke="var(--theme-trade)" stroke-width="2"/>
+          <rect x="220" y="112" width="280" height="98" rx="10" fill="none" stroke="var(--theme-scale)" stroke-width="2"/>
+          <rect x="275" y="140" width="170" height="44" rx="8" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <g text-anchor="middle">
+            <text x="360" y="56" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-time)">整體程式碼庫 codebase</text>
+            <text x="360" y="98" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-trade)">專案 project</text>
+            <text x="360" y="130" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-scale)">團隊 team</text>
+            <text x="360" y="167" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--accent)">檔案 file</text>
+          </g>
+          <text x="40" y="160" class="fig-mut" font-size="12" text-anchor="middle" transform="rotate(-90 40 160)">「Be consistent」從局部開始</text>
+          <path d="M360 286 L360 314" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#dn8)"/>
+          <defs><marker id="dn8" markerWidth="9" markerHeight="9" refX="3" refY="6" orient="auto"><path d="M0,0 L6,0 L3,6 Z" fill="var(--muted)"/></marker></defs>
+          <rect x="210" y="314" width="300" height="40" rx="9" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="360" y="339" class="fig-mut" font-size="13" text-anchor="middle">外部社群 external community</text>
+          <text x="360" y="374" class="fig-mut" font-size="11.5" text-anchor="middle">時間／規模成為因素時，考慮與外部標準一致（如 2→4 空格、CamelCase→snake_case）</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 一致性的階層：優先序 檔案 &gt; 團隊 &gt; 專案 &gt; 整體程式碼庫；一旦時間與規模成為因素，再向外部社群標準靠攏。</figcaption>
+      </figure>
+      <div class="impl"><b>規模下：</b>C++ 指南已刪去「永不改會讓舊碼不一致的規則」的承諾——<b>要求完美一致已到「成本超過價值」</b>（LSC 工具能更新大部分舊碼但無法保證每處，見 ch22）。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">內容</span> The Style Guide：三類規則 <span class="en2">放什麼進指南</span></h3>
+      <ul class="tight">
+        <li><b>避開危險：</b>基於技術理由「必須/不得」的特性規則，每條附 pros/cons 與理由。</li>
+        <li><b>強制最佳實務：</b>註解、檔案結構、命名；對「新且未充分理解的特性」先架安全圍籬（<b><span class="mono">std::unique_ptr</span> 案例</b>：C++11 初期禁用 → 工程師適應後因清楚表達所有權而放行）。</li>
+        <li><b>確保一致：</b>命名、縮排、import 排序等「小事」——技術上無優劣（<b>bikeshedding</b>）；選一個就跳出爭論，重要的是「我們選了」。</li>
+        <li><b>其餘的：</b>很多最佳實務刻意不寫（別耍小聰明、別 fork、別重造輪子）——有些刻意假設讀者已具備。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">演進</span> Changing the Rules <span class="en2">修改規則</span></h3>
+      <div class="claim">指南不是靜態的。每條規則都附<b>權衡理由</b>，這樣條件改變時才知道何時該重新評估（如 Python <b>CamelCase→snake_case</b>）。</div>
+      <ul class="tight">
+        <li><b>流程是解決方案導向：</b>提案要用<b>現有程式中的真實模式</b>證明問題（非假設），始於社群討論。</li>
+        <li><b>Style Arbiters：</b>各語言資深專家，以<b>工程取捨的共識（非投票、非個人偏好）</b>拍板；C++ 為 4 人組。</li>
+        <li><b>Exceptions/Waiver：</b>不輕易給——macro 前綴若只為嫌長而請求豁免會被駁回（<b>程式碼庫完整性勝過專案一致性</b>）。</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">指引</span> Guidance：musts 之外的 shoulds <span class="en2">primer / TotW / 101</span></h3>
+      <div class="impl"><b>Primers</b>（描述性，解釋認可特性怎麼用）、<b>C++ Tips of the Week（TotW）</b>（從實際問題長出、是「canon of the common」、常在 review 被引用）、<b><span class="mono">&lt;Language&gt;@Google 101</span> 課程</b>（把「好工程師」補成「好的 Google 程式碼庫工程師」）。</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">執行</span> Applying the Rules <span class="en2">社會性 vs 技術性執行</span></h3>
+      <div class="claim">規則的價值在於可被執行。檢查合規時<b>強烈偏好技術自動化</b>：不會隨時間/規模流失、消除人為偏誤、可擴展（規模翻倍成本幾乎不變）。</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="執行光譜：社會性執行到技術性執行，可行就盡量自動化">
+          <rect x="28" y="46" width="292" height="120" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="174" y="74" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">社會性執行 Social</text>
+          <text x="174" y="102" class="fig-mut" font-size="12.5" text-anchor="middle">教學・訓練</text>
+          <text x="174" y="124" class="fig-mut" font-size="12.5" text-anchor="middle">code review・readability</text>
+          <text x="174" y="150" class="fig-mut" font-size="12" text-anchor="middle">需要判斷力/社會性規則（如 CL 大小）留給人</text>
+          <rect x="400" y="46" width="292" height="120" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="546" y="74" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">技術性執行 Technical</text>
+          <text x="546" y="102" class="fig-mut" font-size="12.5" text-anchor="middle">error checker：clang-tidy／Error Prone</text>
+          <text x="546" y="124" class="fig-mut" font-size="12.5" text-anchor="middle">formatter：gofmt ＋ presubmit</text>
+          <text x="546" y="150" class="fig-mut" font-size="12" text-anchor="middle">不會遺忘・消除偏誤・可擴展</text>
+          <path d="M324 106 L396 106" stroke="var(--theme-time)" stroke-width="3" fill="none" marker-end="url(#ar8)"/>
+          <defs><marker id="ar8" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-time)"/></marker></defs>
+          <text x="360" y="98" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--theme-time)">可行就</text>
+          <text x="360" y="200" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">技術規則：可行就偏好自動化（C++ 約 90% 規則可自動驗證）</text>
+        </svg>
+        <figcaption><b>本章核心模型（自製）</b> 執行光譜：從社會性（教學、code review）到技術性（error checker、formatter＋presubmit）——技術規則只要可行就偏好自動化；需要判斷力或社會性的規則才留給人。</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Error Checkers：</b>C++ 約 90% 規則可自動驗證；就地給警告＋建議修正，新的 deprecated 用法「一夜消失」。用 clang-tidy／Error Prone（見 ch20）。</li>
+        <li><b>Code Formatters：</b>「機器平均明顯比人類好」；用 <b>presubmit</b> 強制（clang-format、yapf、gofmt、dartfmt、buildifier）。</li>
+        <li><b>gofmt 案例：</b>Go 2009 開源<b>第一天就附 gofmt</b>、無設定旋鈕；機器改寫與人手寫無從分辨（gofix）。2012 buildifier 用 6 週讓 <b>20 萬個 BUILD 檔</b>被接受。</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">原文引用</h2>
+    <blockquote class="q"><span class="en">"Rules are laws. They are not just suggestions or recommendations, but strict, mandatory laws."</span><span class="zh">規則就是法律。它們不只是建議或推薦，而是嚴格、強制的法律。</span><div class="note">開章對 rules（musts）與 guidance（shoulds）的根本區分。</div></blockquote>
+    <blockquote class="q"><span class="en">"We value 'simple to read' over 'simple to write'."</span><span class="zh">我們重視「容易讀」勝過「容易寫」。</span><div class="note">Optimize for the reader——程式被讀遠多於被寫，呼應全書 Time 主軸。</div></blockquote>
+    <blockquote class="q"><span class="en">"It's the consistency of having one answer rather than the answer itself that is the valuable part here."</span><span class="zh">在這裡真正有價值的，是「只有一個答案」這件事本身，而不是那個答案是什麼。</span><div class="note">Be consistent——終結「兩空格 vs 四空格」式 bikeshedding 的根本論點。</div></blockquote>
+    <blockquote class="q"><span class="en">"A foolish consistency is the hobgoblin of little minds." (Ralph Waldo Emerson)</span><span class="zh">愚蠢的一致性，是小心靈的妖怪。（愛默生）</span><div class="note">Concede to practicalities——一致性是目標但不盲目，「一致至關重要，適應是關鍵」。</div></blockquote>
+    <blockquote class="q"><span class="en">"The robots are better on average than the humans by a significant amount."</span><span class="zh">論平均，機器人明顯比人類做得好。</span><div class="note">Code formatters——管理史上最大程式碼庫的觀察，故用 presubmit 強制。</div></blockquote>
+    <blockquote class="q"><span class="en">"If the rules are the 'musts,' our guidance is the 'shoulds.'"</span><span class="zh">如果規則是「必須」，那我們的指引就是「應該」。</span><div class="note">Guidance 節——區分強制規則與建議性指引。</div></blockquote>
+  </section>
+  <section><h2 class="sec">關鍵字補充</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Rules vs Guidance（規則 vs 指引）</span><br>規則是強制可執行的「musts」（法律），指引是建議性的「shoulds」（最佳實務）。本章根本二分。</div>
+      <div class="kw"><span class="term">Style Guide（風格指南）</span><br>治理程式碼的完整慣例集合（不只格式），各語言獨立；工程師被問責的權威來源。</div>
+      <div class="kw"><span class="term">Pull Their Weight（值回票價）</span><br>規則效益須大於「全員學習與維護」成本；不證自明、或只有一兩人會錯的事不該成為規則。</div>
+      <div class="kw"><span class="term">Optimize for the Reader（為讀者最佳化）</span><br>程式被讀多於被寫，「簡單讀」勝過「簡單寫」；把意圖留在現場（override、unique_ptr），追求 local reasoning。</div>
+      <div class="kw"><span class="term">Hierarchy of Consistency（一致性的階層）</span><br>從局部開始：檔案 &gt; 團隊 &gt; 專案 &gt; 整體；時間與規模成為因素時再考慮與外部一致。</div>
+      <div class="kw"><span class="term">Expert Chunking（專家組塊）</span><br>一致性讓專家把程式看成有意義的「塊」（如棋型）而非個別片段，快速抓重點。</div>
+      <div class="kw"><span class="term">Bikeshedding（瑣事爭論）</span><br>Parkinson 瑣事定律：對沒有技術優劣的小事無止盡爭論。規則的價值是「選一個」跳出循環。</div>
+      <div class="kw"><span class="term">Style Arbiters（風格仲裁者）</span><br>各語言指南 owner，以工程取捨的共識（非投票、非個人偏好）拍板；C++ 為 4 人組。</div>
+      <div class="kw"><span class="term">Concede to Practicalities（向現實妥協）</span><br>一致性不盲目；效能（noexcept）、互通性（snake_case、產生碼豁免）值得破例。</div>
+      <div class="kw"><span class="term">Presubmit Check / Automated Enforcement（提交前檢查／自動執行）</span><br>提交前自動驗證合規否則拒絕。技術執行不會流失、消除偏誤、可擴展（C++ 約 90% 規則可自動驗證）。</div>
+    </div>
+  </section>
+  <section><h2 class="sec">延伸提問</h2>
+    <ol class="q-list">
+      <li>翻出你團隊最近一次關於「格式/命名/風格」的爭論。它是否屬於「<b>沒有技術優劣、只是 bikeshedding</b>」？能不能用 formatter＋presubmit 把它<b>自動化</b>，從此讓它「不再有趣」？</li>
+      <li>用「<b>規則必須值回票價</b>」檢查你的規範清單：有沒有哪幾條其實只有一兩人會弄錯、卻加重了所有人的記憶負擔？哪些「規則」其實該降級成「指引」？</li>
+      <li>你的程式有沒有「為讀者最佳化」？挑一段你覺得「聰明/簡潔」的程式——半年後的同事（或 SRE 半夜除錯）能在<b>呼叫點就讀懂意圖</b>嗎？還是得去翻實作（缺 local reasoning）？</li>
+      <li>套用「<b>一致性的階層</b>」：你的團隊有沒有「局部慣例」與「公司/外部標準」衝突處？什麼情況你會選擇與外部一致（像 Python 改 snake_case），什麼情況守內部一致？</li>
+      <li>盤點你<b>靠人盯</b>的規則：哪些其實可以也應該自動化（error checker/formatter/presubmit）？哪些<b>該</b>留給人判斷（社會性的，如 CL 大小）？你有沒有不小心「用技術方案解社會問題」？對照 ch20。</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">跨章連結</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— 風格指南附 rationale、靠 readability 在 code review 中傳播，是第 3 章「權威資訊源」「師徒制」的具體形態。</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— readability 倚賴的自動格式化與 linter，正是讓「測量 readability 是否還值得」成立的背景。</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— 規則的「社會性執行」主要靠 code review；本章與第 9 章互為「規範 ↔ 落實」。</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— 「技術性執行」核心（clang-tidy、Error Prone）；本章估計 C++ 約 90% 規則可被靜態分析驗證。</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— 「不再追求完美一致」「buildifier retrofit 20 萬個 BUILD 檔」都仰賴 LSC 工具把規則套用到既有程式。</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— 「對時間與規模有韌性」「程式被讀多於被寫」直接回扣全書三主軸。</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch07.html">← 上一章：Measuring Engineering Productivity</a><a class="idx" href="index.html">⌂ 總索引</a><a href="ch09.html">下一章：Code Review →</a></nav>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="top">
+  <div class="wrap">
+    <div class="crumb">Part III — Processes (opening)</div>
+    <div class="ch-no">CHAPTER 08</div>
+    <h1 class="title">Style Guides and Rules</h1>
+    <div class="title-zh">The win is having one answer — not which answer it is</div>
+    <div class="meta-row">
+      <span class="badge">by Shaindel Schwartz</span>
+      <span class="badge">PDF p.169–192</span>
+      <span class="theme-tag t-scale">Scale</span>
+      <span class="theme-tag t-time">Time</span>
+      <span class="theme-tag t-trade">Trade-offs</span>
+    </div>
+    <div class="epigraph">
+      <span class="en">"It's the consistency of having one answer rather than the answer itself that is the valuable part."</span>
+      <span class="zh">In plain terms: the win is that there's one answer — not which answer it is.</span>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <section><h2 class="sec">Summary</h2>
+    <div class="card">
+      <p>This opens the "Processes" part. Google governs <b>2 billion+ lines, ~60,000 submissions/day, 30,000+ engineers, alive for decades</b> with <b>per-language style guides</b>. The key distinction: <b>rules are laws</b> — strict, mandatory, universally enforceable, no waiver-free exceptions; <b>guidance is recommendations</b>. In a phrase: <b>rules are the "musts," guidance the "shoulds."</b></p>
+      <p>When defining rules, ask not "what rules" but "<b>what goal</b>" — Google's is to <b>manage complexity</b> under scale and time. Five principles: rules must ① <b>pull their weight</b>, ② <b>optimize for the reader</b> (read beats write), ③ <b>be consistent</b>, ④ <b>avoid error-prone/surprising constructs</b>, ⑤ <b>concede to practicalities</b>. Rules fall into three buckets (avoid danger, enforce best practices, ensure consistency), decided by style arbiters via <b>consensus</b> with recorded reasoning. Enforcement: <b>automate technically whenever feasible</b> (error checkers, formatters + presubmit) — "robots beat humans on average," remove bias, and scale (≈ <b>90%</b> of C++ rules auto-verifiable).</p>
+    </div>
+  </section>
+  <section><h2 class="sec">Why read this</h2>
+    <div class="why-grid">
+      <div class="why-card"><b>Your team still argues "two spaces or four" in review.</b> The argument that ends it: <b>the point isn't which answer, it's having one</b>; then automate with a formatter + presubmit so it "stops being interesting."</div>
+      <div class="why-card"><b>You want a team rule but aren't sure it should exist.</b> "Rules must pull their weight" is the test: if only one or two get it wrong, a rule everyone must remember isn't worth it — don't promote every best practice to a rule.</div>
+      <div class="why-card"><b>Writing for the future reader or for present-you?</b> "Optimize for the reader; read beats write" is the most applicable mindset — <span class="mono">unique_ptr</span> ownership, the <span class="mono">override</span> annotation, and local reasoning put intent at the call site.</div>
+      <div class="why-card"><b>You want to upgrade "watched by humans" to "blocked by tools."</b> The chapter spells out why technical enforcement beats social, and which rules <b>should</b> stay human-judged (social ones, like CL size) — don't solve social problems technically.</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Key details</h2>
+    <div class="sub">
+      <h3><span class="pill pill-core">WHY</span> Why Have Rules?</h3>
+      <div class="claim">Rules encourage "good" and discourage "bad" — and "good/bad" <b>vary by org and are subjective</b>. Recognize what your org values, then use rules accordingly.</div>
+      <div class="impl"><b>Takeaway:</b> rules shape a <b>common vocabulary</b>, letting engineers focus on *what* code says rather than *how*, doing the good thing by default.</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-trade">PRINCIPLES</span> The Five Guiding Principles</h3>
+      <div class="claim">The key question isn't "what rules" but "<b>what goal</b>." Context: 30k+ engineers, 60k submissions/day, 2B lines, decades — the goal is resilience to <b>scale and time</b>. A trade-off: restrict choice for consistency and less conflict.</div>
+      <ol class="pr">
+        <li><b>Pull their weight:</b> omit self-evident rules (no rule against <span class="mono">goto</span>); if one or two get it wrong, don't add it.</li>
+        <li><b>Optimize for the reader:</b> read beats write; use <span class="mono">override</span>, <span class="mono">unique_ptr</span> to put intent in place, aiming for <b>local reasoning</b>.</li>
+        <li><b>Be consistent:</b> like offices — your badge works everywhere; lets experts chunk, lets tooling scale, gives resilience to time.</li>
+        <li><b>Avoid error-prone/surprising constructs:</b> restrict Python reflection (<span class="mono">hasattr/getattr</span>); *all* engineers must work in the code, not just experts.</li>
+        <li><b>Concede to practicalities:</b> Emerson's "foolish consistency" — performance (<span class="mono">noexcept</span>), interoperability (<span class="mono">snake_case</span>, Windows multiple inheritance, generated-code exemptions) warrant exceptions.</li>
+      </ol>
+      <figure class="fig">
+        <svg viewBox="0 0 720 384" role="img" aria-label="The hierarchy of consistency: file, team, project, codebase, plus external community">
+          <rect x="110" y="36" width="500" height="250" rx="12" fill="none" stroke="var(--theme-time)" stroke-width="2"/>
+          <rect x="165" y="78" width="390" height="166" rx="11" fill="none" stroke="var(--theme-trade)" stroke-width="2"/>
+          <rect x="220" y="112" width="280" height="98" rx="10" fill="none" stroke="var(--theme-scale)" stroke-width="2"/>
+          <rect x="275" y="140" width="170" height="44" rx="8" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <g text-anchor="middle">
+            <text x="360" y="56" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-time)">overall codebase</text>
+            <text x="360" y="98" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-trade)">project</text>
+            <text x="360" y="130" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--theme-scale)">team</text>
+            <text x="360" y="167" class="fig-txt" font-size="13.5" font-weight="700" fill="var(--accent)">file</text>
+          </g>
+          <text x="40" y="160" class="fig-mut" font-size="12" text-anchor="middle" transform="rotate(-90 40 160)">"Be consistent" starts locally</text>
+          <path d="M360 286 L360 314" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-dasharray="4 3" marker-end="url(#dn8e)"/>
+          <defs><marker id="dn8e" markerWidth="9" markerHeight="9" refX="3" refY="6" orient="auto"><path d="M0,0 L6,0 L3,6 Z" fill="var(--muted)"/></marker></defs>
+          <rect x="210" y="314" width="300" height="40" rx="9" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="360" y="339" class="fig-mut" font-size="13" text-anchor="middle">external community</text>
+          <text x="360" y="374" class="fig-mut" font-size="11.5" text-anchor="middle">once time/scale matter, match the external standard (2→4 spaces, CamelCase→snake_case)</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the hierarchy of consistency: file &gt; team &gt; project &gt; overall codebase; once time and scale matter, move toward the external standard.</figcaption>
+      </figure>
+      <div class="impl"><b>At scale:</b> the C++ guide struck its "never change rules that make old code inconsistent" promise — <b>demanding perfect consistency reached "too much cost for the value"</b> (LSC updates most old code but can't guarantee every corner; see ch22).</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">CONTENT</span> The Style Guide: three buckets</h3>
+      <ul class="tight">
+        <li><b>Avoid danger:</b> technical "must/must not" feature rules, each with weighed pros/cons.</li>
+        <li><b>Enforce best practices:</b> comments, file structure, naming; safety fences for new, not-yet-understood features (<b><span class="mono">std::unique_ptr</span> case</b>: disallowed in C++11 → allowed once engineers adjusted and it clearly expressed ownership).</li>
+        <li><b>Ensure consistency:</b> naming, indentation, import order — no technical winner (<b>bikeshedding</b>); pick one and move on, the value is *that* you chose.</li>
+        <li><b>And everything else:</b> much is deliberately left out (don't be clever, don't fork, don't reinvent) — some things are intentionally assumed.</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-time">EVOLUTION</span> Changing the Rules</h3>
+      <div class="claim">Guides aren't static. Every rule records its <b>pros/cons</b> so you can tell when to reconsider (e.g., Python <b>CamelCase→snake_case</b>).</div>
+      <ul class="tight">
+        <li><b>Solution-based process:</b> a proposal must prove a <b>real problem with patterns in existing code</b> (not hypotheticals), starting with community discussion.</li>
+        <li><b>Style arbiters:</b> senior per-language experts decide by <b>trade-off consensus (not voting, not preference)</b>; the C++ group is four.</li>
+        <li><b>Exceptions/waivers:</b> not granted lightly — a macro-prefix waiver just for length is rejected (<b>codebase integrity &gt; project consistency</b>).</li>
+      </ul>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-core">GUIDANCE</span> Guidance: the "shoulds" beyond the "musts"</h3>
+      <div class="impl"><b>Primers</b> (descriptive — how to use endorsed features), <b>C++ Tips of the Week (TotW)</b> (grown from real problems, a "canon of the common," cited in reviews), <b><span class="mono">&lt;Language&gt;@Google 101</span> courses</b> (turning a good engineer into a good Google-codebase engineer).</div>
+    </div>
+    <div class="sub">
+      <h3><span class="pill pill-scale">ENFORCE</span> Applying the Rules</h3>
+      <div class="claim">Rules are valuable only if enforceable. For compliance, <b>strongly prefer technical automation</b>: it doesn't decay with time/scale, removes human bias, and scales (doubling the company barely changes cost).</div>
+      <figure class="fig">
+        <svg viewBox="0 0 720 230" role="img" aria-label="Enforcement spectrum: from social to technical; automate whenever feasible">
+          <rect x="28" y="46" width="292" height="120" rx="11" fill="#12151f" stroke="var(--accent)" stroke-width="2"/>
+          <text x="174" y="74" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Social enforcement</text>
+          <text x="174" y="102" class="fig-mut" font-size="12.5" text-anchor="middle">teaching · training</text>
+          <text x="174" y="124" class="fig-mut" font-size="12.5" text-anchor="middle">code review · readability</text>
+          <text x="174" y="150" class="fig-mut" font-size="12" text-anchor="middle">judgment/social rules (e.g. CL size) stay human</text>
+          <rect x="400" y="46" width="292" height="120" rx="11" fill="#12151f" stroke="var(--theme-scale)" stroke-width="2"/>
+          <text x="546" y="74" class="fig-txt" font-size="15" font-weight="700" text-anchor="middle">Technical enforcement</text>
+          <text x="546" y="102" class="fig-mut" font-size="12.5" text-anchor="middle">error checkers: clang-tidy / Error Prone</text>
+          <text x="546" y="124" class="fig-mut" font-size="12.5" text-anchor="middle">formatters: gofmt + presubmit</text>
+          <text x="546" y="150" class="fig-mut" font-size="12" text-anchor="middle">not forgotten · no bias · scales</text>
+          <path d="M324 106 L396 106" stroke="var(--theme-time)" stroke-width="3" fill="none" marker-end="url(#ar8e)"/>
+          <defs><marker id="ar8e" markerWidth="11" markerHeight="11" refX="7" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="var(--theme-time)"/></marker></defs>
+          <text x="360" y="98" class="fig-txt" font-size="11.5" font-weight="700" text-anchor="middle" fill="var(--theme-time)">prefer</text>
+          <text x="360" y="200" class="fig-txt" font-size="13" font-weight="700" text-anchor="middle">technical rules: prefer automation when feasible (≈90% of C++ rules auto-verifiable)</text>
+        </svg>
+        <figcaption><b>Core model of the chapter (original)</b> — the enforcement spectrum: from social (teaching, code review) to technical (error checkers, formatters + presubmit). Prefer automating technical rules; keep judgment/social rules human.</figcaption>
+      </figure>
+      <ul class="tight">
+        <li><b>Error checkers:</b> ≈90% of C++ rules auto-verifiable; in-place warnings + suggested fixes made new deprecated usages "disappear overnight." clang-tidy / Error Prone (see ch20).</li>
+        <li><b>Code formatters:</b> "robots beat humans on average"; enforced via <b>presubmit</b> (clang-format, yapf, gofmt, dartfmt, buildifier).</li>
+        <li><b>gofmt case:</b> Go shipped <b>gofmt on day one</b> in 2009, no config knobs; machine-edited code is indistinguishable from human (gofix). In 2012 buildifier got <b>200,000 BUILD files</b> accepted in 6 weeks.</li>
+      </ul>
+    </div>
+  </section>
+  <section><h2 class="sec">Quotes (original + gloss)</h2>
+    <blockquote class="q"><span class="en">"Rules are laws. They are not just suggestions or recommendations, but strict, mandatory laws."</span><span class="zh">Rules are enforceable and binding; guidance merely advises — keep them clearly separate.</span><div class="note">The opening distinction between rules (musts) and guidance (shoulds).</div></blockquote>
+    <blockquote class="q"><span class="en">"We value 'simple to read' over 'simple to write'."</span><span class="zh">Pay the cost in typing so every future reader pays less in understanding.</span><div class="note">Optimize for the reader — code is read far more than written.</div></blockquote>
+    <blockquote class="q"><span class="en">"It's the consistency of having one answer rather than the answer itself that is the valuable part here."</span><span class="zh">Just pick one (spaces, line length) and move on — agreement is the value, not the choice.</span><div class="note">Be consistent — the argument that ends bikeshedding.</div></blockquote>
+    <blockquote class="q"><span class="en">"A foolish consistency is the hobgoblin of little minds." (Ralph Waldo Emerson)</span><span class="zh">Don't worship consistency blindly — performance and interoperability can justify exceptions.</span><div class="note">Concede to practicalities — "consistency is vital; adaptation is key."</div></blockquote>
+    <blockquote class="q"><span class="en">"The robots are better on average than the humans by a significant amount."</span><span class="zh">Automated formatters beat hand-formatting almost every time, so enforce them with presubmit.</span><div class="note">Code formatters, from managing the largest codebase ever.</div></blockquote>
+    <blockquote class="q"><span class="en">"If the rules are the 'musts,' our guidance is the 'shoulds.'"</span><span class="zh">Rules are mandatory law; guidance (primers, TotW, courses) is advisory best practice.</span><div class="note">The Guidance section.</div></blockquote>
+  </section>
+  <section><h2 class="sec">Key terms</h2>
+    <div class="card">
+      <div class="kw"><span class="term">Rules vs Guidance</span><br>Rules are enforceable "musts" (laws); guidance is advisory "shoulds" (best practices). The chapter's foundational split.</div>
+      <div class="kw"><span class="term">Style guide</span><br>The full set of conventions governing code (not just formatting), per language; the authoritative source engineers are accountable to.</div>
+      <div class="kw"><span class="term">Pull their weight</span><br>A rule's benefit must exceed the cost of everyone learning and maintaining it; self-evident things shouldn't be rules.</div>
+      <div class="kw"><span class="term">Optimize for the reader</span><br>Read beats write; "simple to read" over "simple to write"; leave intent in place (override, unique_ptr), aiming for local reasoning.</div>
+      <div class="kw"><span class="term">Hierarchy of consistency</span><br>Starts locally: file &gt; team &gt; project &gt; overall codebase; once time and scale matter, consider matching the external community.</div>
+      <div class="kw"><span class="term">Expert chunking</span><br>Consistency lets experts see code as meaningful chunks (like chess configurations) and zero in fast.</div>
+      <div class="kw"><span class="term">Bikeshedding</span><br>Parkinson's law of triviality: endless debate over things with no technical winner. A rule's value is "pick one" to escape the cycle.</div>
+      <div class="kw"><span class="term">Style arbiters</span><br>Per-language guide owners who decide by trade-off consensus (not voting, not preference); the C++ group is four.</div>
+      <div class="kw"><span class="term">Concede to practicalities</span><br>Consistency isn't blind; performance (noexcept) and interoperability (snake_case, generated-code exemptions) warrant exceptions.</div>
+      <div class="kw"><span class="term">Presubmit check / automated enforcement</span><br>Auto-validate compliance before submit, rejecting otherwise. Doesn't decay, removes bias, scales (≈90% of C++ rules auto-verifiable).</div>
+    </div>
+  </section>
+  <section><h2 class="sec">Questions to push your thinking</h2>
+    <ol class="q-list">
+      <li>Dig up your team's last argument about "format/naming/style." Was it pure <b>bikeshedding</b> (no technical winner)? Could you <b>automate</b> it with a formatter + presubmit so it "stops being interesting"?</li>
+      <li>Apply "<b>rules must pull their weight</b>" to your rule list: which rules only one or two get wrong, yet burden everyone's memory? Which "rules" should be demoted to "guidance"?</li>
+      <li>Does your code "optimize for the reader"? Take a piece that felt "clever/concise" — can a colleague six months later (or an SRE at 3am) read the intent <b>at the call site</b>, or must they dig into the implementation?</li>
+      <li>Apply the <b>hierarchy of consistency</b>: where do "local conventions" clash with company/external standards? When match the external community (like Python's → snake_case), when hold internal consistency?</li>
+      <li>Inventory your <b>human-watched</b> rules: which can and should be automated? Which <b>should</b> stay human-judged (social, like CL size)? Are you "solving a social problem with a technical solution"? Per ch20.</li>
+    </ol>
+  </section>
+  <section><h2 class="sec">Cross-chapter links</h2>
+    <div class="chips">
+      <div class="chip"><a href="ch03.html">ch03 Knowledge Sharing</a> <span class="rel">— style guides with rationale, propagated via readability in code review, are the concrete form of Ch.3's "canonical sources" and mentorship.</span></div>
+      <div class="chip"><a href="ch07.html">ch07 Measuring Engineering Productivity</a> <span class="rel">— the autoformatters and linters readability relies on are the backdrop that made "is readability still worth it" a live question.</span></div>
+      <div class="chip"><a href="ch09.html">ch09 Code Review</a> <span class="rel">— the "social enforcement" of rules runs mainly through code review; this chapter and Ch.9 are "rules ↔ landing them."</span></div>
+      <div class="chip"><a href="ch20.html">ch20 Static Analysis</a> <span class="rel">— the heart of "technical enforcement" (clang-tidy, Error Prone); ≈90% of C++ rules are statically verifiable.</span></div>
+      <div class="chip"><a href="ch22.html">ch22 Large-Scale Changes</a> <span class="rel">— "no longer aiming for perfect consistency" and "buildifier retrofitting 200,000 BUILD files" rely on LSC tooling.</span></div>
+      <div class="chip"><a href="ch01.html">ch01 What Is Software Engineering?</a> <span class="rel">— "resilience to time and scale" and "code is read more than written" tie straight back to the book's three themes.</span></div>
+    </div>
+  </section>
+  <nav class="foot"><a href="ch07.html">← Prev: Measuring Engineering Productivity</a><a class="idx" href="index.html">⌂ Index</a><a href="ch09.html">Next: Code Review →</a></nav>
+</div>
+</div>
+
+</body>
+</html>

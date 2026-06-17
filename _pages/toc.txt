@@ -1,0 +1,514 @@
+PAGES: 602
+[1] Cover
+[4] Copyright
+[5] Table of Contents
+[19] Foreword
+[21] Preface
+  [21] Programming Over Time
+  [22] Google’s Perspective
+  [23] What This Book Isn’t
+  [24] Parting Remarks
+  [24] Conventions Used in This Book
+  [25] O’Reilly Online Learning
+  [25] How to Contact Us
+  [26] Acknowledgments
+[29] Part I. Thesis
+  [31] Chapter 1. What Is Software Engineering?
+    [34] Time and Change
+      [36] Hyrum’s Law
+      [37] Example: Hash Ordering
+      [38] Why Not Just Aim for “Nothing Changes”?
+    [39] Scale and Efficiency
+      [40] Policies That Don’t Scale
+      [42] Policies That Scale Well
+      [42] Example: Compiler Upgrade
+      [45] Shifting Left
+    [46] Trade-offs and Costs
+      [47] Example: Markers
+      [48] Inputs to Decision Making
+      [48] Example: Distributed Builds
+      [50] Example: Deciding Between Time and Scale
+      [50] Revisiting Decisions, Making Mistakes
+    [51] Software Engineering Versus Programming
+    [52] Conclusion
+    [52] TL;DRs
+[53] Part II. Culture
+  [55] Chapter 2. How to Work Well on Teams
+    [55] Help Me Hide My Code
+    [56] The Genius Myth
+    [58] Hiding Considered Harmful
+      [59] Early Detection
+      [59] The Bus Factor
+      [60] Pace of Progress
+      [62] In Short, Don’t Hide
+    [62] It’s All About the Team
+      [62] The Three Pillars of Social Interaction
+      [63] Why Do These Pillars Matter?
+      [64] Humility, Respect, and Trust in Practice
+      [67] Blameless Post-Mortem Culture
+      [69] Being Googley
+    [70] Conclusion
+    [70] TL;DRs
+  [71] Chapter 3. Knowledge Sharing
+    [71] Challenges to Learning
+    [73] Philosophy
+    [74] Setting the Stage: Psychological Safety
+      [74] Mentorship
+      [75] Psychological Safety in Large Groups
+    [76] Growing Your Knowledge
+      [76] Ask Questions
+      [77] Understand Context
+    [78] Scaling Your Questions: Ask the Community
+      [78] Group Chats
+      [78] Mailing Lists
+      [79] YAQS: Question-and-Answer Platform
+    [80] Scaling Your Knowledge: You Always Have Something to Teach
+      [80] Office Hours
+      [80] Tech Talks and Classes
+      [81] Documentation
+      [84] Code
+    [84] Scaling Your Organization’s Knowledge
+      [84] Cultivating a Knowledge-Sharing Culture
+      [86] Establishing Canonical Sources of Information
+      [89] Staying in the Loop
+    [90] Readability: Standardized Mentorship Through Code Review
+      [91] What Is the Readability Process?
+      [92] Why Have This Process?
+    [94] Conclusion
+    [95] TL;DRs
+  [97] Chapter 4. Engineering for Equity
+    [98] Bias Is the Default
+    [100] Understanding the Need for Diversity
+    [100] Building Multicultural Capacity
+    [102] Making Diversity Actionable
+    [103] Reject Singular Approaches
+    [104] Challenge Established Processes
+    [105] Values Versus Outcomes
+    [106] Stay Curious, Push Forward
+    [107] Conclusion
+    [107] TL;DRs
+  [109] Chapter 5. How to Lead a Team
+    [109] Managers and Tech Leads (and Both)
+      [110] The Engineering Manager
+      [110] The Tech Lead
+      [110] The Tech Lead Manager
+    [111] Moving from an Individual Contributor Role to a Leadership Role
+      [112] The Only Thing to Fear Is…Well, Everything
+      [113] Servant Leadership
+    [114] The Engineering Manager
+      [114] Manager Is a Four-Letter Word
+      [115] Today’s Engineering Manager
+    [116] Antipatterns
+      [117] Antipattern: Hire Pushovers
+      [117] Antipattern: Ignore Low Performers
+      [118] Antipattern: Ignore Human Issues
+      [119] Antipattern: Be Everyone’s Friend
+      [120] Antipattern: Compromise the Hiring Bar
+      [120] Antipattern: Treat Your Team Like Children
+    [121] Positive Patterns
+      [121] Lose the Ego
+      [122] Be a Zen Master
+      [124] Be a Catalyst
+      [124] Remove Roadblocks
+      [125] Be a Teacher and a Mentor
+      [125] Set Clear Goals
+      [126] Be Honest
+      [127] Track Happiness
+    [128] The Unexpected Question
+    [129] Other Tips and Tricks
+    [131] People Are Like Plants
+      [132] Intrinsic Versus Extrinsic Motivation
+    [133] Conclusion
+    [133] TL;DRs
+  [135] Chapter 6. Leading at Scale
+    [136] Always Be Deciding
+      [136] The Parable of the Airplane
+      [137] Identify the Blinders
+      [137] Identify the Key Trade-Offs
+      [138] Decide, Then Iterate
+    [140] Always Be Leaving
+      [140] Your Mission: Build a “Self-Driving” Team
+      [141] Dividing the Problem Space
+    [144] Always Be Scaling
+      [144] The Cycle of Success
+      [146] Important Versus Urgent
+      [147] Learn to Drop Balls
+      [148] Protecting Your Energy
+    [150] Conclusion
+    [150] TL;DRs
+  [151] Chapter 7. Measuring Engineering Productivity
+    [151] Why Should We Measure Engineering Productivity?
+    [153] Triage: Is It Even Worth Measuring?
+    [157] Selecting Meaningful Metrics with Goals and Signals
+    [158] Goals
+    [160] Signals
+    [160] Metrics
+    [161] Using Data to Validate Metrics
+    [165] Taking Action and Tracking Results
+    [165] Conclusion
+    [165] TL;DRs
+[167] Part III. Processes
+  [169] Chapter 8. Style Guides and Rules
+    [170] Why Have Rules?
+    [171] Creating the Rules
+      [171] Guiding Principles
+      [179] The Style Guide
+    [182] Changing the Rules
+      [183] The Process
+      [184] The Style Arbiters
+      [184] Exceptions
+    [185] Guidance
+    [186] Applying the Rules
+      [188] Error Checkers
+      [189] Code Formatters
+    [191] Conclusion
+    [191] TL;DRs
+  [193] Chapter 9. Code Review
+    [194] Code Review Flow
+    [195] How Code Review Works at Google
+    [198] Code Review Benefits
+      [199] Code Correctness
+      [200] Comprehension of Code
+      [201] Code Consistency
+      [202] Psychological and Cultural Benefits
+      [203] Knowledge Sharing
+    [204] Code Review Best Practices
+      [204] Be Polite and Professional
+      [205] Write Small Changes
+      [206] Write Good Change Descriptions
+      [207] Keep Reviewers to a Minimum
+      [207] Automate Where Possible
+    [208] Types of Code Reviews
+      [208] Greenfield Code Reviews
+      [209] Behavioral Changes, Improvements, and Optimizations
+      [209] Bug Fixes and Rollbacks
+      [210] Refactorings and Large-Scale Changes
+    [210] Conclusion
+    [211] TL;DRs
+  [213] Chapter 10. Documentation
+    [213] What Qualifies as Documentation?
+    [214] Why Is Documentation Needed?
+    [216] Documentation Is Like Code
+    [218] Know Your Audience
+      [219] Types of Audiences
+    [220] Documentation Types
+      [221] Reference Documentation
+      [223] Design Docs
+      [224] Tutorials
+      [226] Conceptual Documentation
+      [226] Landing Pages
+    [227] Documentation Reviews
+    [229] Documentation Philosophy
+      [229] WHO, WHAT, WHEN, WHERE, and WHY
+      [230] The Beginning, Middle, and End
+      [230] The Parameters of Good Documentation
+      [231] Deprecating Documents
+    [232] When Do You Need Technical Writers?
+    [232] Conclusion
+    [233] TL;DRs
+  [235] Chapter 11. Testing Overview
+    [236] Why Do We Write Tests?
+      [237] The Story of Google Web Server
+      [238] Testing at the Speed of Modern Development
+      [240] Write, Run, React
+      [241] Benefits of Testing Code
+    [242] Designing a Test Suite
+      [243] Test Size
+      [247] Test Scope
+      [249] The Beyoncé Rule
+      [250] A Note on Code Coverage
+    [251] Testing at Google Scale
+      [252] The Pitfalls of a Large Test Suite
+    [253] History of Testing at Google
+      [254] Orientation Classes
+      [255] Test Certified
+      [255] Testing on the Toilet
+      [256] Testing Culture Today
+    [257] The Limits of Automated Testing
+    [258] Conclusion
+    [258] TL;DRs
+  [259] Chapter 12. Unit Testing
+    [260] The Importance of Maintainability
+    [261] Preventing Brittle Tests
+      [261] Strive for Unchanging Tests
+      [262] Test via Public APIs
+      [266] Test State, Not Interactions
+    [267] Writing Clear Tests
+      [268] Make Your Tests Complete and Concise
+      [269] Test Behaviors, Not Methods
+      [274] Don’t Put Logic in Tests
+      [275] Write Clear Failure Messages
+    [276] Tests and Code Sharing: DAMP, Not DRY
+      [279] Shared Values
+      [281] Shared Setup
+      [282] Shared Helpers and Validation
+      [283] Defining Test Infrastructure
+    [284] Conclusion
+    [284] TL;DRs
+  [285] Chapter 13. Test Doubles
+    [286] The Impact of Test Doubles on Software Development
+    [286] Test Doubles at Google
+    [287] Basic Concepts
+      [287] An Example Test Double
+      [288] Seams
+      [289] Mocking Frameworks
+    [290] Techniques for Using Test Doubles
+      [291] Faking
+      [291] Stubbing
+      [292] Interaction Testing
+    [292] Real Implementations
+      [293] Prefer Realism Over Isolation
+      [294] How to Decide When to Use a Real Implementation
+    [297] Faking
+      [298] Why Are Fakes Important?
+      [298] When Should Fakes Be Written?
+      [299] The Fidelity of Fakes
+      [300] Fakes Should Be Tested
+      [300] What to Do If a Fake Is Not Available
+    [300] Stubbing
+      [301] The Dangers of Overusing Stubbing
+      [303] When Is Stubbing Appropriate?
+    [303] Interaction Testing
+      [303] Prefer State Testing Over Interaction Testing
+      [305] When Is Interaction Testing Appropriate?
+      [305] Best Practices for Interaction Testing
+    [308] Conclusion
+    [308] TL;DRs
+  [309] Chapter 14. Larger Testing
+    [309] What Are Larger Tests?
+      [310] Fidelity
+      [311] Common Gaps in Unit Tests
+      [313] Why Not Have Larger Tests?
+    [314] Larger Tests at Google
+      [314] Larger Tests and Time
+      [316] Larger Tests at Google Scale
+    [317] Structure of a Large Test
+      [318] The System Under Test
+      [322] Test Data
+      [323] Verification
+    [324] Types of Larger Tests
+      [325] Functional Testing of One or More Interacting Binaries
+      [325] Browser and Device Testing
+      [325] Performance, Load, and Stress testing
+      [326] Deployment Configuration Testing
+      [326] Exploratory Testing
+      [327] A/B Diff Regression Testing
+      [329] UAT
+      [329] Probers and Canary Analysis
+      [330] Disaster Recovery and Chaos Engineering
+      [331] User Evaluation
+    [332] Large Tests and the Developer Workflow
+      [333] Authoring Large Tests
+      [333] Running Large Tests
+      [336] Owning Large Tests
+    [337] Conclusion
+    [337] TL;DRs
+  [339] Chapter 15. Deprecation
+    [340] Why Deprecate?
+    [341] Why Is Deprecation So Hard?
+      [343] Deprecation During Design
+    [344] Types of Deprecation
+      [344] Advisory Deprecation
+      [345] Compulsory Deprecation
+      [346] Deprecation Warnings
+    [347] Managing the Deprecation Process
+      [348] Process Owners
+      [348] Milestones
+      [349] Deprecation Tooling
+    [350] Conclusion
+    [351] TL;DRs
+[353] Part IV. Tools
+  [355] Chapter 16. Version Control and Branch Management
+    [355] What Is Version Control?
+      [357] Why Is Version Control Important?
+      [359] Centralized VCS Versus Distributed VCS
+      [362] Source of Truth
+      [364] Version Control Versus Dependency Management
+    [364] Branch Management
+      [364] Work in Progress Is Akin to a Branch
+      [365] Dev Branches
+      [367] Release Branches
+    [368] Version Control at Google
+      [368] One Version
+      [369] Scenario: Multiple Available Versions
+      [370] The “One-Version” Rule
+      [371] (Nearly) No Long-Lived Branches
+      [372] What About Release Branches?
+    [373] Monorepos
+    [374] Future of Version Control
+    [376] Conclusion
+    [377] TL;DRs
+  [379] Chapter 17. Code Search
+    [380] The Code Search UI
+    [381] How Do Googlers Use Code Search?
+      [381] Where?
+      [382] What?
+      [382] How?
+      [382] Why?
+      [383] Who and When?
+    [383] Why a Separate Web Tool?
+      [383] Scale
+      [384] Zero Setup Global Code View
+      [384] Specialization
+      [384] Integration with Other Developer Tools
+      [387] API Exposure
+    [387] Impact of Scale on Design
+      [387] Search Query Latency
+      [388] Index Latency
+    [389] Google’s Implementation
+      [389] Search Index
+      [391] Ranking
+    [394] Selected Trade-Offs
+      [394] Completeness: Repository at Head
+      [394] Completeness: All Versus Most-Relevant Results
+      [395] Completeness: Head Versus Branches Versus All History Versus Workspaces
+      [396] Expressiveness: Token Versus Substring Versus Regex
+    [397] Conclusion
+    [398] TL;DRs
+  [399] Chapter 18. Build Systems and Build Philosophy
+    [399] Purpose of a Build System
+    [400] What Happens Without a Build System?
+      [401] But All I Need Is a Compiler!
+      [401] Shell Scripts to the Rescue?
+    [403] Modern Build Systems
+      [403] It’s All About Dependencies
+      [404] Task-Based Build Systems
+      [408] Artifact-Based Build Systems
+      [414] Distributed Builds
+      [418] Time, Scale, Trade-Offs
+    [418] Dealing with Modules and Dependencies
+      [419] Using Fine-Grained Modules and the 1:1:1 Rule
+      [420] Minimizing Module Visibility
+      [420] Managing Dependencies
+    [425] Conclusion
+    [425] TL;DRs
+  [427] Chapter 19. Critique: Google’s Code Review Tool
+    [427] Code Review Tooling Principles
+    [428] Code Review Flow
+      [430] Notifications
+    [430] Stage 1: Create a Change
+      [431] Diffing
+      [432] Analysis Results
+      [434] Tight Tool Integration
+    [434] Stage 2: Request Review
+    [436] Stages 3 and 4: Understanding and Commenting on a Change
+      [436] Commenting
+      [438] Understanding the State of a Change
+    [440] Stage 5: Change Approvals (Scoring a Change)
+    [441] Stage 6: Commiting a Change
+      [442] After Commit: Tracking History
+    [443] Conclusion
+    [444] TL;DRs
+  [445] Chapter 20. Static Analysis
+    [446] Characteristics of Effective Static Analysis
+      [446] Scalability
+      [446] Usability
+    [447] Key Lessons in Making Static Analysis Work
+      [447] Focus on Developer Happiness
+      [448] Make Static Analysis a Part of the Core Developer Workflow
+      [448] Empower Users to Contribute
+    [449] Tricorder: Google’s Static Analysis Platform
+      [450] Integrated Tools
+      [451] Integrated Feedback Channels
+      [452] Suggested Fixes
+      [452] Per-Project Customization
+      [453] Presubmits
+      [454] Compiler Integration
+      [455] Analysis While Editing and Browsing Code
+    [456] Conclusion
+    [456] TL;DRs
+  [457] Chapter 21. Dependency Management
+    [459] Why Is Dependency Management So Difficult?
+      [459] Conflicting Requirements and Diamond Dependencies
+    [461] Importing Dependencies
+      [461] Compatibility Promises
+      [464] Considerations When Importing
+      [465] How Google Handles Importing Dependencies
+    [467] Dependency Management, In Theory
+      [467] Nothing Changes (aka The Static Dependency Model)
+      [468] Semantic Versioning
+      [469] Bundled Distribution Models
+      [470] Live at Head
+    [471] The Limitations of SemVer
+      [472] SemVer Might Overconstrain
+      [473] SemVer Might Overpromise
+      [474] Motivations
+      [475] Minimum Version Selection
+      [476] So, Does SemVer Work?
+    [477] Dependency Management with Infinite Resources
+      [480] Exporting Dependencies
+    [484] Conclusion
+    [484] TL;DRs
+  [487] Chapter 22. Large-Scale Changes
+    [488] What Is a Large-Scale Change?
+    [489] Who Deals with LSCs?
+    [491] Barriers to Atomic Changes
+      [491] Technical Limitations
+      [491] Merge Conflicts
+      [492] No Haunted Graveyards
+      [492] Heterogeneity
+      [493] Testing
+      [495] Code Review
+    [496] LSC Infrastructure
+      [497] Policies and Culture
+      [498] Codebase Insight
+      [498] Change Management
+      [499] Testing
+      [499] Language Support
+    [500] The LSC Process
+      [501] Authorization
+      [501] Change Creation
+      [502] Sharding and Submitting
+      [505] Cleanup
+    [505] Conclusion
+    [506] TL;DRs
+  [507] Chapter 23. Continuous Integration
+    [509] CI Concepts
+      [509] Fast Feedback Loops
+      [511] Automation
+      [513] Continuous Testing
+      [518] CI Challenges
+      [519] Hermetic Testing
+    [521] CI at Google
+      [524] CI Case Study: Google Takeout
+      [531] But I Can’t Afford CI
+    [531] Conclusion
+    [531] TL;DRs
+  [533] Chapter 24. Continuous Delivery
+    [534] Idioms of Continuous Delivery at Google
+    [535] Velocity Is a Team Sport: How to Break Up a Deployment into Manageable Pieces
+    [536] Evaluating Changes in Isolation: Flag-Guarding Features
+    [537] Striving for Agility: Setting Up a Release Train
+      [537] No Binary Is Perfect
+      [538] Meet Your Release Deadline
+    [539] Quality and User-Focus: Ship Only What Gets Used
+    [540] Shifting Left: Making Data-Driven Decisions Earlier
+    [541] Changing Team Culture: Building Discipline into Deployment
+    [542] Conclusion
+    [542] TL;DRs
+  [545] Chapter 25. Compute as a Service
+    [546] Taming the Compute Environment
+      [546] Automation of Toil
+      [548] Containerization and Multitenancy
+      [551] Summary
+    [551] Writing Software for Managed Compute
+      [551] Architecting for Failure
+      [553] Batch Versus Serving
+      [555] Managing State
+      [556] Connecting to a Service
+      [557] One-Off Code
+    [558] CaaS Over Time and Scale
+      [558] Containers as an Abstraction
+      [561] One Service to Rule Them All
+      [563] Submitted Configuration
+    [563] Choosing a Compute Service
+      [565] Centralization Versus Customization
+      [567] Level of Abstraction: Serverless
+      [571] Public Versus Private
+    [572] Conclusion
+    [573] TL;DRs
+[575] Part V. Conclusion
+[577] Afterword
+[579] Index
+[600] About the Authors
+[601] Colophon

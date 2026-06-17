@@ -1,0 +1,177 @@
+[
+ {
+  "num": 1,
+  "title": "What Is Software Engineering?",
+  "start": 31,
+  "end": 52,
+  "chars": 58039
+ },
+ {
+  "num": 2,
+  "title": "How to Work Well on Teams",
+  "start": 55,
+  "end": 70,
+  "chars": 40902
+ },
+ {
+  "num": 3,
+  "title": "Knowledge Sharing",
+  "start": 71,
+  "end": 96,
+  "chars": 59387
+ },
+ {
+  "num": 4,
+  "title": "Engineering for Equity",
+  "start": 97,
+  "end": 108,
+  "chars": 28710
+ },
+ {
+  "num": 5,
+  "title": "How to Lead a Team",
+  "start": 109,
+  "end": 134,
+  "chars": 70624
+ },
+ {
+  "num": 6,
+  "title": "Leading at Scale",
+  "start": 135,
+  "end": 150,
+  "chars": 40723
+ },
+ {
+  "num": 7,
+  "title": "Measuring Engineering Productivity",
+  "start": 151,
+  "end": 166,
+  "chars": 39512
+ },
+ {
+  "num": 8,
+  "title": "Style Guides and Rules",
+  "start": 169,
+  "end": 192,
+  "chars": 59937
+ },
+ {
+  "num": 9,
+  "title": "Code Review",
+  "start": 193,
+  "end": 212,
+  "chars": 49889
+ },
+ {
+  "num": 10,
+  "title": "Documentation",
+  "start": 213,
+  "end": 234,
+  "chars": 54128
+ },
+ {
+  "num": 11,
+  "title": "Testing Overview",
+  "start": 235,
+  "end": 258,
+  "chars": 57895
+ },
+ {
+  "num": 12,
+  "title": "Unit Testing",
+  "start": 259,
+  "end": 284,
+  "chars": 56292
+ },
+ {
+  "num": 13,
+  "title": "Test Doubles",
+  "start": 285,
+  "end": 308,
+  "chars": 54431
+ },
+ {
+  "num": 14,
+  "title": "Larger Testing",
+  "start": 309,
+  "end": 338,
+  "chars": 65020
+ },
+ {
+  "num": 15,
+  "title": "Deprecation",
+  "start": 339,
+  "end": 352,
+  "chars": 33697
+ },
+ {
+  "num": 16,
+  "title": "Version Control and Branch Management",
+  "start": 355,
+  "end": 378,
+  "chars": 64732
+ },
+ {
+  "num": 17,
+  "title": "Code Search",
+  "start": 379,
+  "end": 398,
+  "chars": 49120
+ },
+ {
+  "num": 18,
+  "title": "Build Systems and Build Philosophy",
+  "start": 399,
+  "end": 426,
+  "chars": 72488
+ },
+ {
+  "num": 19,
+  "title": "Critique: Google’s Code Review Tool",
+  "start": 427,
+  "end": 444,
+  "chars": 33997
+ },
+ {
+  "num": 20,
+  "title": "Static Analysis",
+  "start": 445,
+  "end": 456,
+  "chars": 29650
+ },
+ {
+  "num": 21,
+  "title": "Dependency Management",
+  "start": 457,
+  "end": 486,
+  "chars": 79544
+ },
+ {
+  "num": 22,
+  "title": "Large-Scale Changes",
+  "start": 487,
+  "end": 506,
+  "chars": 51045
+ },
+ {
+  "num": 23,
+  "title": "Continuous Integration",
+  "start": 507,
+  "end": 532,
+  "chars": 60701
+ },
+ {
+  "num": 24,
+  "title": "Continuous Delivery",
+  "start": 533,
+  "end": 544,
+  "chars": 27505
+ },
+ {
+  "num": 25,
+  "title": "Compute as a Service",
+  "start": 545,
+  "end": 574,
+  "chars": 80188
+ }
+]

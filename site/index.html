@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Software Engineering at Google — 研究閱讀系統</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#171a23; --card2:#1c2030; --fg:#e6e9f0; --muted:#9aa3b2;
+    --accent:#5b9dd9; --border:#262b38;
+    --theme-time:#e0a23b; --theme-scale:#3bb8c4; --theme-trade:#c45b9d;
+    --maxw:1040px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Microsoft JhengHei",sans-serif; line-height:1.7}
+  .mono{font-family:"SF Mono",Consolas,monospace}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 90px}
+  .lang-radio{position:absolute; left:-9999px}
+  .lang-switch{position:fixed; top:14px; right:14px; z-index:50; display:flex;
+    background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.35)}
+  .lang-switch label{padding:7px 16px; font-size:.82rem; color:var(--muted); cursor:pointer; user-select:none}
+  #lang-zh:checked ~ .lang-switch label[for=lang-zh],
+  #lang-en:checked ~ .lang-switch label[for=lang-en]{background:var(--accent); color:#0f1117; font-weight:700}
+  .en-page{display:none}
+  #lang-en:checked ~ .en-page{display:block}
+  #lang-en:checked ~ .zh-page{display:none}
+  header.hero{background:radial-gradient(1200px 400px at 50% -120px,#1b2236,#0f1117); border-bottom:1px solid var(--border); padding:60px 0 40px; text-align:center}
+  .kicker{color:var(--accent); letter-spacing:.18em; font-size:.85rem; font-weight:700}
+  h1{margin:.3em 0 .1em; font-size:2.5rem; line-height:1.2}
+  .sub{color:var(--muted); font-size:1.1rem}
+  .sub-zh{color:var(--fg); margin-top:6px}
+  .epigraph{max-width:680px; margin:24px auto 0; padding:14px 20px; border-left:3px solid var(--accent); background:#12151f; border-radius:0 8px 8px 0; text-align:left}
+  .epigraph .en{font-family:"SF Mono",Consolas,monospace; color:var(--muted); font-size:.9rem}
+  .epigraph .zh{margin-top:4px}
+  .progress-wrap{max-width:520px; margin:26px auto 0}
+  .progress-bar{height:10px; background:var(--card); border:1px solid var(--border); border-radius:999px; overflow:hidden}
+  .progress-fill{height:100%; width:32%; background:linear-gradient(90deg,var(--theme-scale),var(--accent))}
+  .progress-text{color:var(--muted); font-size:.85rem; margin-top:8px}
+  .themes{display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:30px}
+  .theme-card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 18px; max-width:300px; text-align:left}
+  .theme-card .dot{display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:8px; vertical-align:middle}
+  .theme-card b{font-size:1rem}
+  .theme-card p{color:var(--muted); font-size:.86rem; margin:8px 0 0}
+  .d-time{background:var(--theme-time)} .d-scale{background:var(--theme-scale)} .d-trade{background:var(--theme-trade)}
+  .part{margin-top:48px}
+  .part-head{display:flex; align-items:baseline; gap:14px; border-bottom:2px solid var(--border); padding-bottom:10px}
+  .part-head .pno{color:var(--accent); font-weight:700; letter-spacing:.1em; font-size:.85rem}
+  .part-head h2{margin:0; font-size:1.5rem}
+  .part-head .pzh{color:var(--muted); font-size:1rem}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-top:18px}
+  .ch-card{display:block; text-decoration:none; color:var(--fg); background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; transition:.15s; position:relative}
+  .ch-card:hover{border-color:var(--accent); transform:translateY(-2px)}
+  .ch-card.todo{opacity:.5; pointer-events:none}
+  .ch-card .num{color:var(--accent); font-weight:700; font-size:.8rem; letter-spacing:.08em}
+  .ch-card .ten{font-weight:700; margin-top:4px; font-size:1.05rem}
+  .ch-card .tzh{color:var(--muted); font-size:.9rem; margin-top:2px}
+  .ch-card .tags{margin-top:10px; display:flex; gap:5px; flex-wrap:wrap}
+  .tg{font-size:.66rem; padding:2px 8px; border-radius:999px; font-weight:700; color:#0f1117}
+  .tg-time{background:var(--theme-time)} .tg-scale{background:var(--theme-scale)} .tg-trade{background:var(--theme-trade)} .tg-cul{background:var(--accent)}
+  .status{position:absolute; top:14px; right:14px; font-size:.68rem; padding:2px 9px; border-radius:999px}
+  .st-done{background:rgba(59,184,196,.16); color:var(--theme-scale); border:1px solid rgba(59,184,196,.4)}
+  .st-todo{background:var(--card2); color:var(--muted); border:1px solid var(--border)}
+  footer{margin-top:60px; padding-top:24px; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem; text-align:center}
+</style>
+</head>
+<body>
+<input class="lang-radio" type="radio" name="lang" id="lang-zh" checked>
+<input class="lang-radio" type="radio" name="lang" id="lang-en">
+<div class="lang-switch"><label for="lang-zh">中文</label><label for="lang-en">EN</label></div>
+
+<!-- ============================ 中文版 ============================ -->
+<div class="zh-page">
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">研究閱讀系統 ｜ 廣讀 · 精讀 · 思考 · 提問 · 重複閱讀</div>
+    <h1>Software Engineering at Google</h1>
+    <div class="sub">25 章 · 5 大部分 · 中英並陳研究筆記</div>
+    <div class="sub-zh">給 L4~L6 軟體工程師的精讀地圖</div>
+    <div class="epigraph">
+      <span class="en">"Software engineering is programming integrated over time."</span>
+      <span class="zh">軟體工程，是把時間維度整合進來的程式設計。</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+      <div class="progress-text">完成進度：8 / 25 章</div>
+    </div>
+    <div class="themes">
+      <div class="theme-card"><b><span class="dot d-time"></span>Time 時間</b><p>軟體工程是「整合了時間維度的程式設計」；程式碼有預期壽命，必須能因應變化。</p></div>
+      <div class="theme-card"><b><span class="dot d-scale"></span>Scale 規模</b><p>組織與程式碼長大時，每件重複做的事都要次線性擴展，否則撐不住。</p></div>
+      <div class="theme-card"><b><span class="dot d-trade"></span>Trade-offs 取捨</b><p>工程決策是在不完美資訊下權衡成本；要有理由，不能「因為我說了算」。</p></div>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="part">
+    <div class="part-head"><span class="pno">PART I</span><h2>Thesis</h2><span class="pzh">論題</span></div>
+    <div class="grid">
+      <a class="ch-card" href="ch01.html"><span class="status st-done">✓ 完成</span><div class="num">CH 01</div><div class="ten">What Is Software Engineering?</div><div class="tzh">什麼是軟體工程？</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+    </div>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="pno">PART II</span><h2>Culture</h2><span class="pzh">文化</span></div>
+    <div class="grid">
+      <a class="ch-card" href="ch02.html"><span class="status st-done">✓ 完成</span><div class="num">CH 02</div><div class="ten">How to Work Well on Teams</div><div class="tzh">如何在團隊裡好好合作</div><div class="tags"><span class="tg tg-cul">Culture</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch03.html"><span class="status st-done">✓ 完成</span><div class="num">CH 03</div><div class="ten">Knowledge Sharing</div><div class="tzh">知識分享</div><div class="tags"><span class="tg tg-cul">Culture</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch04.html"><span class="status st-done">✓ 完成</span><div class="num">CH 04</div><div class="ten">Engineering for Equity</div><div class="tzh">為公平而工程</div><div class="tags"><span class="tg tg-cul">Culture</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch05.html"><span class="status st-done">✓ 完成</span><div class="num">CH 05</div><div class="ten">How to Lead a Team</div><div class="tzh">如何領導團隊</div><div class="tags"><span class="tg tg-cul">Culture</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch06.html"><span class="status st-done">✓ 完成</span><div class="num">CH 06</div><div class="ten">Leading at Scale</div><div class="tzh">規模化的領導</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span></div></a>
+      <a class="ch-card" href="ch07.html"><span class="status st-done">✓ 完成</span><div class="num">CH 07</div><div class="ten">Measuring Engineering Productivity</div><div class="tzh">衡量工程生產力</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-cul">Culture</span></div></a>
+    </div>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="pno">PART III</span><h2>Processes</h2><span class="pzh">流程</span></div>
+    <div class="grid">
+      <a class="ch-card" href="ch08.html"><span class="status st-done">✓ 完成</span><div class="num">CH 08</div><div class="ten">Style Guides and Rules</div><div class="tzh">風格規範與規則</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card todo" href="ch09.html"><span class="status st-todo">待產出</span><div class="num">CH 09</div><div class="ten">Code Review</div><div class="tzh">程式碼審查</div></a>
+      <a class="ch-card todo" href="ch10.html"><span class="status st-todo">待產出</span><div class="num">CH 10</div><div class="ten">Documentation</div><div class="tzh">文件</div></a>
+      <a class="ch-card todo" href="ch11.html"><span class="status st-todo">待產出</span><div class="num">CH 11</div><div class="ten">Testing Overview</div><div class="tzh">測試總覽</div></a>
+      <a class="ch-card todo" href="ch12.html"><span class="status st-todo">待產出</span><div class="num">CH 12</div><div class="ten">Unit Testing</div><div class="tzh">單元測試</div></a>
+      <a class="ch-card todo" href="ch13.html"><span class="status st-todo">待產出</span><div class="num">CH 13</div><div class="ten">Test Doubles</div><div class="tzh">測試替身</div></a>
+      <a class="ch-card todo" href="ch14.html"><span class="status st-todo">待產出</span><div class="num">CH 14</div><div class="ten">Larger Testing</div><div class="tzh">大型測試</div></a>
+      <a class="ch-card todo" href="ch15.html"><span class="status st-todo">待產出</span><div class="num">CH 15</div><div class="ten">Deprecation</div><div class="tzh">棄用</div></a>
+    </div>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="pno">PART IV</span><h2>Tools</h2><span class="pzh">工具</span></div>
+    <div class="grid">
+      <a class="ch-card todo" href="ch16.html"><span class="status st-todo">待產出</span><div class="num">CH 16</div><div class="ten">Version Control and Branch Management</div><div class="tzh">版本控制與分支管理</div></a>
+      <a class="ch-card todo" href="ch17.html"><span class="status st-todo">待產出</span><div class="num">CH 17</div><div class="ten">Code Search</div><div class="tzh">程式碼搜尋</div></a>
+      <a class="ch-card todo" href="ch18.html"><span class="status st-todo">待產出</span><div class="num">CH 18</div><div class="ten">Build Systems and Build Philosophy</div><div class="tzh">建置系統與建置哲學</div></a>
+      <a class="ch-card todo" href="ch19.html"><span class="status st-todo">待產出</span><div class="num">CH 19</div><div class="ten">Critique: Google's Code Review Tool</div><div class="tzh">Critique：Google 的審查工具</div></a>
+      <a class="ch-card todo" href="ch20.html"><span class="status st-todo">待產出</span><div class="num">CH 20</div><div class="ten">Static Analysis</div><div class="tzh">靜態分析</div></a>
+      <a class="ch-card todo" href="ch21.html"><span class="status st-todo">待產出</span><div class="num">CH 21</div><div class="ten">Dependency Management</div><div class="tzh">依賴管理</div></a>
+      <a class="ch-card todo" href="ch22.html"><span class="status st-todo">待產出</span><div class="num">CH 22</div><div class="ten">Large-Scale Changes</div><div class="tzh">大規模變更</div></a>
+      <a class="ch-card todo" href="ch23.html"><span class="status st-todo">待產出</span><div class="num">CH 23</div><div class="ten">Continuous Integration</div><div class="tzh">持續整合</div></a>
+      <a class="ch-card todo" href="ch24.html"><span class="status st-todo">待產出</span><div class="num">CH 24</div><div class="ten">Continuous Delivery</div><div class="tzh">持續交付</div></a>
+      <a class="ch-card todo" href="ch25.html"><span class="status st-todo">待產出</span><div class="num">CH 25</div><div class="ten">Compute as a Service</div><div class="tzh">運算即服務</div></a>
+    </div>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="pno">PART V</span><h2>Conclusion</h2><span class="pzh">結論</span></div>
+    <div class="grid">
+      <a class="ch-card todo" style="pointer-events:none"><span class="status st-todo">後記</span><div class="num">AFTERWORD</div><div class="ten">Afterword</div><div class="tzh">後記（併入全書回顧）</div></a>
+    </div>
+  </div>
+  <footer>
+    依據 O'Reilly《Software Engineering at Google》製作 · 研究筆記為繁體中文／英文導讀，原文版權歸原作者所有<br>
+    產出流程：<span class="mono">swe-research</span> SKILL · 五階段研究閱讀法 · 每章可切換中／英
+  </footer>
+</div>
+</div>
+
+<!-- ============================ English ============================ -->
+<div class="en-page">
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">RESEARCH READING SYSTEM ｜ Skim · Deep-read · Reflect · Question · Re-read</div>
+    <h1>Software Engineering at Google</h1>
+    <div class="sub">25 chapters · 5 parts · bilingual study notes</div>
+    <div class="sub-zh">A close-reading map for L4–L6 software engineers</div>
+    <div class="epigraph">
+      <span class="en">"Software engineering is programming integrated over time."</span>
+      <span class="zh">In plain terms: software engineering = programming + the dimension of time.</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+      <div class="progress-text">Progress: 8 / 25 chapters</div>
+    </div>
+    <div class="themes">
+      <div class="theme-card"><b><span class="dot d-time"></span>Time</b><p>Software engineering is "programming integrated over time"; code has an expected life span and must react to change.</p></div>
+      <div class="theme-card"><b><span class="dot d-scale"></span>Scale</b><p>As org and codebase grow, everything done repeatedly must scale sub-linearly, or it collapses.</p></div>
+      <div class="theme-card"><b><span class="dot d-trade"></span>Trade-offs</b><p>Engineering decisions weigh costs under imperfect information; they need reasons, never "because I said so."</p></div>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="part">
+    <div class="part-head"><span class="pno">PART I</span><h2>Thesis</h2></div>
+    <div class="grid">
+      <a class="ch-card" href="ch01.html"><span class="status st-done">✓ done</span><div class="num">CH 01</div><div class="ten">What Is Software Engineering?</div><div class="tzh">Programming + the dimension of time</div><div class="tags"><span class="tg tg-time">Time</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+    </div>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="pno">PART II</span><h2>Culture</h2></div>
+    <div class="grid">
+      <a class="ch-card" href="ch02.html"><span class="status st-done">✓ done</span><div class="num">CH 02</div><div class="ten">How to Work Well on Teams</div><div class="tzh">Built by teams, not lone geniuses (HRT)</div><div class="tags"><span class="tg tg-cul">Culture</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch03.html"><span class="status st-done">✓ done</span><div class="num">CH 03</div><div class="ten">Knowledge Sharing</div><div class="tzh">Move answers from the few to everyone (psych safety)</div><div class="tags"><span class="tg tg-cul">Culture</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch04.html"><span class="status st-done">✓ done</span><div class="num">CH 04</div><div class="ten">Engineering for Equity</div><div class="tzh">Bias is the default — correct for it</div><div class="tags"><span class="tg tg-cul">Culture</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch05.html"><span class="status st-done">✓ done</span><div class="num">CH 05</div><div class="ten">How to Lead a Team</div><div class="tzh">Servant leadership; people are like plants</div><div class="tags"><span class="tg tg-cul">Culture</span><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card" href="ch06.html"><span class="status st-done">✓ done</span><div class="num">CH 06</div><div class="ten">Leading at Scale</div><div class="tzh">The three Always; build a self-driving team</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-time">Time</span></div></a>
+      <a class="ch-card" href="ch07.html"><span class="status st-done">✓ done</span><div class="num">CH 07</div><div class="ten">Measuring Engineering Productivity</div><div class="tzh">GSM framework + QUANTS; measure for decisions</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-trade">Trade-offs</span><span class="tg tg-cul">Culture</span></div></a>
+    </div>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="pno">PART III</span><h2>Processes</h2></div>
+    <div class="grid">
+      <a class="ch-card" href="ch08.html"><span class="status st-done">✓ done</span><div class="num">CH 08</div><div class="ten">Style Guides and Rules</div><div class="tzh">Rules are laws; consistency; automate enforcement</div><div class="tags"><span class="tg tg-scale">Scale</span><span class="tg tg-time">Time</span><span class="tg tg-trade">Trade-offs</span></div></a>
+      <a class="ch-card todo" href="ch09.html"><span class="status st-todo">soon</span><div class="num">CH 09</div><div class="ten">Code Review</div></a>
+      <a class="ch-card todo" href="ch10.html"><span class="status st-todo">soon</span><div class="num">CH 10</div><div class="ten">Documentation</div></a>
+      <a class="ch-card todo" href="ch11.html"><span class="status st-todo">soon</span><div class="num">CH 11</div><div class="ten">Testing Overview</div></a>
+      <a class="ch-card todo" href="ch12.html"><span class="status st-todo">soon</span><div class="num">CH 12</div><div class="ten">Unit Testing</div></a>
+      <a class="ch-card todo" href="ch13.html"><span class="status st-todo">soon</span><div class="num">CH 13</div><div class="ten">Test Doubles</div></a>
+      <a class="ch-card todo" href="ch14.html"><span class="status st-todo">soon</span><div class="num">CH 14</div><div class="ten">Larger Testing</div></a>
+      <a class="ch-card todo" href="ch15.html"><span class="status st-todo">soon</span><div class="num">CH 15</div><div class="ten">Deprecation</div></a>
+    </div>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="pno">PART IV</span><h2>Tools</h2></div>
+    <div class="grid">
+      <a class="ch-card todo" href="ch16.html"><span class="status st-todo">soon</span><div class="num">CH 16</div><div class="ten">Version Control and Branch Management</div></a>
+      <a class="ch-card todo" href="ch17.html"><span class="status st-todo">soon</span><div class="num">CH 17</div><div class="ten">Code Search</div></a>
+      <a class="ch-card todo" href="ch18.html"><span class="status st-todo">soon</span><div class="num">CH 18</div><div class="ten">Build Systems and Build Philosophy</div></a>
+      <a class="ch-card todo" href="ch19.html"><span class="status st-todo">soon</span><div class="num">CH 19</div><div class="ten">Critique: Google's Code Review Tool</div></a>
+      <a class="ch-card todo" href="ch20.html"><span class="status st-todo">soon</span><div class="num">CH 20</div><div class="ten">Static Analysis</div></a>
+      <a class="ch-card todo" href="ch21.html"><span class="status st-todo">soon</span><div class="num">CH 21</div><div class="ten">Dependency Management</div></a>
+      <a class="ch-card todo" href="ch22.html"><span class="status st-todo">soon</span><div class="num">CH 22</div><div class="ten">Large-Scale Changes</div></a>
+      <a class="ch-card todo" href="ch23.html"><span class="status st-todo">soon</span><div class="num">CH 23</div><div class="ten">Continuous Integration</div></a>
+      <a class="ch-card todo" href="ch24.html"><span class="status st-todo">soon</span><div class="num">CH 24</div><div class="ten">Continuous Delivery</div></a>
+      <a class="ch-card todo" href="ch25.html"><span class="status st-todo">soon</span><div class="num">CH 25</div><div class="ten">Compute as a Service</div></a>
+    </div>
+  </div>
+  <div class="part">
+    <div class="part-head"><span class="pno">PART V</span><h2>Conclusion</h2></div>
+    <div class="grid">
+      <a class="ch-card todo" style="pointer-events:none"><span class="status st-todo">afterword</span><div class="num">AFTERWORD</div><div class="ten">Afterword</div></a>
+    </div>
+  </div>
+  <footer>
+    Based on O'Reilly's <i>Software Engineering at Google</i> · study notes in Traditional Chinese / English; original text © its authors<br>
+    Built with the <span class="mono">swe-research</span> SKILL · five-stage research reading method · per-chapter ZH/EN toggle
+  </footer>
+</div>
+</div>
+
+</body>
+</html>
