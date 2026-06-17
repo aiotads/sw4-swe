@@ -86,6 +86,10 @@ d:\ah\swe\
   - 三主軸：`--theme-time:#e0a23b`、`--theme-scale:#3bb8c4`、`--theme-trade:#c45b9d`
 - 字體：系統無襯線 + 等寬字用於程式碼/英文金句。最大內容寬度約 860px、置中、行高 1.75。
 - 每章頁尾固定導航：`← 上一章 ｜ 總索引 ｜ 下一章 →`（首末章對應端點留空或回索引）。
+- **導航之後固定 colophon**（`<footer class="colophon">`，全書一致、恆顯示）：①原書出處＋
+  授權（改寫自《Software Engineering at Google》，© Google, LLC，`CC BY-NC-ND 4.0`，連 abseil 官方版）；
+  ②製作署名 `© 2026 Allen Huang`＋「僅供學習研究、非商業、非官方產物」。沿用 ch01 的 `.colophon` CSS。
+  `index.html` 頁尾比照（中英兩版皆含出處＋授權＋署名）。詳見 SKILL。
 - 中英並陳金句用 `blockquote`：英文在上（等寬、次要色），繁中在下（正文色、較大）。
 - **圖**：概念圖/流程圖一律 inline SVG 在深色主題重繪（用三主軸配色），包進
   `<figure>`＋`<figcaption>`（標 `Figure X-Y` 與繁中圖說）；產品 UI 截圖抽原圖

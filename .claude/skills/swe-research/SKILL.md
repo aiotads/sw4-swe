@@ -124,9 +124,16 @@ description: >
   頁首（章號/中英標題/Part/作者/頁碼徽章）→ 摘要卡 → 為什麼要讀（重點卡列）→
   細節重點（小節卡片，主張用強調色）→ 原文金句（中英並陳 blockquote）→
   關鍵字詞彙表（definition grid）→ 延伸提問（編號列表卡）→
-  跨章連結（chips）→ 頁尾導航（上一章 / 索引 / 下一章）。
+  跨章連結（chips）→ 頁尾導航（上一章 / 索引 / 下一章）→ **出處署名 colophon**。
 - 用純 CSS 表現「視覺化」：重點卡、主軸標籤色塊、簡單關係用 CSS grid/flex 排版，
   避免複雜 SVG。Time/Scale/Trade-offs 三主軸固定配色，全書一致。
+- **頁尾 colophon（硬性，全書一致）**：導航之後、`</body>` 之前放一段
+  `<footer class="colophon">`，恆顯示（不隨中／英切換隱藏），內容兩段：
+  ① 原書出處與授權——改寫自《Software Engineering at Google》（連 abseil 官方版、
+  標 © Google, LLC 與 `CC BY-NC-ND 4.0` 連結）；② 製作署名——
+  `© 2026 Allen Huang`＋「僅供學習研究、非商業、非官方產物」。沿用 ch01 的
+  `.colophon` CSS（`--muted`/`--border`、860px 置中、`.author` 用 `--fg`），勿改色。
+  此乃履行 CC 的 BY（署名）義務並標明非改作散布的合理使用立場，不可省略。
 
 ## 完成檢查清單（每章交付前自檢）
 - [ ] 七段齊全，frontmatter 正確。
@@ -134,5 +141,6 @@ description: >
 - [ ] 金句英文逐字無誤；繁中保留語意、諺語轉意到位。
 - [ ] 無過淺（名詞解釋）或過深（學術黑話）的段落。
 - [ ] HTML 可單檔開啟、無外部依賴、主題與其他章一致、頁尾導航連結正確。
+- [ ] 頁尾 colophon 齊全（原書出處＋`CC BY-NC-ND 4.0`＋`© 2026 Allen Huang`），與 ch01 一致。
 - [ ] 跨章連結指向存在的章。
 - [ ] 產出後在 `docs/index.html` 將該章標記為完成。
